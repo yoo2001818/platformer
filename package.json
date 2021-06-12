@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "webpack": "webpack",
-    "start": "webpack serve"
+    "start": "webpack serve",
+    "lint": "eslint src/"
   },
   "author": "Duknam Yoo (yoo2001818@gmail.com)",
   "license": "MIT",
@@ -20,6 +21,12 @@
     "@yarnpkg/pnpify": "^3.0.0-rc.6",
     "css-loader": "^5.2.6",
     "eslint": "^7.28.0",
+    "eslint-import-resolver-node": "^0.3.4",
+    "eslint-plugin-babel": "^5.3.1",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-sort-class-members": "^1.11.0",
     "gl-matrix": "^3.3.0",
     "html-webpack-plugin": "^5.3.1",
     "jest": "^27.0.4",
