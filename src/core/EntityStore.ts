@@ -1,4 +1,4 @@
-import {Component} from './components';
+import {Component} from './components/Component';
 import {Entity} from './Entity';
 import {EntityHandle} from './EntityHandle';
 
@@ -28,7 +28,8 @@ export class EntityStore {
   }
 
   registerComponents(components: {[key: string]: Component<any>;}): void {
-    Object.entries(components).forEach(([name, component]) => {
+    Object.keys(components).forEach((name) => {
+      const component = components[name];
       this.registerComponent(name, component);
     });
   }
@@ -86,6 +87,19 @@ export class EntityStore {
       if (entity.isValid()) {
         callback(entity);
       }
+    });
+  }
+
+  forEachWith<TValues extends any[]>(
+    components: {[K in keyof TValues]: Component<TValues[K]>},
+    callback: (entity: Entity, ...values: TValues) => void,
+  ): void {
+    this.entities.forEach((entity) => {
+      const args = components.map((component) => component.get(entity));
+      if (!args.every((arg) => arg != null)) {
+        return;
+      }
+      callback(entity, ...args as TValues);
     });
   }
 }

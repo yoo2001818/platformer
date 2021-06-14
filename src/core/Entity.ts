@@ -1,4 +1,4 @@
-import {Component} from './components';
+import type {Component} from './components';
 import {EntityHandle} from './EntityHandle';
 import type {EntityStore} from './EntityStore';
 

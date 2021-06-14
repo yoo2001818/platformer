@@ -1,6 +1,6 @@
-import {Entity} from '../Entity';
-import {EntityChunk} from '../EntityChunk';
-import {EntityStore} from '../EntityStore';
+import type {Entity} from '../Entity';
+import type {EntityChunk} from '../EntityChunk';
+import type {EntityStore} from '../EntityStore';
 
 export interface Component<TReadValue, TWriteValue = TReadValue> {
   register(store: EntityStore, index: number): void;
