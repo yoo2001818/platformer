@@ -1,5 +1,6 @@
 import {Component} from './components/Component';
 import {Entity} from './Entity';
+import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
 
 export class EntityStore {
@@ -8,6 +9,9 @@ export class EntityStore {
 
   entities: Entity[];
   deletedEntities: Entity[];
+  floatingEntities: Entity[];
+
+  groups: Map<number, EntityGroup>;
 
   constructor() {
     this.components = [];
@@ -15,6 +19,9 @@ export class EntityStore {
 
     this.entities = [];
     this.deletedEntities = [];
+    this.floatingEntities = [];
+
+    this.groups = new Map();
   }
 
   registerComponent(name: string, component: Component<any>): void {
@@ -52,6 +59,7 @@ export class EntityStore {
     // Otherwise, create one
     const entity = new Entity(this, this.entities.length);
     this.entities.push(entity);
+    entity._markFloating();
     return entity;
   }
 
@@ -80,6 +88,14 @@ export class EntityStore {
   _handleDestroy(entity: Entity): void {
     this.deletedEntities.push(entity);
     entity._markDeleted();
+  }
+
+  _handleFloat(entity: Entity): void {
+    this.floatingEntities.push(entity);
+  }
+
+  sort(): void {
+
   }
 
   forEach(callback: (entity: Entity) => void): void {

@@ -6,5 +6,6 @@ export class EntityGroup {
 
   constructor(hashCode: number) {
     this.hashCode = hashCode;
+    this.chunks = [];
   }
 }

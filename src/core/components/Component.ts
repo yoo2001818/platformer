@@ -2,7 +2,10 @@ import type {Entity} from '../Entity';
 import type {EntityChunk} from '../EntityChunk';
 import type {EntityStore} from '../EntityStore';
 
-export interface Component<TReadValue, TWriteValue = TReadValue> {
+export interface Component<
+  TReadValue,
+  TWriteValue extends TReadValue = TReadValue
+> {
   register(store: EntityStore, index: number): void;
   unregister(): void;
 
@@ -10,7 +13,7 @@ export interface Component<TReadValue, TWriteValue = TReadValue> {
   set(entity: Entity, value: TWriteValue): void;
   delete(entity: Entity): void;
 
-  getHashCode(entity: Entity): number;
+  getHashCode(value: TWriteValue | null): number;
 
   initChunk?(chunk: EntityChunk): void;
   moveToChunk?(entity: Entity, chunk: EntityChunk, offset: number): void;

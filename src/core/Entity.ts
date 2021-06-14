@@ -1,16 +1,19 @@
 import type {Component} from './components';
 import {EntityHandle} from './EntityHandle';
 import type {EntityStore} from './EntityStore';
+import {getHashCode} from './utils/getHashCode';
 
 export class Entity {
   handle: EntityHandle;
   deleted: boolean;
+  floating: boolean;
   componentMap: unknown[];
   store: EntityStore;
 
   constructor(store: EntityStore, id: number) {
     this.handle = new EntityHandle(id, 0);
     this.deleted = false;
+    this.floating = true;
     this.componentMap = [];
     this.store = store;
   }
@@ -19,14 +22,30 @@ export class Entity {
     this.deleted = false;
     this.handle = this.handle.incrementVersion();
     this.clear();
+    this._markFloating();
   }
 
   _markDeleted(): void {
     this.deleted = true;
   }
 
+  _markFloating(): void {
+    this.store._handleFloat(this);
+    this.floating = true;
+  }
+
+  _markUnfloating(): void {
+    this.floating = false;
+  }
+
   isValid(): boolean {
     return !this.deleted;
+  }
+
+  float(): void {
+    if (!this.floating) {
+      this._markFloating();
+    }
   }
 
   get<TReadValue>(
@@ -63,5 +82,9 @@ export class Entity {
 
   destroy(): void {
     this.store._handleDestroy(this);
+  }
+
+  getHashCode(): number {
+    return getHashCode(this, this.store.getComponents());
   }
 }
