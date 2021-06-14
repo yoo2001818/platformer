@@ -1,4 +1,5 @@
 import type {Component} from './components';
+import type {EntityChunk} from './EntityChunk';
 import {EntityHandle} from './EntityHandle';
 import type {EntityStore} from './EntityStore';
 import {getHashCode} from './utils/getHashCode';
@@ -8,6 +9,8 @@ export class Entity {
   deleted: boolean;
   floating: boolean;
   componentMap: unknown[];
+  chunk: EntityChunk | null;
+  chunkOffset: number;
   store: EntityStore;
 
   constructor(store: EntityStore, id: number) {
@@ -15,6 +18,8 @@ export class Entity {
     this.deleted = false;
     this.floating = true;
     this.componentMap = [];
+    this.chunk = null;
+    this.chunkOffset = 0;
     this.store = store;
   }
 
@@ -44,6 +49,9 @@ export class Entity {
 
   float(): void {
     if (!this.floating) {
+      if (this.chunk != null) {
+        this.chunk._handleFloat(this);
+      }
       this._markFloating();
     }
   }

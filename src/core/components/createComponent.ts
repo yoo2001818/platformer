@@ -43,13 +43,5 @@ export function createComponent<TValue>(): Component<TValue> {
     getHashCode(value) {
       return value == null ? 0 : 1;
     },
-    initChunk(chunk) {
-    },
-    moveToChunk(entity, chunk, offset) {
-    },
-    moveFromChunk(entity, chunk, offset) {
-    },
-    getChunk(chunk, offset) {
-    },
   };
 }

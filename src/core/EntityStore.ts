@@ -2,6 +2,7 @@ import {Component} from './components/Component';
 import {Entity} from './Entity';
 import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
+import {sortEntity} from './sortEntity';
 
 export class EntityStore {
   components: Component<any>[];
@@ -94,8 +95,19 @@ export class EntityStore {
     this.floatingEntities.push(entity);
   }
 
-  sort(): void {
+  getGroup(entity: Entity): EntityGroup {
+    const hashCode = entity.getHashCode();
+    const group = this.groups.get(hashCode);
+    if (group != null) {
+      return group;
+    }
+    const newGroup = new EntityGroup(hashCode);
+    this.groups.set(hashCode, newGroup);
+    return newGroup;
+  }
 
+  sort(): void {
+    sortEntity(this);
   }
 
   forEach(callback: (entity: Entity) => void): void {
