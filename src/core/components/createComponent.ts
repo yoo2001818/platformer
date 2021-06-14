@@ -19,6 +19,9 @@ export function createComponent<TValue>(): Component<TValue> {
     }
   }
   return {
+    getIndex() {
+      return index;
+    },
     register(storeVal, indexVal) {
       index = indexVal;
     },

@@ -120,11 +120,41 @@ export class EntityStore {
   }
 
   forEachWith<TValues extends any[]>(
-    components: {[K in keyof TValues]: Component<TValues[K]>},
+    components: {[K in keyof TValues]: Component<TValues[K]> | string},
     callback: (entity: Entity, ...values: TValues) => void,
   ): void {
-    this.entities.forEach((entity) => {
-      const args = components.map((component) => component.get(entity));
+    const mappedComponents = components.map((component) => {
+      if (typeof component === 'string') {
+        return this.getComponent(component);
+      }
+      return component;
+    });
+    for (const group of this.groups.values()) {
+      // Check for hashCode
+      const passed = mappedComponents.every(
+        (component) => group.componentHashCodes[component.getIndex()!] !== 0,
+      );
+      if (!passed) {
+        continue;
+      }
+      group.forEachChunk((chunk) => {
+        // TODO: This should be moved to somewhere else, with less overhead
+        chunk.forEach((entity) => {
+          const args = mappedComponents
+            .map((component) => component.get(entity));
+          if (!args.every((arg) => arg != null)) {
+            return;
+          }
+          callback(entity, ...args as TValues);
+        });
+      });
+    }
+    this.floatingEntities.forEach((entity) => {
+      if (!entity.isValid()) {
+        return;
+      }
+      const args = mappedComponents
+        .map((component) => component.get(entity));
       if (!args.every((arg) => arg != null)) {
         return;
       }

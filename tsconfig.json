@@ -15,7 +15,8 @@
     "outDir": "./lib",
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "declaration": true
+    "declaration": true,
+    "downlevelIteration": true
   },
   "files": ["src/index.ts"]
 }

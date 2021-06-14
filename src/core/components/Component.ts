@@ -6,6 +6,7 @@ export interface Component<
   TReadValue,
   TWriteValue extends TReadValue = TReadValue
 > {
+  getIndex(): number | null;
   register(store: EntityStore, index: number): void;
   unregister(): void;
 

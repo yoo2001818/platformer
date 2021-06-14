@@ -83,4 +83,12 @@ export class EntityChunk {
       this.group._handleEmpty(this);
     }
   }
+
+  forEach(callback: (entity: Entity) => void): void {
+    this.entities.forEach((entity) => {
+      if (entity != null && entity.isValid()) {
+        callback(entity);
+      }
+    });
+  }
 }

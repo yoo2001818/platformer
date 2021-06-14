@@ -37,4 +37,12 @@ export class EntityGroup {
   _handleEmpty(chunk: EntityChunk): void {
 
   }
+
+  forEachChunk(callback: (chunk: EntityChunk) => void): void {
+    this.chunks.forEach(callback);
+  }
+
+  forEach(callback: (entity: Entity) => void): void {
+    this.forEachChunk((chunk) => chunk.forEach(callback));
+  }
 }

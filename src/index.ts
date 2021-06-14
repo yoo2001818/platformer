@@ -9,17 +9,47 @@ console.log(mat);
 
 const store = new EntityStore();
 
+const posComp = createComponent<{x: number; y: number;}>();
+const velComp = createComponent<{x: number; y: number;}>();
+
 store.registerComponents({
-  pos: createComponent(),
-  vel: createComponent(),
+  pos: posComp,
+  vel: velComp,
 });
 
-const entity = store.create();
-entity.set('pos', {x: 5, y: 3});
-entity.set('vel', {x: 1, y: 1});
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d')!;
 
-store.sort();
+canvas.width = 800;
+canvas.height = 600;
 
-entity.destroy();
+document.body.appendChild(canvas);
+
+function update() {
+  const entity = store.create();
+  entity.set('pos', {x: 400, y: 0});
+  entity.set('vel', {x: Math.random() * 10 - 5, y: 5});
+
+  store.forEachWith([posComp, velComp], (entity, pos, vel) => {
+    pos.x += vel.x;
+    pos.y += vel.y;
+    if (pos.y > 600) {
+      entity.destroy();
+    }
+  });
+
+  store.sort();
+
+  ctx.clearRect(0, 0, 800, 600);
+  ctx.fillStyle = '#000';
+
+  store.forEachWith([posComp, velComp], (entity, pos, vel) => {
+    ctx.fillRect(pos.x, pos.y, 10, 10);
+  });
+
+  requestAnimationFrame(update);
+}
+
+requestAnimationFrame(update);
 
 console.log(store);
