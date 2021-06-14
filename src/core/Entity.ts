@@ -32,6 +32,9 @@ export class Entity {
 
   _markDeleted(): void {
     this.deleted = true;
+    if (!this.floating && this.chunk != null) {
+      this.chunk._handleDelete(this);
+    }
   }
 
   _markFloating(): void {
@@ -94,5 +97,11 @@ export class Entity {
 
   getHashCode(): number {
     return getHashCode(this, this.store.getComponents());
+  }
+
+  getComponentHashCodes(): number[] {
+    return this.store.getComponents().map((component) => {
+      return component.getHashCode(this);
+    });
   }
 }

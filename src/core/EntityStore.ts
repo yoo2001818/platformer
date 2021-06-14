@@ -53,7 +53,7 @@ export class EntityStore {
   create(): Entity {
     // Check if there is any deleted entities
     if (this.deletedEntities.length > 0) {
-      const entity = this.deletedEntities.pop();
+      const entity = this.deletedEntities.pop()!;
       entity._markUndeleted();
       return entity;
     }
@@ -101,7 +101,8 @@ export class EntityStore {
     if (group != null) {
       return group;
     }
-    const newGroup = new EntityGroup(hashCode);
+    const componentHashCodes = entity.getComponentHashCodes();
+    const newGroup = new EntityGroup(hashCode, componentHashCodes);
     this.groups.set(hashCode, newGroup);
     return newGroup;
   }

@@ -10,4 +10,5 @@ export function sortEntity(store: EntityStore): void {
     const group = store.getGroup(entity);
     group.allocate(entity);
   });
+  store.floatingEntities = [];
 }

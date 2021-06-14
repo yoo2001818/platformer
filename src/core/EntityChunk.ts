@@ -43,6 +43,7 @@ export class EntityChunk {
     entity.chunk = this;
     entity.chunkOffset = offset;
     entity._markUnfloating();
+    this.entities[offset] = entity;
   }
 
   _handleFloat(entity: Entity): void {
@@ -56,6 +57,22 @@ export class EntityChunk {
         component.set(entity, value);
       }
     });
+    this.entities[offset] = null;
+    this.size -= 1;
+    this.defragNeeded = true;
+    if (this.size === this.maxSize - 1) {
+      this.group._handleAvailable(this);
+    }
+    if (this.size === 0) {
+      this.group._handleEmpty(this);
+    }
+  }
+
+  _handleDelete(entity: Entity): void {
+    const offset = entity.chunkOffset;
+    entity.chunk = null;
+    entity.chunkOffset = 0;
+    // Skip copying
     this.entities[offset] = null;
     this.size -= 1;
     this.defragNeeded = true;

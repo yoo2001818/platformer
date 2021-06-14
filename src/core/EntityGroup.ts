@@ -3,12 +3,15 @@ import {EntityChunk} from './EntityChunk';
 
 export class EntityGroup {
   hashCode: number;
+  componentHashCodes: number[];
   chunks: EntityChunk[];
   availableChunks: EntityChunk[];
 
-  constructor(hashCode: number) {
+  constructor(hashCode: number, componentHashCodes: number[]) {
     this.hashCode = hashCode;
+    this.componentHashCodes = componentHashCodes;
     this.chunks = [];
+    this.availableChunks = [];
   }
 
   allocate(entity: Entity): EntityChunk {
