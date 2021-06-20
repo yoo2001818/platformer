@@ -44,14 +44,25 @@ export function createArrayComponent(
     getHashCode(value) {
       return value == null ? 0 : 1;
     },
-    initChunk(chunk, value) {
-
+    initChunk(chunk) {
+      chunk.componentMap[index!] = new Float32Array(chunk.maxSize * dimensions);
     },
     getChunk(chunk, offset) {
-
+      const arr = chunk.componentMap[index!] as Float32Array | null;
+      if (arr == null) {
+        return null;
+      }
+      return arr.subarray(
+        offset * dimensions,
+        offset * dimensions + dimensions,
+      );
     },
     setChunk(chunk, offset, value) {
-
+      const arr = chunk.componentMap[index!] as Float32Array | null;
+      if (arr == null) {
+        return;
+      }
+      arr.set(value, offset * dimensions);
     },
   };
 }
