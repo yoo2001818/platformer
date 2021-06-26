@@ -43,6 +43,26 @@ export class Entity {
     this.floating = false;
   }
 
+  _getRawMap<T>(component: Component<any>, initialValue: T): T {
+    const index = component.getIndex();
+    if (index == null) {
+      throw new Error('Component is not registered');
+    }
+    const value = this.componentMap[index];
+    if (value === undefined) {
+      return initialValue;
+    }
+    return value as T;
+  }
+
+  _setRawMap<T>(component: Component<any>, value: T): void {
+    const index = component.getIndex();
+    if (index == null) {
+      throw new Error('Component is not registered');
+    }
+    this.componentMap[index] = value;
+  }
+
   isValid(): boolean {
     return !this.deleted;
   }

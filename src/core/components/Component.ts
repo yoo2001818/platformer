@@ -17,6 +17,6 @@ export interface Component<
   getHashCode(value: TWriteValue | null): number;
 
   initChunk?(chunk: EntityChunk, value: TWriteValue): void;
-  getChunk?(chunk: EntityChunk, offset: number): TReadValue;
+  getChunk?(chunk: EntityChunk, offset: number): TReadValue | null;
   setChunk?(chunk: EntityChunk, offset: number, value: TWriteValue): void;
 }

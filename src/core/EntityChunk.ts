@@ -1,3 +1,4 @@
+import type {Component} from './components';
 import {Entity} from './Entity';
 import type {EntityGroup} from './EntityGroup';
 
@@ -17,6 +18,22 @@ export class EntityChunk {
     this.size = 0;
     this.defragNeeded = false;
     this.init(protoEntity);
+  }
+
+  _getRawMap<T>(component: Component<any>): T {
+    const index = component.getIndex();
+    if (index == null) {
+      throw new Error('Component is not registered');
+    }
+    return this.componentMap[index] as T;
+  }
+
+  _setRawMap<T>(component: Component<any>, value: T): void {
+    const index = component.getIndex();
+    if (index == null) {
+      throw new Error('Component is not registered');
+    }
+    this.componentMap[index] = value;
   }
 
   init(protoEntity: Entity): void {
