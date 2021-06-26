@@ -3,6 +3,7 @@ import {Entity} from './Entity';
 import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
 import {sortEntity} from './sortEntity';
+import {getHashCode} from './utils/getHashCode';
 
 export class EntityStore {
   components: Component<any>[];
@@ -12,7 +13,7 @@ export class EntityStore {
   deletedEntities: Entity[];
   floatingEntities: Entity[];
 
-  groups: Map<number, EntityGroup>;
+  groups: Map<number, EntityGroup[]>;
 
   constructor() {
     this.components = [];
@@ -96,14 +97,22 @@ export class EntityStore {
   }
 
   getGroup(entity: Entity): EntityGroup {
-    const hashCode = entity.getHashCode();
-    const group = this.groups.get(hashCode);
-    if (group != null) {
-      return group;
+    const hashCodes = entity.getHashCodes();
+    const hashCode = getHashCode(hashCodes);
+    const matchedGroups = this.groups.get(hashCode);
+    if (matchedGroups != null) {
+      // Try to find matching group
+      const group = matchedGroups.find((group) => {
+        return hashCodes.every((current, i) => current === group.hashCodes[i]);
+      });
+      if (group != null) {
+        return group;
+      }
+      const newGroup = new EntityGroup(hashCodes);
+      matchedGroups.push(newGroup);
     }
-    const componentHashCodes = entity.getComponentHashCodes();
-    const newGroup = new EntityGroup(hashCode, componentHashCodes);
-    this.groups.set(hashCode, newGroup);
+    const newGroup = new EntityGroup(hashCodes);
+    this.groups.set(hashCode, [newGroup]);
     return newGroup;
   }
 
@@ -132,7 +141,7 @@ export class EntityStore {
     for (const group of this.groups.values()) {
       // Check for hashCode
       const passed = mappedComponents.every(
-        (component) => group.componentHashCodes[component.getIndex()!] !== 0,
+        (component) => group.hashCodes[component.getIndex()!] !== 0,
       );
       if (!passed) {
         continue;

@@ -2,7 +2,6 @@ import type {Component} from './components';
 import type {EntityChunk} from './EntityChunk';
 import {EntityHandle} from './EntityHandle';
 import type {EntityStore} from './EntityStore';
-import {getHashCode} from './utils/getHashCode';
 
 export class Entity {
   handle: EntityHandle;
@@ -117,11 +116,7 @@ export class Entity {
     }
   }
 
-  getHashCode(): number {
-    return getHashCode(this, this.store.getComponents());
-  }
-
-  getComponentHashCodes(): number[] {
+  getHashCodes(): number[] {
     return this.store.getComponents().map((component) => {
       return component.getHashCode(this);
     });

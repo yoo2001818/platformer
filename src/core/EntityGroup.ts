@@ -2,14 +2,12 @@ import {Entity} from './Entity';
 import {EntityChunk} from './EntityChunk';
 
 export class EntityGroup {
-  hashCode: number;
-  componentHashCodes: number[];
+  hashCodes: number[];
   chunks: EntityChunk[];
   availableChunks: EntityChunk[];
 
-  constructor(hashCode: number, componentHashCodes: number[]) {
-    this.hashCode = hashCode;
-    this.componentHashCodes = componentHashCodes;
+  constructor(hashCodes: number[]) {
+    this.hashCodes = hashCodes;
     this.chunks = [];
     this.availableChunks = [];
   }
