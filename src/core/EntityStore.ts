@@ -128,6 +128,14 @@ export class EntityStore {
     });
   }
 
+  forEachGroup(callback: (group: EntityGroup) => void): void {
+    for (const groups of this.groups.values()) {
+      for (const group of groups) {
+        callback(group);
+      }
+    }
+  }
+
   forEachWith<TValues extends any[]>(
     components: {[K in keyof TValues]: Component<TValues[K]> | string},
     callback: (entity: Entity, ...values: TValues) => void,
@@ -138,13 +146,13 @@ export class EntityStore {
       }
       return component;
     });
-    for (const group of this.groups.values()) {
+    this.forEachGroup((group) => {
       // Check for hashCode
       const passed = mappedComponents.every(
         (component) => group.hashCodes[component.getIndex()!] !== 0,
       );
       if (!passed) {
-        continue;
+        return;
       }
       group.forEachChunk((chunk) => {
         // TODO: This should be moved to somewhere else, with less overhead
@@ -157,7 +165,7 @@ export class EntityStore {
           callback(entity, ...args as TValues);
         });
       });
-    }
+    });
     this.floatingEntities.forEach((entity) => {
       if (!entity.isValid()) {
         return;
