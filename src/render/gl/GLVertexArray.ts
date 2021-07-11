@@ -11,6 +11,7 @@ export class GLVertexArray {
   ) {
     this.gl = gl;
     this.vaoExt = vaoExt;
+    this.vao = null;
     this.isBound = false;
     this.init();
   }
@@ -37,5 +38,4 @@ export class GLVertexArray {
       }
     }
   }
-  
 }

@@ -8,5 +8,6 @@
     "no-mixed-operators": 0,
     "@shopify/strict-component-boundaries": 0,
     "no-warning-comments": 0,
+    "no-negated-condition": 0
   }
 }

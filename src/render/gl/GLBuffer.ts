@@ -8,15 +8,15 @@ const USAGE_MAP = {
   dynamic: 0x88E8,
 } as const;
 
-type UsageType = keyof typeof USAGE_MAP;
+export type UsageType = keyof typeof USAGE_MAP;
 
 export class GLBuffer {
   type: number;
   usage: number;
   initialValue: ArrayBufferView | ArrayBufferLike | null;
-  renderer: Renderer | null;
-  buffer: WebGLBuffer | null;
-  isBound: boolean;
+  renderer: Renderer | null = null;
+  buffer: WebGLBuffer | null = null;
+  isBound = false;
 
   constructor(
     type: number,
@@ -25,8 +25,8 @@ export class GLBuffer {
   ) {
     this.type = type;
     this.usage = USAGE_MAP[usage];
-    this.initialValue = flattenBuffer(initialValue);
-    this.isBound = false;
+    this.initialValue =
+      initialValue != null ? flattenBuffer(initialValue) : null;
   }
 
   bind(renderer: Renderer): void {
@@ -41,7 +41,7 @@ export class GLBuffer {
       return;
     }
     if (!this.isBound) {
-      const {renderer, buffer, type} = this;
+      const {buffer, type} = this;
       renderer.gl.bindBuffer(type, buffer);
       this.isBound = true;
     }
@@ -53,7 +53,7 @@ export class GLBuffer {
 
   dispose(): void {
     const {renderer, buffer} = this;
-    if (this.renderer != null && this.buffer != null) {
+    if (renderer != null && buffer != null) {
       renderer.gl.deleteBuffer(buffer);
       this.buffer = null;
       this.renderer = null;
@@ -62,22 +62,31 @@ export class GLBuffer {
 
   bufferDataEmpty(size: number): void {
     const {renderer, type, usage} = this;
+    if (renderer == null) {
+      throw new Error('Renderer is not supplied');
+    }
     this.bind(renderer);
     const {gl} = renderer;
     gl.bufferData(type, size, usage);
   }
 
-  bufferData(input: ArrayBufferView | number[]): void {
+  bufferData(input: BufferValue): void {
     const {renderer, type, usage} = this;
+    if (renderer == null) {
+      throw new Error('Renderer is not supplied');
+    }
     this.bind(renderer);
     const {gl} = renderer;
-    gl.bufferData(type, input, usage);
+    gl.bufferData(type, flattenBuffer(input), usage);
   }
 
-  bufferSubData(offset: number, input: ArrayBufferView | number[]): void {
-    const {renderer, type, usage} = this;
+  bufferSubData(offset: number, input: BufferValue): void {
+    const {renderer, type} = this;
+    if (renderer == null) {
+      throw new Error('Renderer is not supplied');
+    }
     this.bind(renderer);
     const {gl} = renderer;
-    gl.bufferSubData(type, offset, input);
+    gl.bufferSubData(type, offset, flattenBuffer(input));
   }
 }
