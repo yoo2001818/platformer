@@ -8,20 +8,24 @@ export class GLVertexArray {
   constructor() {
   }
 
-
-  dispose(): void {
-    const {vaoExt, vao} = this;
-    if (vaoExt != null && vao != null) {
-      vaoExt.deleteVertexArrayOES(vao);
+  bind(renderer: Renderer): void {
+    if (renderer.vaoExt == null) {
+      throw new Error('VAO is not supported');
+    }
+    if (this.vao == null) {
+      this.renderer = renderer;
+      this.vao = renderer.vaoExt.createVertexArrayOES();
+    }
+    if (renderer.boundVertexArray !== this) {
+      renderer.vaoExt.bindVertexArrayOES(vao);
+      renderer.boundVertexArray = this;
     }
   }
 
-  bind(): void {
-    if (!this.isBound) {
-      const {vaoExt, vao} = this;
-      if (vaoExt != null) {
-        vaoExt.bindVertexArrayOES(vao);
-      }
+  dispose(): void {
+    const {renderer, vao} = this;
+    if (renderer != null && vao != null) {
+      renderer.vaoExt!.deleteVertexArrayOES(vao);
     }
   }
 
