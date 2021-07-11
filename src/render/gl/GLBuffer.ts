@@ -1,4 +1,4 @@
-import {Renderer} from './Renderer';
+import type {Renderer} from './Renderer';
 import {ArrayBufferView, BufferValue} from './types';
 import {flattenBuffer} from './utils';
 
@@ -16,7 +16,6 @@ export class GLBuffer {
   initialValue: ArrayBufferView | ArrayBufferLike | null;
   renderer: Renderer | null = null;
   buffer: WebGLBuffer | null = null;
-  isBound = false;
 
   constructor(
     type: number,
@@ -30,25 +29,7 @@ export class GLBuffer {
   }
 
   bind(renderer: Renderer): void {
-    if (this.buffer == null) {
-      this.renderer = renderer;
-      this.buffer = renderer.gl.createBuffer();
-      renderer.gl.bindBuffer(this.type, this.buffer);
-      this.isBound = true;
-      if (this.initialValue != null) {
-        this.bufferData(this.initialValue);
-      }
-      return;
-    }
-    if (!this.isBound) {
-      const {buffer, type} = this;
-      renderer.gl.bindBuffer(type, buffer);
-      this.isBound = true;
-    }
-  }
-
-  unbind(): void {
-    this.isBound = false;
+    throw new Error('Not implemented');
   }
 
   dispose(): void {
