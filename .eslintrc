@@ -6,6 +6,7 @@
   "rules": {
     "no-console": 0,
     "no-mixed-operators": 0,
-    "@shopify/strict-component-boundaries": 0
+    "@shopify/strict-component-boundaries": 0,
+    "no-warning-comments": 0,
   }
 }
