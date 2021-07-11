@@ -1,6 +1,6 @@
 export class Renderer {
-  context: WebGLRenderingContext;
+  gl: WebGLRenderingContext;
   constructor(context: WebGLRenderingContext) {
-    this.context = context;
+    this.gl = context;
   }
 }

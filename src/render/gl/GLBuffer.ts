@@ -1,43 +1,48 @@
-type ArrayBufferView =
-  | ArrayBufferLike
-  | Int8Array
-  | Uint8Array
-  | Uint8ClampedArray
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | Float32Array
-  | Float64Array
-  | DataView;
+import {Renderer} from './Renderer';
+import {ArrayBufferView, BufferValue} from './types';
+import {flattenBuffer} from './utils';
+
+const USAGE_MAP = {
+  static: 0x88E4,
+  stream: 0x88E0,
+  dynamic: 0x88E8,
+} as const;
+
+type UsageType = keyof typeof USAGE_MAP;
 
 export class GLBuffer {
   type: number;
-  gl: WebGLRenderingContext;
-  buffer: WebGLBuffer;
+  usage: number;
+  initialValue: ArrayBufferView | ArrayBufferLike | null;
+  renderer: Renderer | null;
+  buffer: WebGLBuffer | null;
   isBound: boolean;
 
-  constructor(type: number, gl: WebGLRenderingContext) {
+  constructor(
+    type: number,
+    initialValue?: BufferValue | null,
+    usage: UsageType = 'static',
+  ) {
     this.type = type;
-    this.gl = gl;
+    this.usage = USAGE_MAP[usage];
+    this.initialValue = flattenBuffer(initialValue);
     this.isBound = false;
-    this.init();
   }
 
-  init(): void {
-    const {gl} = this;
-    this.buffer = gl.createBuffer();
-  }
-
-  dispose(): void {
-    const {gl, buffer} = this;
-    gl.deleteBuffer(buffer);
-  }
-
-  bind(): void {
+  bind(renderer: Renderer): void {
+    if (this.buffer == null) {
+      this.renderer = renderer;
+      this.buffer = renderer.gl.createBuffer();
+      renderer.gl.bindBuffer(this.type, this.buffer);
+      this.isBound = true;
+      if (this.initialValue != null) {
+        this.bufferData(this.initialValue);
+      }
+      return;
+    }
     if (!this.isBound) {
-      const {gl, buffer, type} = this;
-      gl.bindBuffer(type, buffer);
+      const {renderer, buffer, type} = this;
+      renderer.gl.bindBuffer(type, buffer);
       this.isBound = true;
     }
   }
@@ -46,18 +51,33 @@ export class GLBuffer {
     this.isBound = false;
   }
 
-  bufferDataEmpty(size: number, usage?: number): void {
-    const {gl, type} = this;
-    gl.bufferData(type, size, usage ?? gl.DYNAMIC_DRAW);
+  dispose(): void {
+    const {renderer, buffer} = this;
+    if (this.renderer != null && this.buffer != null) {
+      renderer.gl.deleteBuffer(buffer);
+      this.buffer = null;
+      this.renderer = null;
+    }
   }
 
-  bufferData(input: ArrayBufferView, usage?: number): void {
-    const {gl, type} = this;
-    gl.bufferData(type, input, usage ?? gl.STATIC_DRAW);
+  bufferDataEmpty(size: number): void {
+    const {renderer, type, usage} = this;
+    this.bind(renderer);
+    const {gl} = renderer;
+    gl.bufferData(type, size, usage);
   }
 
-  bufferSubData(offset: number, input: ArrayBufferView): void {
-    const {gl, type} = this;
+  bufferData(input: ArrayBufferView | number[]): void {
+    const {renderer, type, usage} = this;
+    this.bind(renderer);
+    const {gl} = renderer;
+    gl.bufferData(type, input, usage);
+  }
+
+  bufferSubData(offset: number, input: ArrayBufferView | number[]): void {
+    const {renderer, type, usage} = this;
+    this.bind(renderer);
+    const {gl} = renderer;
     gl.bufferSubData(type, offset, input);
   }
 }

@@ -18,5 +18,5 @@
     "declaration": true,
     "downlevelIteration": true
   },
-  "files": ["src/index.ts"]
+  "include": ["src/**/*"]
 }

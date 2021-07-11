@@ -1,5 +1,5 @@
 import {Material} from './Material';
-import {Geometry} from './Geometry';
+import {Geometry} from './geometry/Geometry';
 
 export interface Mesh {
   material: Material | string;
