@@ -1,6 +1,6 @@
 import type {Renderer} from './Renderer';
-import {ArrayBufferView, BufferValue} from './types';
-import {flattenBuffer} from './utils';
+import {ArrayBufferView, BufferValue, GLAttributeType} from './types';
+import {flattenBuffer, inferBufferType} from './utils';
 
 const USAGE_MAP = {
   static: 0x88E4,
@@ -13,6 +13,7 @@ export type UsageType = keyof typeof USAGE_MAP;
 export class GLBuffer {
   type: number;
   usage: number;
+  dataType: GLAttributeType | null = null;
   initialValue: ArrayBufferView | ArrayBufferLike | null;
   renderer: Renderer | null = null;
   buffer: WebGLBuffer | null = null;
@@ -59,6 +60,7 @@ export class GLBuffer {
     this.bind(renderer);
     const {gl} = renderer;
     gl.bufferData(type, flattenBuffer(input), usage);
+    this.dataType = inferBufferType(input);
   }
 
   bufferSubData(offset: number, input: BufferValue): void {
@@ -69,5 +71,8 @@ export class GLBuffer {
     this.bind(renderer);
     const {gl} = renderer;
     gl.bufferSubData(type, offset, flattenBuffer(input));
+    if (this.dataType == null) {
+      this.dataType = inferBufferType(input);
+    }
   }
 }

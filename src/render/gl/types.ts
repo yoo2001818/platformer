@@ -1,3 +1,5 @@
+import type {GLArrayBuffer} from './GLArrayBuffer';
+
 export type ArrayBufferView =
   | Int8Array
   | Uint8Array
@@ -15,3 +17,20 @@ export type BufferValue =
   | ArrayBufferView
   | number[]
   | number[][];
+
+export type GLAttributeType =
+  | 'byte'
+  | 'short'
+  | 'unsignedByte'
+  | 'unsignedShort'
+  | 'float';
+
+export interface AttributeOptions {
+  buffer: GLArrayBuffer;
+  size: number;
+  type?: GLAttributeType;
+  normalized?: boolean;
+  stride?: number;
+  offset?: number;
+  divisor?: number;
+}
