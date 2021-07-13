@@ -45,34 +45,8 @@ export class GLVertexArray {
     if (renderer == null) {
       throw new Error('Renderer is not supplied');
     }
-    const {gl, instanceExt} = renderer;
-    const {
-      buffer,
-      size,
-      type = buffer.dataType,
-      normalized = false,
-      stride = 0,
-      offset = 0,
-      divisor = 0,
-    } = options;
     this.bind(renderer);
-    buffer.bind(renderer);
-    if (type == null) {
-      throw new Error('Attribute data type must be specified');
-    }
-    // TODO: We should check if vertex attrib array is already enabled
-    gl.enableVertexAttribArray(index);
-    gl.vertexAttribPointer(
-      index,
-      size,
-      ATTRIBUTE_TYPE_MAP[type],
-      normalized,
-      stride,
-      offset,
-    );
-    if (instanceExt != null) {
-      instanceExt.vertexAttribDivisorANGLE(index, divisor);
-    }
+    renderer.attributeManager.set(index, options);
   }
 
 }
