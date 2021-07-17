@@ -30,23 +30,4 @@ export class GLVertexArray {
     }
   }
 
-  set(index: number, options: AttributeOptions): void {
-    const {renderer} = this;
-    if (renderer == null) {
-      throw new Error('Renderer is not supplied');
-    }
-    this.bind(renderer);
-    renderer.attributeManager.set(index, options);
-  }
-
-  setStatic(index: number, array: Float32Array): void {
-    const {renderer} = this;
-    if (renderer == null) {
-      throw new Error('Renderer is not supplied');
-    }
-    // NOTE: Actually, VAO doesn't store non-array vertex attributes. Still...
-    this.bind(renderer);
-    renderer.attributeManager.setStatic(index, array);
-  }
-
 }

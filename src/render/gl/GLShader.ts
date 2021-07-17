@@ -1,4 +1,8 @@
 import type {Renderer} from './Renderer';
+import {extractUniforms} from './uniform/extractUniforms';
+import {extractAttributes} from './attribute/extractAttributes';
+import {UniformEntry} from './uniform/types';
+import {AttributeSlot} from './attribute/types';
 
 function compileShader(
   gl: WebGLRenderingContext,
@@ -21,6 +25,9 @@ export class GLShader {
   vertShader: WebGLShader | null = null;
   fragShader: WebGLShader | null = null;
   program: WebGLProgram | null = null;
+  uniforms: UniformEntry | null = null;
+  attributes: {[key: string]: AttributeSlot;} | null = null;
+
   constructor(
     vertCode: string,
     fragCode: string,
@@ -42,6 +49,8 @@ export class GLShader {
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         throw new Error(gl.getProgramInfoLog(program)!);
       }
+      this.uniforms = extractUniforms(gl, program);
+      this.attributes = extractAttributes(gl, program);
       this.program = program;
     }
     if (renderer.boundShader !== this) {
