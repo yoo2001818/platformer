@@ -69,8 +69,8 @@ export function extractUniforms(
           location: gl.getUniformLocation(program, newName)!,
           name: newName,
           size: 1,
-          glType: uniform.type,
-          type: 'uniform',
+          type: uniform.type,
+          uniform: 'uniform',
         }, output);
       }
     } else {
@@ -79,8 +79,8 @@ export function extractUniforms(
         location: loc,
         name: uniform.name,
         size: uniform.size,
-        glType: uniform.type,
-        type: 'uniform',
+        type: uniform.type,
+        uniform: 'uniform',
       }, output);
     }
   }

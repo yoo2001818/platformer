@@ -1,8 +1,8 @@
 export interface UniformSlot {
   name: string;
   size: number;
-  glType: number;
-  type: 'uniform';
+  type: number;
+  uniform: 'uniform';
   location: WebGLUniformLocation;
 }
 
