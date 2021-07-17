@@ -1,16 +1,6 @@
 import {Renderer} from './Renderer';
 import {AttributeOptions} from './types';
 
-const ATTRIBUTE_TYPE_MAP = {
-  byte: 0x1400,
-  unsignedByte: 0x1401,
-  short: 0x1402,
-  unsignedShort: 0x1403,
-  int: 0x1404,
-  unsignedInt: 0x1405,
-  float: 0x1406,
-};
-
 export class GLVertexArray {
   renderer: Renderer | null = null;
   vao: WebGLVertexArrayObjectOES | null = null;
@@ -47,6 +37,16 @@ export class GLVertexArray {
     }
     this.bind(renderer);
     renderer.attributeManager.set(index, options);
+  }
+
+  setStatic(index: number, array: Float32Array): void {
+    const {renderer} = this;
+    if (renderer == null) {
+      throw new Error('Renderer is not supplied');
+    }
+    // NOTE: Actually, VAO doesn't store non-array vertex attributes. Still...
+    this.bind(renderer);
+    renderer.attributeManager.setStatic(index, array);
   }
 
 }

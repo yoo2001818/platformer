@@ -2,6 +2,7 @@ import {GLArrayBuffer} from './GLArrayBuffer';
 import {GLAttributeManager} from './GLAttributeManager';
 import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLVertexArray} from './GLVertexArray';
+import {GLShader} from './GLShader';
 
 export class Renderer {
   gl: WebGLRenderingContext;
@@ -11,6 +12,7 @@ export class Renderer {
   boundArrayBuffer: GLArrayBuffer | null = null;
   boundElementArrayBuffer: GLElementArrayBuffer | null = null;
   boundVertexArray: GLVertexArray | null = null;
+  boundShader: GLShader | null = null;
 
   constructor(gl: WebGLRenderingContext) {
     this.gl = gl;
