@@ -1,6 +1,7 @@
 import {mat4} from 'gl-matrix';
 
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
+import { GLElementArrayBuffer } from '../render/gl/GLElementArrayBuffer';
 import {GLShader} from '../render/gl/GLShader';
 import {Renderer} from '../render/gl/Renderer';
 
@@ -29,8 +30,6 @@ function main() {
     1, -1, 0,
     1, 1, 0,
     -1, 1, 0,
-    -1, -1, 0,
-    1, 1, 0,
   ]);
   const colorBuffer = new GLArrayBuffer([
     // +---+
@@ -39,10 +38,12 @@ function main() {
     1, 0, 0, 1,
     1, 1, 0, 1,
     0, 1, 1, 1,
-    1, 1, 0, 1,
-    1, 0, 0, 1,
-    0, 1, 1, 1,
+    1, 0, 1, 1,
   ]);
+  const elementBuffer = new GLElementArrayBuffer(new Uint8Array([
+    0, 1, 2,
+    3, 2, 0,
+  ]));
   const shader = new GLShader(`
     #version 100
     precision lowp float;
@@ -103,8 +104,9 @@ function main() {
     uModel,
   });
 
+  elementBuffer.bind(renderer);
   gl.cullFace(gl.FRONT_AND_BACK);
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
 }
 
 main();
