@@ -23,6 +23,7 @@ export class GLAttributeManager {
   constructor(renderer: Renderer) {
     this.renderer = renderer;
     this.attributes = [];
+    this.init();
   }
 
   init(): void {

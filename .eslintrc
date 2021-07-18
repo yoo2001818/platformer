@@ -9,6 +9,7 @@
     "@shopify/strict-component-boundaries": 0,
     "no-warning-comments": 0,
     "no-negated-condition": 0,
-    "import/no-cycle": 0
+    "import/no-cycle": 0,
+    "no-alert": 0
   }
 }

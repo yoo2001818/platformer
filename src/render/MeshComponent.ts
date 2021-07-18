@@ -1,6 +1,6 @@
 import {Component} from '../core/components';
 import type {Entity} from '../core/Entity';
-import type {EntityChunk} from '../core/EntityChunk';
+import type {EntityStore} from '../core/EntityStore';
 
 import {Mesh} from './Mesh';
 
@@ -14,7 +14,7 @@ export class MeshComponent implements Component<Mesh> {
     return this.index;
   }
 
-  register(storeVal, indexVal): void {
+  register(storeVal: EntityStore, indexVal: number): void {
     this.index = indexVal;
   }
 

@@ -1,5 +1,6 @@
 import type {Entity} from '../Entity';
 import {EntityChunk} from '../EntityChunk';
+import type {EntityStore} from '../EntityStore';
 
 import {Component} from './Component';
 
@@ -15,7 +16,7 @@ export class Float32ArrayComponent implements Component<Float32Array> {
     return this.index;
   }
 
-  register(storeVal, indexVal): void {
+  register(storeVal: EntityStore, indexVal: number): void {
     this.index = indexVal;
   }
 
@@ -38,9 +39,12 @@ export class Float32ArrayComponent implements Component<Float32Array> {
       entity.float();
     }
     if (entity.chunk != null) {
-      this.setChunk(entity.chunk, entity.chunkOffset, value);
+      if (value != null) {
+        this.setChunk(entity.chunk, entity.chunkOffset, value);
+      }
+    } else {
+      entity._setRawMap(this, value);
     }
-    entity._setRawMap(this, value);
   }
 
   delete(entity: Entity): void {

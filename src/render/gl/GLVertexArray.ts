@@ -1,5 +1,4 @@
 import {Renderer} from './Renderer';
-import {AttributeOptions} from './types';
 
 export class GLVertexArray {
   renderer: Renderer | null = null;
