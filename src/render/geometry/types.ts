@@ -1,14 +1,15 @@
-export interface GeometryAttribute {
-  data: number[] | number[][] | Float32Array;
-  axis: number;
-  stride?: number | null;
-  offset?: number | null;
-  instanced?: number | null;
+import {GLElementArrayBuffer} from '../gl/GLElementArrayBuffer';
+import {AttributeOptions, BufferValue} from '../gl/types';
+
+export interface StaticGeometryOptions {
+  attributes?: {[key: string]: BufferValue;};
+  indices?: BufferValue;
+  mode?: number;
 }
 
-export interface GeometryDescriptor {
-  attributes: {[key: string]: GeometryAttribute | number[][];};
-  indices?: number[] | Uint8Array | Uint16Array | Uint32Array | null;
+export interface GeometryOptions {
+  attributes?: {[key: string]: BufferValue | AttributeOptions;};
+  indices?: BufferValue | GLElementArrayBuffer;
   mode?: number;
 }
 
@@ -17,8 +18,8 @@ export interface GeometryDescriptor {
 // all the attributes, which is useful for calculating normals and tangents,
 // since position data is shared between all vertices, but hard normals are
 // not.
-export interface ChannelGeometryDescriptor {
-  attributes: {[key: string]: GeometryAttribute | number[][];};
+export interface ChannelGeometryOptions {
+  attributes: {[key: string]: BufferValue | AttributeOptions;};
   indices: {[key: string]: number[];};
 }
 
