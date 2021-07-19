@@ -6,6 +6,7 @@ import {AttributeSlot} from './attribute/types';
 import {setUniforms} from './uniform/setUniforms';
 import {AttributeOptions} from './types';
 import {convertFloatArray} from './uniform/utils';
+import {GLArrayBuffer} from './GLArrayBuffer';
 
 function compileShader(
   gl: WebGLRenderingContext,
@@ -19,6 +20,41 @@ function compileShader(
     throw new Error(gl.getShaderInfoLog(shader)!);
   }
   return shader;
+}
+
+function getTypeSize(gl: WebGLRenderingContext, type: number): number {
+  switch (type) {
+    case gl.FLOAT:
+      return 1;
+    case gl.FLOAT_VEC2:
+    case gl.INT_VEC2:
+    case gl.BOOL_VEC2:
+      return 2;
+    case gl.FLOAT_VEC3:
+    case gl.INT_VEC3:
+    case gl.BOOL_VEC3:
+      return 3;
+    case gl.FLOAT_VEC4:
+    case gl.INT_VEC4:
+    case gl.BOOL_VEC4:
+      return 4;
+    case gl.FLOAT_MAT2:
+      return 4;
+    case gl.FLOAT_MAT3:
+      return 9;
+    case gl.FLOAT_MAT4:
+      return 16;
+    case gl.BOOL:
+    case gl.BYTE:
+    case gl.UNSIGNED_BYTE:
+    case gl.SHORT:
+    case gl.UNSIGNED_SHORT:
+    case gl.INT:
+    case gl.UNSIGNED_INT:
+      return 1;
+    default:
+      throw new Error('Unsupported type');
+  }
 }
 
 export class GLShader {
@@ -89,14 +125,25 @@ export class GLShader {
     setUniforms(renderer, uniforms, this.uniforms!);
   }
 
-  setAttribute(name: string, options: AttributeOptions): void {
+  setAttribute(name: string, options: AttributeOptions | GLArrayBuffer): void {
     const {renderer} = this;
     if (renderer == null) {
       throw new Error('Renderer is not bound');
     }
     this.bind(renderer);
+    const {gl} = renderer;
     const attribute = this.attributes![name];
-    renderer.attributeManager.set(attribute.location, options);
+    if (options instanceof GLArrayBuffer) {
+      renderer.attributeManager.set(attribute.location, {
+        buffer: options,
+        size: getTypeSize(gl, attribute.type),
+      });
+    } else {
+      renderer.attributeManager.set(attribute.location, {
+        ...options,
+        size: getTypeSize(gl, attribute.type),
+      });
+    }
   }
 
   setAttributeStatic(name: string, value: unknown): void {

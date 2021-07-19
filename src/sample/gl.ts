@@ -73,16 +73,8 @@ function main() {
   `);
 
   shader.bind(renderer);
-  shader.setAttribute('aPosition', {
-    buffer: quadBuffer,
-    size: 3,
-    type: 'float',
-  });
-  shader.setAttribute('aColor', {
-    buffer: colorBuffer,
-    size: 4,
-    type: 'float',
-  });
+  shader.setAttribute('aPosition', quadBuffer);
+  shader.setAttribute('aColor', colorBuffer);
   // shader.setAttributeStatic('aColor', [0, 0, 1, 1]);
 
   const uProjection = mat4.create();

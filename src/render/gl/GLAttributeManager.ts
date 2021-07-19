@@ -42,15 +42,19 @@ export class GLAttributeManager {
     const {
       buffer,
       size,
-      type = buffer.dataType,
       normalized = false,
       stride = 0,
       offset = 0,
       divisor = 0,
     } = options;
     buffer.bind(renderer);
+    const type = options.type ?? buffer.dataType;
     if (type == null) {
       throw new Error('Attribute data type must be specified');
+    }
+    if (size == null) {
+      throw new Error('Attribute size must be specified ' +
+        '(or set it through the shader)');
     }
     const attribute = attributes[index];
     if (!attribute.enabled) {

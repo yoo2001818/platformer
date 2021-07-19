@@ -27,7 +27,7 @@ export type GLAttributeType =
 
 export interface AttributeOptions {
   buffer: GLArrayBuffer;
-  size: number;
+  size?: number;
   type?: GLAttributeType;
   normalized?: boolean;
   stride?: number;
