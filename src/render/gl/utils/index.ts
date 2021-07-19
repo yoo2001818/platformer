@@ -49,4 +49,22 @@ export function inferBufferType(data: unknown): GLAttributeType {
   return 'float';
 }
 
+export const TYPE_LENGTHS: {[key in GLAttributeType]: number;} = {
+  byte: 1,
+  short: 2,
+  unsignedByte: 1,
+  unsignedShort: 2,
+  float: 4,
+};
+
+export const ATTRIBUTE_TYPE_MAP = {
+  byte: 0x1400,
+  unsignedByte: 0x1401,
+  short: 0x1402,
+  unsignedShort: 0x1403,
+  int: 0x1404,
+  unsignedInt: 0x1405,
+  float: 0x1406,
+};
+
 export * from './parseIndices';

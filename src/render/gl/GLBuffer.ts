@@ -14,7 +14,8 @@ export class GLBuffer {
   type: number;
   usage: number;
   dataType: GLAttributeType | null = null;
-  initialValue: BufferValue | null;
+  byteLength: number | null = null;
+  initialValue: ArrayBufferLike | ArrayBufferView | null;
   renderer: Renderer | null = null;
   buffer: WebGLBuffer | null = null;
 
@@ -28,6 +29,8 @@ export class GLBuffer {
     this.initialValue =
       initialValue != null ? this._flatten(initialValue) : null;
     this.dataType = inferBufferType(initialValue);
+    this.byteLength =
+      this.initialValue != null ? this.initialValue.byteLength : null;
   }
 
   _flatten(value: BufferValue): ArrayBufferLike | ArrayBufferView {
@@ -50,6 +53,8 @@ export class GLBuffer {
   set(value: BufferValue | null): void {
     this.initialValue = value != null ? this._flatten(value) : null;
     this.dataType = inferBufferType(value);
+    this.byteLength =
+      this.initialValue != null ? this.initialValue.byteLength : null;
     if (this.buffer != null && value != null) {
       this.bufferData(value);
     }
@@ -63,6 +68,7 @@ export class GLBuffer {
     this.bind(renderer);
     const {gl} = renderer;
     gl.bufferData(type, size, usage);
+    this.byteLength = size;
   }
 
   bufferData(input: BufferValue): void {
@@ -72,8 +78,10 @@ export class GLBuffer {
     }
     this.bind(renderer);
     const {gl} = renderer;
-    gl.bufferData(type, this._flatten(input), usage);
+    const flattened = this._flatten(input);
+    gl.bufferData(type, flattened, usage);
     this.dataType = inferBufferType(input);
+    this.byteLength = flattened.byteLength;
   }
 
   bufferSubData(offset: number, input: BufferValue): void {

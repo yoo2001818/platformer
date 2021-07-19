@@ -1,20 +1,11 @@
 import {Renderer} from './Renderer';
 import {AttributeOptions} from './types';
+import {ATTRIBUTE_TYPE_MAP} from './utils';
 
 interface AttributeData {
   enabled: boolean;
   divisor: number;
 }
-
-const ATTRIBUTE_TYPE_MAP = {
-  byte: 0x1400,
-  unsignedByte: 0x1401,
-  short: 0x1402,
-  unsignedShort: 0x1403,
-  int: 0x1404,
-  unsignedInt: 0x1405,
-  float: 0x1406,
-};
 
 export class GLAttributeManager {
   renderer: Renderer;

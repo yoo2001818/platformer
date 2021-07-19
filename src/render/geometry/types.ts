@@ -13,7 +13,7 @@ export interface GeometryOptions {
   indices?: BufferValue | GLElementArrayBuffer;
   mode?: number;
   size?: number;
-  offset?: number;
+  count?: number;
 }
 
 // ChannelGeometry allows to specify separate indices for each attribute.

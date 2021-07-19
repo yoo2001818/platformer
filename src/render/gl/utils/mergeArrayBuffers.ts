@@ -11,11 +11,19 @@ export function mergeArrayBuffers(
   input.forEach((array) => {
     if (array instanceof ArrayBuffer) {
       new Uint8Array(output).set(new Uint8Array(array), offset);
-    } else if (array instanceof SharedArrayBuffer) {
+    } else if (
+      typeof SharedArrayBuffer !== 'undefined' &&
+      array instanceof SharedArrayBuffer
+    ) {
       new Uint8Array(output).set(new Uint8Array(array), offset);
     } else {
+      const arrayArray = array as Uint8Array;
       new Uint8Array(output).set(
-        new Uint8Array(array.buffer, array.byteOffset, array.byteLength),
+        new Uint8Array(
+          arrayArray.buffer,
+          arrayArray.byteOffset,
+          arrayArray.byteLength,
+        ),
         offset,
       );
     }
