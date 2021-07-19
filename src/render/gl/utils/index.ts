@@ -1,8 +1,6 @@
-import {ArrayBufferView, GLAttributeType} from './types';
+import {BufferValue, GLAttributeType} from '../types';
 
-export function flattenBuffer<
-  T extends ArrayBufferView | ArrayBufferLike | number[] | number[][]
->(
+export function flattenBuffer<T extends BufferValue>(
   data: T,
 ): T extends number[] | number[][] ? Float32Array : T {
   if (Array.isArray(data)) {
@@ -22,8 +20,11 @@ export function flattenBuffer<
   return data as any;
 }
 
-export function inferBufferType(data: unknown): GLAttributeType | null {
+export function inferBufferType(data: unknown): GLAttributeType {
   if (Array.isArray(data)) {
+    return 'float';
+  }
+  if (data instanceof Float64Array) {
     return 'float';
   }
   if (data instanceof Float32Array) {
@@ -47,3 +48,5 @@ export function inferBufferType(data: unknown): GLAttributeType | null {
   // Assume float
   return 'float';
 }
+
+export * from './parseIndices';

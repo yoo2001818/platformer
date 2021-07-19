@@ -1,16 +1,19 @@
 import {GLElementArrayBuffer} from '../gl/GLElementArrayBuffer';
+import {GLArrayBuffer} from '../gl/GLArrayBuffer';
 import {AttributeOptions, BufferValue} from '../gl/types';
 
 export interface StaticGeometryOptions {
-  attributes?: {[key: string]: BufferValue;};
+  attributes: {[key: string]: BufferValue;};
   indices?: BufferValue;
   mode?: number;
 }
 
 export interface GeometryOptions {
-  attributes?: {[key: string]: BufferValue | AttributeOptions;};
+  attributes: {[key: string]: BufferValue | GLArrayBuffer | AttributeOptions;};
   indices?: BufferValue | GLElementArrayBuffer;
   mode?: number;
+  size?: number;
+  offset?: number;
 }
 
 // ChannelGeometry allows to specify separate indices for each attribute.

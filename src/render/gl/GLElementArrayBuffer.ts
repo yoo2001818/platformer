@@ -1,6 +1,7 @@
 import {GLBuffer, UsageType} from './GLBuffer';
 import type {Renderer} from './Renderer';
-import {BufferValue} from './types';
+import {ArrayBufferView, BufferValue} from './types';
+import {parseIndices} from './utils';
 
 const ELEMENT_ARRAY_BUFFER = 0x8893;
 
@@ -10,6 +11,10 @@ export class GLElementArrayBuffer extends GLBuffer {
     usage: UsageType = 'static',
   ) {
     super(ELEMENT_ARRAY_BUFFER, initialValue, usage);
+  }
+
+  _flatten(value: BufferValue): ArrayBufferLike | ArrayBufferView {
+    return parseIndices(value);
   }
 
   bind(renderer: Renderer): void {

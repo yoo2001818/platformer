@@ -14,7 +14,7 @@ export class GLBuffer {
   type: number;
   usage: number;
   dataType: GLAttributeType | null = null;
-  initialValue: ArrayBufferView | ArrayBufferLike | null;
+  initialValue: BufferValue | null;
   renderer: Renderer | null = null;
   buffer: WebGLBuffer | null = null;
 
@@ -26,7 +26,12 @@ export class GLBuffer {
     this.type = type;
     this.usage = USAGE_MAP[usage];
     this.initialValue =
-      initialValue != null ? flattenBuffer(initialValue) : null;
+      initialValue != null ? this._flatten(initialValue) : null;
+    this.dataType = inferBufferType(initialValue);
+  }
+
+  _flatten(value: BufferValue): ArrayBufferLike | ArrayBufferView {
+    return flattenBuffer(value);
   }
 
   bind(renderer: Renderer): void {
@@ -39,6 +44,14 @@ export class GLBuffer {
       renderer.gl.deleteBuffer(buffer);
       this.buffer = null;
       this.renderer = null;
+    }
+  }
+
+  set(value: BufferValue | null): void {
+    this.initialValue = value != null ? this._flatten(value) : null;
+    this.dataType = inferBufferType(value);
+    if (this.buffer != null && value != null) {
+      this.bufferData(value);
     }
   }
 
@@ -59,7 +72,7 @@ export class GLBuffer {
     }
     this.bind(renderer);
     const {gl} = renderer;
-    gl.bufferData(type, flattenBuffer(input), usage);
+    gl.bufferData(type, this._flatten(input), usage);
     this.dataType = inferBufferType(input);
   }
 
@@ -70,7 +83,7 @@ export class GLBuffer {
     }
     this.bind(renderer);
     const {gl} = renderer;
-    gl.bufferSubData(type, offset, flattenBuffer(input));
+    gl.bufferSubData(type, offset, this._flatten(input));
     if (this.dataType == null) {
       this.dataType = inferBufferType(input);
     }
