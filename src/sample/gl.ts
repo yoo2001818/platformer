@@ -73,10 +73,7 @@ function main() {
     ],
   });
 
-  let time = 0;
-
   function update(delta: number): void {
-    time += delta;
     shader.bind(renderer);
     geometry.bind(renderer, shader);
     // shader.setAttributeStatic('aColor', [0, 0, 1, 1]);

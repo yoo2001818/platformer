@@ -1,24 +1,3 @@
-import {GeometryAttribute} from '../types';
-
-export function parseAttribute(
-  input: GeometryAttribute | number[][],
-): GeometryAttribute {
-  if (Array.isArray(input)) {
-    // Get vector axis size and attribute size
-    const axis = input[0].length;
-    const output = new Float32Array(axis * input.length);
-    let ptr = 0;
-    input.forEach((vec) => {
-      for (let i = 0; i < axis; i += 1) {
-        output[ptr] = vec[i];
-        ptr += 1;
-      }
-    });
-    return {axis, data: output};
-  }
-  return input;
-}
-
 export function flattenBuffer(
   data: number[] | number[][] | Float32Array,
 ): Float32Array {
