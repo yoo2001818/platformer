@@ -17,7 +17,7 @@ export class GLVertexArray {
       this.vao = renderer.vaoExt.createVertexArrayOES();
     }
     if (renderer.boundVertexArray !== this) {
-      renderer.vaoExt.bindVertexArrayOES(vao);
+      renderer.vaoExt.bindVertexArrayOES(this.vao);
       renderer.boundVertexArray = this;
     }
   }

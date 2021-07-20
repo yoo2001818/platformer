@@ -2,6 +2,7 @@ import {mat4} from 'gl-matrix';
 
 import {GLGeometry} from '../render/gl/GLGeometry';
 import {GLShader} from '../render/gl/GLShader';
+import {GLVertexArray} from '../render/gl/GLVertexArray';
 import {Renderer} from '../render/gl/Renderer';
 
 function main() {
@@ -73,10 +74,14 @@ function main() {
     ],
   });
 
+  const vao = new GLVertexArray();
+  vao.bind(renderer);
+  shader.bind(renderer);
+  geometry.bind(renderer, shader);
+  // shader.setAttributeStatic('aColor', [0, 0, 1, 1]);
+
   function update(delta: number): void {
-    shader.bind(renderer);
-    geometry.bind(renderer, shader);
-    // shader.setAttributeStatic('aColor', [0, 0, 1, 1]);
+    vao.bind(renderer);
 
     const uProjection = mat4.create();
     mat4.perspective(
