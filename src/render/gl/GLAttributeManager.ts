@@ -10,10 +10,12 @@ interface AttributeData {
 export class GLAttributeManager {
   renderer: Renderer;
   attributes: AttributeData[];
+  standardAttributes: string[];
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
     this.attributes = [];
+    this.standardAttributes = [];
     this.init();
   }
 
@@ -25,6 +27,10 @@ export class GLAttributeManager {
     for (let i = 0; i < numAttributes; i += 1) {
       this.attributes[i] = {enabled: false, divisor: 0};
     }
+  }
+
+  setStandardAttributes(names: string[]): void {
+    this.standardAttributes = names;
   }
 
   set(index: number, options: AttributeOptions): void {

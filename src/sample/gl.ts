@@ -104,7 +104,6 @@ function main() {
     });
 
     gl!.enable(gl!.CULL_FACE);
-    gl!.cullFace(gl!.FRONT);
     geometry.draw();
     requestAnimationFrame(update);
   }

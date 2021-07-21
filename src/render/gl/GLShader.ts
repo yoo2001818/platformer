@@ -82,6 +82,11 @@ export class GLShader {
       this.vertShader = compileShader(gl, gl.VERTEX_SHADER, this.vertCode);
       this.fragShader = compileShader(gl, gl.FRAGMENT_SHADER, this.fragCode);
       const program = gl.createProgram()!;
+      // Bind standard attributes
+      renderer.attributeManager.standardAttributes.forEach((name, index) => {
+        gl.bindAttribLocation(program, index, name);
+      });
+      // Attach shaders
       gl.attachShader(program, this.vertShader);
       gl.attachShader(program, this.fragShader);
       gl.linkProgram(program);
