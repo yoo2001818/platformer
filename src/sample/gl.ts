@@ -70,7 +70,7 @@ function main() {
       // | / |
       // +---+
       0, 1, 2,
-      3, 2, 0,
+      3, 0, 2,
     ],
   });
 
@@ -103,7 +103,8 @@ function main() {
       uModel,
     });
 
-    gl!.cullFace(gl!.FRONT_AND_BACK);
+    gl!.enable(gl!.CULL_FACE);
+    gl!.cullFace(gl!.FRONT);
     geometry.draw();
     requestAnimationFrame(update);
   }
