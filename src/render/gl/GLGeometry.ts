@@ -1,4 +1,4 @@
-import {GeometryAttribute} from '../geometry/types';
+import {GeometryAttribute} from '../../geom/types';
 
 import {GLArrayBuffer} from './GLArrayBuffer';
 import {GLBuffer} from './GLBuffer';
