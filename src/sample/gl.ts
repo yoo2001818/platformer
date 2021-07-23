@@ -12,6 +12,7 @@ import {Renderer} from '../render/gl/Renderer';
 
 // import monkey from './monkey.obj';
 import logo from './logo.png';
+import { GLArrayBuffer } from '../render/gl/GLArrayBuffer';
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -36,6 +37,7 @@ function main() {
 
     attribute vec3 aPosition;
     attribute vec2 aTexCoord;
+    attribute vec3 aInstanced;
 
     uniform mat4 uView;
     uniform mat4 uProjection;
@@ -44,7 +46,7 @@ function main() {
     varying vec2 vTexCoord;
 
     void main() {
-      gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
+      gl_Position = uProjection * uView * uModel * vec4(aPosition + aInstanced, 1.0);
       vTexCoord = aTexCoord;
     }
   `, `
@@ -63,15 +65,25 @@ function main() {
   const geometry = new GLGeometry(calcNormals(box()));
   // const geometry = new GLGeometry(calcNormals(bakeChannelGeom(parseObj(monkey)[0].geometry)));
 
+  const instanceVbo = new GLArrayBuffer(Array.from({length: 100}, () => [
+    Math.random() * 20 - 10,
+    Math.random() * 20 - 10,
+    Math.random() * 20 - 10,
+  ]));
+
   const vao = new GLVertexArray();
   vao.bind(renderer);
   shader.bind(renderer);
   geometry.bind(renderer, shader);
+  shader.setAttribute('aInstanced', {buffer: instanceVbo, divisor: 1});
   // shader.setAttributeStatic('aColor', [0, 0, 1, 1]);
 
   const image = new Image();
   image.src = logo;
   const texture = new GLTexture({source: image});
+
+  gl!.enable(gl!.CULL_FACE);
+  gl!.enable(gl!.DEPTH_TEST);
 
   function update(delta: number): void {
     vao.bind(renderer);
@@ -85,21 +97,22 @@ function main() {
       1000,
     );
 
+    const uView = mat4.create();
+    mat4.translate(uView, uView, [0, 0, -20]);
+
     const uModel = mat4.create();
     mat4.translate(uModel, uModel, [0, 0, -5]);
-    mat4.rotateX(uModel, uModel, Math.PI * delta / 1200);
-    mat4.rotateY(uModel, uModel, Math.PI * delta / 1300);
+    mat4.rotateX(uModel, uModel, Math.PI * delta / 2000);
+    mat4.rotateY(uModel, uModel, Math.PI * delta / 3000);
 
     shader.setUniforms({
       uProjection,
-      uView: mat4.create(),
+      uView,
       uModel,
       uTexture: texture,
     });
 
-    gl!.enable(gl!.CULL_FACE);
-    gl!.enable(gl!.DEPTH_TEST);
-    geometry.draw();
+    geometry.drawInstanced(100);
     requestAnimationFrame(update);
   }
 

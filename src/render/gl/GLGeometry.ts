@@ -151,4 +151,32 @@ export class GLGeometry {
       );
     }
   }
+
+  drawInstanced(primCount: number): void {
+    const {options, renderer} = this;
+    if (renderer == null) {
+      throw new Error('GLGeometry is not bound');
+    }
+    const {instanceExt} = renderer;
+    const {indices, mode, offset, count} = options;
+    if (instanceExt == null) {
+      throw new Error('instancing extension is required');
+    }
+    if (indices != null) {
+      instanceExt.drawElementsInstancedANGLE(
+        mode,
+        count,
+        ATTRIBUTE_TYPE_MAP[indices.dataType!],
+        offset,
+        primCount,
+      );
+    } else {
+      instanceExt.drawArraysInstancedANGLE(
+        mode,
+        offset,
+        count,
+        primCount,
+      );
+    }
+  }
 }
