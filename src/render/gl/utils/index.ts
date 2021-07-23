@@ -65,6 +65,30 @@ export const ATTRIBUTE_TYPE_MAP = {
   int: 0x1404,
   unsignedInt: 0x1405,
   float: 0x1406,
+  unsignedShort4444: 0x8033,
+  unsignedShort5551: 0x8034,
+  unsignedShort565: 0x8363,
+};
+
+export const TEXTURE_FORMAT_MAP = {
+  rgba: 0x1908,
+  rgb: 0x1907,
+  luminanceAlpha: 0x190A,
+  luminance: 0x1909,
+  alpha: 0x1906,
+  depth: 0x1902,
+};
+
+export const TEXTURE_PARAM_MAP = {
+  nearest: 0x2600,
+  linear: 0x2601,
+  nearestMipmapNearest: 0x2700,
+  linearMipmapNearest: 0x2701,
+  nearestMipmapLinear: 0x2702,
+  linearMipmapLinear: 0x2703,
+  repeat: 0x2901,
+  clampToEdge: 0x812F,
+  mirroredRepeat: 0x8370,
 };
 
 export * from './parseIndices';

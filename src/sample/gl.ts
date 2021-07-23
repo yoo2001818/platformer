@@ -7,9 +7,11 @@ import {box} from '../geom/box';
 import {GLGeometry} from '../render/gl/GLGeometry';
 import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
+import {GLTexture} from '../render/gl/GLTexture';
 import {Renderer} from '../render/gl/Renderer';
 
 // import monkey from './monkey.obj';
+import logo from './logo.png';
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -33,26 +35,28 @@ function main() {
     precision lowp float;
 
     attribute vec3 aPosition;
-    attribute vec3 aNormal;
+    attribute vec2 aTexCoord;
 
     uniform mat4 uView;
     uniform mat4 uProjection;
     uniform mat4 uModel;
 
-    varying vec4 vColor;
+    varying vec2 vTexCoord;
 
     void main() {
       gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
-      vColor = vec4(aNormal.xyz * 0.5 + 0.5, 1.0);
+      vTexCoord = aTexCoord;
     }
   `, `
     #version 100
     precision lowp float;
 
-    varying vec4 vColor;
+    varying vec2 vTexCoord;
+
+    uniform sampler2D uTexture;
 
     void main() {
-      gl_FragColor = vColor;
+      gl_FragColor = vec4(texture2D(uTexture, vTexCoord).rgb, 1.0);
     }
   `);
 
@@ -64,6 +68,10 @@ function main() {
   shader.bind(renderer);
   geometry.bind(renderer, shader);
   // shader.setAttributeStatic('aColor', [0, 0, 1, 1]);
+
+  const image = new Image();
+  image.src = logo;
+  const texture = new GLTexture({source: image});
 
   function update(delta: number): void {
     vao.bind(renderer);
@@ -86,6 +94,7 @@ function main() {
       uProjection,
       uView: mat4.create(),
       uModel,
+      uTexture: texture,
     });
 
     gl!.enable(gl!.CULL_FACE);

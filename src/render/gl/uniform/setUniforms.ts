@@ -1,4 +1,5 @@
 import type {Renderer} from '../Renderer';
+import {GLTexture} from '../GLTexture';
 
 import {UniformEntry} from './types';
 import {
@@ -77,7 +78,10 @@ export function setUniforms(
       case gl.SAMPLER_CUBE: {
         // Try to find the entity with given ID - however, if the texture
         // is missing, we need to use "placeholder" texture.
-        // TODO Sampler binding
+        if (value instanceof GLTexture) {
+          const samplerId = renderer.textureManager.bind(value);
+          gl.uniform1i(entry.location, samplerId);
+        }
         break;
       }
       default:

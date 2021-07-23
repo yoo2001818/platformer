@@ -27,6 +27,7 @@
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-sort-class-members": "^1.11.0",
+    "file-loader": "^6.2.0",
     "gl-matrix": "^3.3.0",
     "html-webpack-plugin": "^5.3.1",
     "jest": "^27.0.4",

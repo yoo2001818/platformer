@@ -4964,6 +4964,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"file-loader@npm:^6.2.0":
+  version: 6.2.0
+  resolution: "file-loader@npm:6.2.0"
+  dependencies:
+    loader-utils: ^2.0.0
+    schema-utils: ^3.0.0
+  peerDependencies:
+    webpack: ^4.0.0 || ^5.0.0
+  checksum: 0f103418c072ec66c081a9908cd7824ee19905e18be16889cb050f5f373998afaf7ca4c2fd2df4cabf703a2cd526aefe59105930e3f8d266a5b35e6d5f5b3cf4
+  languageName: node
+  linkType: hard
+
 "file-uri-to-path@npm:1.0.0":
   version: 1.0.0
   resolution: "file-uri-to-path@npm:1.0.0"
@@ -8945,6 +8957,7 @@ fsevents@^2.3.2:
     eslint-plugin-import: ^2.23.4
     eslint-plugin-promise: ^5.1.0
     eslint-plugin-sort-class-members: ^1.11.0
+    file-loader: ^6.2.0
     gl-matrix: ^3.3.0
     html-webpack-plugin: ^5.3.1
     jest: ^27.0.4
