@@ -1,11 +1,14 @@
 import {mat4} from 'gl-matrix';
 
-import {box} from '../geom/box';
 import {calcNormals} from '../geom/calcNormals';
+import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
+import {parseObj} from '../geom/loader/obj';
 import {GLGeometry} from '../render/gl/GLGeometry';
 import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
 import {Renderer} from '../render/gl/Renderer';
+
+import monkey from './monkey.obj';
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -52,7 +55,8 @@ function main() {
     }
   `);
 
-  const geometry = new GLGeometry(calcNormals(box()));
+  // const geometry = new GLGeometry(calcNormals(box()));
+  const geometry = new GLGeometry(calcNormals(bakeChannelGeom(parseObj(monkey)[0].geometry)));
 
   const vao = new GLVertexArray();
   vao.bind(renderer);
@@ -74,8 +78,8 @@ function main() {
 
     const uModel = mat4.create();
     mat4.translate(uModel, uModel, [0, 0, -5]);
-    mat4.rotateX(uModel, uModel, Math.PI * delta / 700);
-    mat4.rotateY(uModel, uModel, Math.PI * delta / 800);
+    mat4.rotateX(uModel, uModel, Math.PI * delta / 1200);
+    mat4.rotateY(uModel, uModel, Math.PI * delta / 1300);
 
     shader.setUniforms({
       uProjection,
@@ -84,6 +88,7 @@ function main() {
     });
 
     gl!.enable(gl!.CULL_FACE);
+    gl!.enable(gl!.DEPTH_TEST);
     geometry.draw();
     requestAnimationFrame(update);
   }

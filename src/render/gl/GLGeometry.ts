@@ -96,14 +96,14 @@ export class GLGeometry {
         if (options.indices instanceof GLElementArrayBuffer) {
           if (options.indices.byteLength != null) {
             // TODO: this means triangles / byte
-            inferredSize = options.indices.byteLength;
+            inferredSize = options.indices.byteLength / 2;
           }
           return options.indices;
         }
         const output = new GLElementArrayBuffer(options.indices);
         if (output.byteLength != null) {
           // TODO: this means triangles / byte
-          inferredSize = output.byteLength;
+          inferredSize = output.byteLength / 2;
         }
         return output;
       })(),
@@ -111,6 +111,7 @@ export class GLGeometry {
       offset: options.count ?? 0,
       count: options.size ?? inferredSize,
     };
+    console.log(this.options);
     buffer.set(mergeArrayBuffers(bufferInserts));
   }
 

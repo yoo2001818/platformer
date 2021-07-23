@@ -8950,6 +8950,7 @@ fsevents@^2.3.2:
     jest: ^27.0.4
     jest-pnp-resolver: ^1.2.2
     pnp-webpack-plugin: ^1.6.4
+    raw-loader: ^4.0.2
     style-loader: ^2.0.0
     ts-jest: ^27.0.3
     ts-loader: ^9.2.3
@@ -9335,6 +9336,18 @@ fsevents@^2.3.2:
     iconv-lite: 0.4.24
     unpipe: 1.0.0
   checksum: 46dc02f8b4f358786d41e18fb55533fbe4702d390e22bbe2b9c98c88dec41cab23ea2315f3ae0bf4bc0213a2872c89943d3df6857f4e21f996ea9d2d92f1bcaa
+  languageName: node
+  linkType: hard
+
+"raw-loader@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "raw-loader@npm:4.0.2"
+  dependencies:
+    loader-utils: ^2.0.0
+    schema-utils: ^3.0.0
+  peerDependencies:
+    webpack: ^4.0.0 || ^5.0.0
+  checksum: 1a08968df5bf185923102de589dc28da6c9953f87059c80de3cbfdfb47bc15907f23f5e21048f03af2842df01d0dde2630826697c783c4c9683ea71f04f4538d
   languageName: node
   linkType: hard
 

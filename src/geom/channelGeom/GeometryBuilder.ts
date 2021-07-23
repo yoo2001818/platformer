@@ -1,11 +1,10 @@
-import { flattenBufferToArray, parseAttribute } from './utils/parseAttribute';
-import { GeometryAttribute, GeometryDescriptor } from './types';
+import {GeometryAttribute, GeometryOptions} from '../types';
 
-// TODO: Move this to somewhere else...
+import {ChannelGeometryOptions} from './types';
 
-export interface GeometryBuilderAttribute {
-  axis: number,
-  data: number[],
+interface GeometryBuilderAttribute {
+  data: number[];
+  size: number;
 }
 
 export class GeometryBuilder {
@@ -48,22 +47,24 @@ export class GeometryBuilder {
     this.faces = [];
   }
 
-  fromGeometry(geometry: GeometryDescriptor): void {
+  fromGeometry(geometry: GeometryOptions): void {
     // Parse each attribute and dump its data
     this.clear();
-    let attributeSize: number = 0;
+    let attributeSize = 0;
     Object.keys(geometry.attributes).forEach((name) => {
-      const attribute = parseAttribute(geometry.attributes[name]);
+      const attribute = geometry.attributes[name];
       const index = this.attributes.length;
       this.attributeNames[index] = name;
       // Convert data into attributes 3D array
-      const buffer = flattenBufferToArray(attribute.data);
-      this.attributes.push({ axis: attribute.axis, data: buffer });
-      attributeSize = attribute.data.length / attribute.axis;
+      this.attributes.push({
+        data: Array.from(attribute.data),
+        size: attribute.size,
+      });
+      attributeSize = attribute.data.length / attribute.size;
     });
     // Then, insert the indices
     if (geometry.indices != null) {
-      const { indices } = geometry;
+      const {indices} = geometry;
       const faces: number[][][] = [];
       const numAttributes = this.attributes.length;
       for (let i = 0; i < indices.length; i += 3) {
@@ -97,7 +98,7 @@ export class GeometryBuilder {
     }
   }
 
-  toGeometry(): GeometryDescriptor {
+  toGeometry(): GeometryOptions {
     // Convert separated attributes / indices into one.
     // Basically, a new attribute has to be written for each attribute pair.
     const outputAttributes: number[][] = this.attributes.map(() => []);
@@ -107,7 +108,7 @@ export class GeometryBuilder {
     // will almost never overlap, Maintaining linked list inside each
     // attribute would be much, much better.
     const attributeCache: [number, number][][] = [];
-    const attributeLengths = this.attributes.map((v) => v.data.length / v.axis);
+    const attributeLengths = this.attributes.map((v) => v.data.length / v.size);
     this.faces.forEach((face) => {
       // Unwrap the face; map each pair to indices value
       const points = face.map((indices) => {
@@ -122,15 +123,17 @@ export class GeometryBuilder {
         }
         // Try to find matching value, if any
         const pair = cacheEntry.find((v) => v[0] === indexKey);
-        if (pair != null) return pair[1];
+        if (pair != null) {
+          return pair[1];
+        }
         // Otherwise, register the attribute
         const currentOffset = offset;
         this.attributes.forEach((attribute, i) => {
           const attributeOutput = outputAttributes[i];
-          const { data, axis } = attribute;
-          const outputOffset = currentOffset * axis;
-          const inputOffset = indices[i] * axis;
-          for (let j = 0; j < axis; j += 1) {
+          const {data, size} = attribute;
+          const outputOffset = currentOffset * size;
+          const inputOffset = indices[i] * size;
+          for (let j = 0; j < size; j += 1) {
             attributeOutput[outputOffset + j] = data[inputOffset + j];
           }
         });
@@ -146,12 +149,12 @@ export class GeometryBuilder {
       }
     });
     // Finally, generate geometry descriptor from this
-    const attributesMap: { [key: string]: GeometryAttribute } = {};
+    const attributesMap: {[key: string]: GeometryAttribute;} = {};
     this.attributes.forEach((attribute, i) => {
       const name = this.attributeNames[i];
       attributesMap[name] = {
         data: outputAttributes[i],
-        axis: attribute.axis,
+        size: attribute.size,
       };
     });
     return {
@@ -160,22 +163,37 @@ export class GeometryBuilder {
     };
   }
 
-  getAttribute(name: string): GeometryBuilderAttribute | null {
+  toChannelGeometry(): ChannelGeometryOptions {
+    const attributesMap: {[key: string]: GeometryAttribute;} = {};
+    this.attributes.forEach((attribute, i) => {
+      const name = this.attributeNames[i];
+      attributesMap[name] = attribute;
+    });
+    return {
+      attributes: attributesMap,
+      indices: this.faces,
+    };
+  }
+
+  getAttribute(name: string): GeometryAttribute | null {
     const index = this.attributeNames.indexOf(name);
-    if (index === -1) return null;
+    if (index === -1) {
+      return null;
+    }
     return this.attributes[index];
   }
 
-  clearAttributes(names: string[], axises: number[]): void {
+  clearAttributes(names: string[], sizes: number[]): void {
     this.attributeNames = names;
-    this.attributes = axises.map((v) => ({
+    this.attributes = sizes.map((v) => ({
       data: [],
-      axis: v,
+      size: v,
     }));
   }
 
   addAttribute(index: number, value: number[]): void {
     const attribute = this.attributes[index];
+    // eslint-disable-next-line @typescript-eslint/prefer-for-of
     for (let i = 0; i < value.length; i += 1) {
       attribute.data.push(value[i]);
     }
@@ -183,6 +201,10 @@ export class GeometryBuilder {
 
   addFace(vertexes: number[][]): void {
     this.faces.push(vertexes);
+  }
+
+  setFaces(faces: number[][][]): void {
+    this.faces = faces;
   }
 
   clearFaces(): void {
