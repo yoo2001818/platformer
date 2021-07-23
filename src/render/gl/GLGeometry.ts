@@ -1,11 +1,11 @@
-import {GeometryOptions, TRIANGLES} from '../geometry/types';
+import {GeometryAttribute} from '../geometry/types';
 
 import {GLArrayBuffer} from './GLArrayBuffer';
 import {GLBuffer} from './GLBuffer';
 import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLShader} from './GLShader';
 import {Renderer} from './Renderer';
-import {ArrayBufferView, AttributeOptions} from './types';
+import {ArrayBufferView, AttributeOptions, BufferValue} from './types';
 import {ATTRIBUTE_TYPE_MAP, flattenBuffer, inferBufferType} from './utils';
 import {mergeArrayBuffers} from './utils/mergeArrayBuffers';
 
@@ -22,6 +22,20 @@ function mapObject<TInput extends {[key: string]: unknown;}, TOutput>(
   return output;
 }
 
+export interface GLGeometryOptions {
+  attributes: {
+    [key: string]:
+      | BufferValue
+      | GLArrayBuffer
+      | AttributeOptions
+      | GeometryAttribute;
+  };
+  indices?: BufferValue | GLElementArrayBuffer;
+  mode?: number;
+  size?: number;
+  count?: number;
+}
+
 interface BakedGeometryOptions {
   attributes: {[key: string]: AttributeOptions;};
   indices?: GLElementArrayBuffer;
@@ -30,16 +44,18 @@ interface BakedGeometryOptions {
   offset: number;
 }
 
+const TRIANGLES = 4;
+
 export class GLGeometry {
   options!: BakedGeometryOptions;
   managedBuffers: GLBuffer[] = [];
   renderer: Renderer | null = null;
 
-  constructor(options: GeometryOptions) {
+  constructor(options: GLGeometryOptions) {
     this.set(options);
   }
 
-  set(options: GeometryOptions): void {
+  set(options: GLGeometryOptions): void {
     // Try to extract all "value" types, and store them into GLBuffer.
     const buffer = new GLArrayBuffer();
     const bufferInserts: (ArrayBufferLike | ArrayBufferView)[] = [];
@@ -53,9 +69,15 @@ export class GLGeometry {
         if ('buffer' in value) {
           return value as AttributeOptions;
         }
+        let dataArr;
+        if ('data' in value) {
+          dataArr = value.data;
+        } else {
+          dataArr = value;
+        }
         // Flatten the array..
-        const array = flattenBuffer(value);
-        const type = inferBufferType(value);
+        const array = flattenBuffer(dataArr);
+        const type = inferBufferType(dataArr);
         // We have to create ArrayBuffer from it
         const offset = bufferPos;
         bufferInserts.push(array);
