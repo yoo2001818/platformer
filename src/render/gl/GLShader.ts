@@ -138,6 +138,9 @@ export class GLShader {
     this.bind(renderer);
     const {gl} = renderer;
     const attribute = this.attributes![name];
+    if (attribute == null) {
+      return;
+    }
     if (options instanceof GLArrayBuffer) {
       renderer.attributeManager.set(attribute.location, {
         buffer: options,

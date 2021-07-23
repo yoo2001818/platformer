@@ -1,5 +1,7 @@
 import {mat4} from 'gl-matrix';
 
+import {box} from '../geom/box';
+import {calcNormals} from '../geom/calcNormals';
 import {GLGeometry} from '../render/gl/GLGeometry';
 import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
@@ -27,7 +29,7 @@ function main() {
     precision lowp float;
 
     attribute vec3 aPosition;
-    attribute vec4 aColor;
+    attribute vec3 aNormal;
 
     uniform mat4 uView;
     uniform mat4 uProjection;
@@ -37,7 +39,7 @@ function main() {
 
     void main() {
       gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
-      vColor = aColor;
+      vColor = vec4(aNormal.xyz * 0.5 + 0.5, 1.0);
     }
   `, `
     #version 100
@@ -50,29 +52,7 @@ function main() {
     }
   `);
 
-  const geometry = new GLGeometry({
-    attributes: {
-      aPosition: [
-        -1, -1, 0,
-        1, -1, 0,
-        1, 1, 0,
-        -1, 1, 0,
-      ],
-      aColor: [
-        1, 0, 0, 1,
-        1, 1, 0, 1,
-        0, 1, 1, 1,
-        1, 0, 1, 1,
-      ],
-    },
-    indices: [
-      // +---+
-      // | / |
-      // +---+
-      0, 1, 2,
-      3, 0, 2,
-    ],
-  });
+  const geometry = new GLGeometry(calcNormals(box()));
 
   const vao = new GLVertexArray();
   vao.bind(renderer);
