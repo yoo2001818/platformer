@@ -162,7 +162,6 @@ export class GLShader {
     this.bind(renderer);
     const {gl} = renderer;
     const attribute = this.attributes![name];
-    console.log(attribute);
     let output: Float32Array;
     switch (attribute.type) {
       case gl.FLOAT:

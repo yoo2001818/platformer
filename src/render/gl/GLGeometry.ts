@@ -109,7 +109,6 @@ export class GLGeometry {
       offset: options.count ?? 0,
       count: options.size ?? inferredSize,
     };
-    console.log(this.options);
     buffer.set(mergeArrayBuffers(bufferInserts));
   }
 
