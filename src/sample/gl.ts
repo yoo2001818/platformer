@@ -1,14 +1,15 @@
 import {mat4} from 'gl-matrix';
 
 import {calcNormals} from '../geom/calcNormals';
-import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
-import {parseObj} from '../geom/loader/obj';
+import {box} from '../geom/box';
+// import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
+// import {parseObj} from '../geom/loader/obj';
 import {GLGeometry} from '../render/gl/GLGeometry';
 import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
 import {Renderer} from '../render/gl/Renderer';
 
-import monkey from './monkey.obj';
+// import monkey from './monkey.obj';
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -55,8 +56,8 @@ function main() {
     }
   `);
 
-  // const geometry = new GLGeometry(calcNormals(box()));
-  const geometry = new GLGeometry(calcNormals(bakeChannelGeom(parseObj(monkey)[0].geometry)));
+  const geometry = new GLGeometry(calcNormals(box()));
+  // const geometry = new GLGeometry(calcNormals(bakeChannelGeom(parseObj(monkey)[0].geometry)));
 
   const vao = new GLVertexArray();
   vao.bind(renderer);

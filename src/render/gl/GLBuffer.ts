@@ -1,6 +1,6 @@
 import type {Renderer} from './Renderer';
 import {ArrayBufferView, BufferValue, GLAttributeType} from './types';
-import {flattenBuffer, inferBufferType} from './utils';
+import {flattenBuffer, inferBufferType, TYPE_LENGTHS} from './utils';
 
 const USAGE_MAP = {
   static: 0x88E4,
@@ -28,9 +28,16 @@ export class GLBuffer {
     this.usage = USAGE_MAP[usage];
     this.initialValue =
       initialValue != null ? this._flatten(initialValue) : null;
-    this.dataType = inferBufferType(initialValue);
+    this.dataType = inferBufferType(this.initialValue);
     this.byteLength =
       this.initialValue != null ? this.initialValue.byteLength : null;
+  }
+
+  get length(): number {
+    if (this.byteLength == null || this.dataType == null) {
+      return 0;
+    }
+    return this.byteLength / TYPE_LENGTHS[this.dataType];
   }
 
   _flatten(value: BufferValue): ArrayBufferLike | ArrayBufferView {
@@ -52,7 +59,7 @@ export class GLBuffer {
 
   set(value: BufferValue | null): void {
     this.initialValue = value != null ? this._flatten(value) : null;
-    this.dataType = inferBufferType(value);
+    this.dataType = inferBufferType(this.initialValue);
     this.byteLength =
       this.initialValue != null ? this.initialValue.byteLength : null;
     if (this.buffer != null && value != null) {
@@ -80,7 +87,7 @@ export class GLBuffer {
     const {gl} = renderer;
     const flattened = this._flatten(input);
     gl.bufferData(type, flattened, usage);
-    this.dataType = inferBufferType(input);
+    this.dataType = inferBufferType(flattened);
     this.byteLength = flattened.byteLength;
   }
 
@@ -91,9 +98,10 @@ export class GLBuffer {
     }
     this.bind(renderer);
     const {gl} = renderer;
-    gl.bufferSubData(type, offset, this._flatten(input));
+    const flattened = this._flatten(input);
+    gl.bufferSubData(type, offset, flattened);
     if (this.dataType == null) {
-      this.dataType = inferBufferType(input);
+      this.dataType = inferBufferType(flattened);
     }
   }
 }

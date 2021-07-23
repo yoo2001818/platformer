@@ -6,7 +6,7 @@ import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLShader} from './GLShader';
 import {Renderer} from './Renderer';
 import {ArrayBufferView, AttributeOptions, BufferValue} from './types';
-import {ATTRIBUTE_TYPE_MAP, flattenBuffer, inferBufferType} from './utils';
+import {ATTRIBUTE_TYPE_MAP, flattenBuffer, inferBufferType, TYPE_LENGTHS} from './utils';
 import {mergeArrayBuffers} from './utils/mergeArrayBuffers';
 
 function mapObject<TInput extends {[key: string]: unknown;}, TOutput>(
@@ -82,7 +82,7 @@ export class GLGeometry {
         const offset = bufferPos;
         bufferInserts.push(array);
         bufferPos += array.byteLength;
-        inferredSize = array.byteLength;
+        inferredSize = array.byteLength / TYPE_LENGTHS[type];
         return {
           buffer,
           type,
@@ -95,15 +95,13 @@ export class GLGeometry {
         }
         if (options.indices instanceof GLElementArrayBuffer) {
           if (options.indices.byteLength != null) {
-            // TODO: this means triangles / byte
-            inferredSize = options.indices.byteLength / 2;
+            inferredSize = options.indices.length;
           }
           return options.indices;
         }
         const output = new GLElementArrayBuffer(options.indices);
         if (output.byteLength != null) {
-          // TODO: this means triangles / byte
-          inferredSize = output.byteLength / 2;
+          inferredSize = output.length;
         }
         return output;
       })(),
