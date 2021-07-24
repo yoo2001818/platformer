@@ -46,7 +46,7 @@ export class GLTexture {
   boundId: number | null = null;
   boundVersion: number | null = null;
   options: GLTextureOptions;
-  uploadFulfilled = false;
+  uploadFulfilled = 0;
 
   constructor(options: GLTextureOptions) {
     this.options = options;
@@ -73,7 +73,7 @@ export class GLTexture {
   }
 
   _bindTick(): void {
-    if (!this.uploadFulfilled) {
+    if (this.uploadFulfilled !== 2) {
       this._texImage2D(this.options);
     }
   }
@@ -87,7 +87,7 @@ export class GLTexture {
     if (this.texture != null && this.renderer != null) {
       this.renderer.gl.deleteTexture(this.texture);
       this.texture = null;
-      this.uploadFulfilled = false;
+      this.uploadFulfilled = 0;
     }
   }
 
@@ -134,19 +134,22 @@ export class GLTexture {
     const target = gl.TEXTURE_2D;
     const {source, format, type} = options;
     if (source instanceof HTMLImageElement && !source.complete) {
-      // Perform loading routine
-      gl.texImage2D(
-        target,
-        0,
-        TEXTURE_FORMAT_MAP.rgb,
-        1,
-        1,
-        0,
-        TEXTURE_FORMAT_MAP.rgb,
-        ATTRIBUTE_TYPE_MAP.unsignedByte,
-        new Uint8Array([0, 0, 0, 1]),
-      );
-      // Don't do anything else now; hopefully it'll reload soon
+      if (this.uploadFulfilled === 0) {
+        // Perform loading routine
+        gl.texImage2D(
+          target,
+          0,
+          TEXTURE_FORMAT_MAP.rgb,
+          1,
+          1,
+          0,
+          TEXTURE_FORMAT_MAP.rgb,
+          ATTRIBUTE_TYPE_MAP.unsignedByte,
+          new Uint8Array([0, 0, 0, 1]),
+        );
+        this.uploadFulfilled = 1;
+        // Don't do anything else now; hopefully it'll reload soon
+      }
     } else if (
       source instanceof HTMLElement ||
       source instanceof ImageData ||
@@ -163,7 +166,7 @@ export class GLTexture {
         source,
       );
       gl.generateMipmap(target);
-      this.uploadFulfilled = true;
+      this.uploadFulfilled = 2;
     } else {
       const {width, height} = options;
       if (width == null || height == null) {
@@ -183,13 +186,17 @@ export class GLTexture {
         source ?? null,
       );
       gl.generateMipmap(target);
-      this.uploadFulfilled = true;
+      this.uploadFulfilled = 2;
     }
+  }
+
+  invalidate(): void {
+    this.uploadFulfilled = 0;
   }
 
   setOptions(options: GLTextureOptions): void {
     this.options = options;
-    this.uploadFulfilled = false;
+    this.uploadFulfilled = 0;
     const {renderer, texture} = this;
     if (renderer != null && texture != null) {
       this.bind(renderer);
