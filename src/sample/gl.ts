@@ -9,10 +9,10 @@ import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
 import {GLTexture} from '../render/gl/GLTexture';
 import {Renderer} from '../render/gl/Renderer';
+import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 
 // import monkey from './monkey.obj';
 import logo from './logo.png';
-import { GLArrayBuffer } from '../render/gl/GLArrayBuffer';
 
 function main() {
   const canvas = document.createElement('canvas');

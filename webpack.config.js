@@ -46,10 +46,6 @@ const config = {
         test: /\.(obj)$/i,
         use: 'raw-loader',
       },
-      {
-        test: /\.(png)$/i,
-        use: 'file-loader',
-      },
     ],
   },
   resolve: {
