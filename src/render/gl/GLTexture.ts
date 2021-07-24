@@ -76,9 +76,7 @@ export class GLTexture {
   }
 
   _bindTick(): void {
-    if (this.uploadFulfilled !== 2) {
-      this._texImage2D(TEXTURE_2D, this.options);
-    }
+    this._init();
   }
 
   _unbind(): void {
@@ -95,8 +93,11 @@ export class GLTexture {
   }
 
   _init(): void {
-    this._setParameters(TEXTURE_2D, this.options);
-    this._texImage2D(TEXTURE_2D, this.options);
+    if (this.uploadFulfilled === 0) {
+      this._setParameters(TEXTURE_2D, this.options);
+    }
+    this.uploadFulfilled =
+      this._texImage2D(TEXTURE_2D, this.options, this.uploadFulfilled);
   }
 
   _setParameters(target: number, params: GLTextureParameters): void {
@@ -127,15 +128,22 @@ export class GLTexture {
     );
   }
 
-  _texImage2D(target: number, options: GLTextureTexImage): void {
+  _texImage2D(
+    target: number,
+    options: GLTextureTexImage,
+    fulfilled = 0,
+  ): number {
     const {renderer} = this;
     if (renderer == null) {
-      return;
+      return 0;
+    }
+    if (fulfilled >= 2) {
+      return fulfilled;
     }
     const {gl} = renderer;
     const {source, format, type} = options;
     if (source instanceof HTMLImageElement && !source.complete) {
-      if (this.uploadFulfilled === 0) {
+      if (fulfilled === 0) {
         // Perform loading routine
         gl.texImage2D(
           target,
@@ -148,8 +156,8 @@ export class GLTexture {
           ATTRIBUTE_TYPE_MAP.unsignedByte,
           new Uint8Array([0, 0, 0, 1]),
         );
-        this.uploadFulfilled = 1;
         // Don't do anything else now; hopefully it'll reload soon
+        return 1;
       }
     } else if (
       source instanceof HTMLElement ||
@@ -167,7 +175,6 @@ export class GLTexture {
         source,
       );
       gl.generateMipmap(target);
-      this.uploadFulfilled = 2;
     } else {
       const {width, height} = options;
       if (width == null || height == null) {
@@ -187,8 +194,8 @@ export class GLTexture {
         source ?? null,
       );
       gl.generateMipmap(target);
-      this.uploadFulfilled = 2;
     }
+    return 2;
   }
 
   invalidate(): void {
