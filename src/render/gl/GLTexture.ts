@@ -40,6 +40,9 @@ export interface GLTextureOptions
 extends GLTextureParameters, GLTextureTexImage {
 }
 
+const TEXTURE_2D = 0x0DE1;
+const TEXTURE_CUBE_MAP = 0x8513;
+
 export class GLTexture {
   renderer: Renderer | null = null;
   texture: WebGLTexture | null = null;
@@ -74,7 +77,7 @@ export class GLTexture {
 
   _bindTick(): void {
     if (this.uploadFulfilled !== 2) {
-      this._texImage2D(this.options);
+      this._texImage2D(TEXTURE_2D, this.options);
     }
   }
 
@@ -92,17 +95,16 @@ export class GLTexture {
   }
 
   _init(): void {
-    this._setParameters(this.options);
-    this._texImage2D(this.options);
+    this._setParameters(TEXTURE_2D, this.options);
+    this._texImage2D(TEXTURE_2D, this.options);
   }
 
-  _setParameters(params: GLTextureParameters): void {
+  _setParameters(target: number, params: GLTextureParameters): void {
     const {renderer} = this;
     if (renderer == null) {
       return;
     }
     const {gl} = renderer;
-    const target = gl.TEXTURE_2D;
     gl.texParameteri(
       target,
       gl.TEXTURE_MAG_FILTER,
@@ -125,13 +127,12 @@ export class GLTexture {
     );
   }
 
-  _texImage2D(options: GLTextureTexImage): void {
+  _texImage2D(target: number, options: GLTextureTexImage): void {
     const {renderer} = this;
     if (renderer == null) {
       return;
     }
     const {gl} = renderer;
-    const target = gl.TEXTURE_2D;
     const {source, format, type} = options;
     if (source instanceof HTMLImageElement && !source.complete) {
       if (this.uploadFulfilled === 0) {
@@ -200,7 +201,7 @@ export class GLTexture {
     const {renderer, texture} = this;
     if (renderer != null && texture != null) {
       this.bind(renderer);
-      this._setParameters(options);
+      this._setParameters(TEXTURE_2D, options);
     }
   }
 }

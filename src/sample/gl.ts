@@ -13,6 +13,7 @@ import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 
 // import monkey from './monkey.obj';
 import logo from './logo.png';
+import { createImage } from '../render/utils/createImage';
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -78,9 +79,7 @@ function main() {
   shader.setAttribute('aInstanced', {buffer: instanceVbo, divisor: 1});
   // shader.setAttributeStatic('aColor', [0, 0, 1, 1]);
 
-  const image = new Image();
-  image.src = logo;
-  const texture = new GLTexture({source: image});
+  const texture = new GLTexture({source: createImage(logo)});
 
   gl!.enable(gl!.CULL_FACE);
   gl!.enable(gl!.DEPTH_TEST);
