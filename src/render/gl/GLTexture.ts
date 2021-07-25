@@ -36,24 +36,14 @@ export interface GLTextureTexImage {
     | 'unsignedShort565';
 }
 
-export interface GLTextureOptions
-extends GLTextureParameters, GLTextureTexImage {
-}
-
-const TEXTURE_2D = 0x0DE1;
-const TEXTURE_CUBE_MAP = 0x8513;
+export const TEXTURE_2D = 0x0DE1;
+export const TEXTURE_CUBE_MAP = 0x8513;
 
 export class GLTexture {
   renderer: Renderer | null = null;
   texture: WebGLTexture | null = null;
   boundId: number | null = null;
   boundVersion: number | null = null;
-  options: GLTextureOptions;
-  uploadFulfilled = 0;
-
-  constructor(options: GLTextureOptions) {
-    this.options = options;
-  }
 
   bind(renderer: Renderer): void {
     renderer.textureManager.bind(this);
@@ -88,16 +78,23 @@ export class GLTexture {
     if (this.texture != null && this.renderer != null) {
       this.renderer.gl.deleteTexture(this.texture);
       this.texture = null;
-      this.uploadFulfilled = 0;
+      this._invalidate();
     }
   }
 
   _init(): void {
+
+    /*
     if (this.uploadFulfilled === 0) {
       this._setParameters(TEXTURE_2D, this.options);
     }
     this.uploadFulfilled =
       this._texImage2D(TEXTURE_2D, this.options, this.uploadFulfilled);
+    */
+  }
+
+  _invalidate(): void {
+    // this.uploadFulfilled = 0;
   }
 
   _setParameters(target: number, params: GLTextureParameters): void {
@@ -159,6 +156,7 @@ export class GLTexture {
         // Don't do anything else now; hopefully it'll reload soon
         return 1;
       }
+      return fulfilled;
     } else if (
       source instanceof HTMLElement ||
       source instanceof ImageData ||
@@ -199,16 +197,7 @@ export class GLTexture {
   }
 
   invalidate(): void {
-    this.uploadFulfilled = 0;
+    this._invalidate();
   }
 
-  setOptions(options: GLTextureOptions): void {
-    this.options = options;
-    this.uploadFulfilled = 0;
-    const {renderer, texture} = this;
-    if (renderer != null && texture != null) {
-      this.bind(renderer);
-      this._setParameters(TEXTURE_2D, options);
-    }
-  }
 }

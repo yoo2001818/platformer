@@ -7,7 +7,7 @@ import {box} from '../geom/box';
 import {GLGeometry} from '../render/gl/GLGeometry';
 import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
-import {GLTexture} from '../render/gl/GLTexture';
+import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {Renderer} from '../render/gl/Renderer';
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 
@@ -79,7 +79,7 @@ function main() {
   shader.setAttribute('aInstanced', {buffer: instanceVbo, divisor: 1});
   // shader.setAttributeStatic('aColor', [0, 0, 1, 1]);
 
-  const texture = new GLTexture({source: createImage(logo)});
+  const texture = new GLTexture2D({source: createImage(logo)});
 
   gl!.enable(gl!.CULL_FACE);
   gl!.enable(gl!.DEPTH_TEST);
