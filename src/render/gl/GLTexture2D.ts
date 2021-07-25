@@ -11,7 +11,7 @@ export class GLTexture2D extends GLTexture {
   uploadFulfilled: number;
 
   constructor(options: GLTexture2DOptions) {
-    super();
+    super(TEXTURE_2D);
     this.options = options;
     this.uploadFulfilled = 0;
   }
@@ -20,8 +20,14 @@ export class GLTexture2D extends GLTexture {
     if (this.uploadFulfilled === 0) {
       this._setParameters(TEXTURE_2D, this.options);
     }
-    this.uploadFulfilled =
-      this._texImage2D(TEXTURE_2D, this.options, this.uploadFulfilled);
+    if (this.uploadFulfilled < 2) {
+      this.uploadFulfilled =
+        this._texImage2D(TEXTURE_2D, this.options, this.uploadFulfilled);
+      if (this.uploadFulfilled === 2) {
+        const {renderer} = this;
+        renderer!.gl.generateMipmap(TEXTURE_2D);
+      }
+    }
   }
 
   _invalidate(): void {
@@ -31,10 +37,5 @@ export class GLTexture2D extends GLTexture {
   setOptions(options: GLTexture2DOptions): void {
     this.options = options;
     this.uploadFulfilled = 0;
-    const {renderer, texture} = this;
-    if (renderer != null && texture != null) {
-      this.bind(renderer);
-      this._setParameters(TEXTURE_2D, options);
-    }
   }
 }

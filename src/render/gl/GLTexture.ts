@@ -40,10 +40,15 @@ export const TEXTURE_2D = 0x0DE1;
 export const TEXTURE_CUBE_MAP = 0x8513;
 
 export class GLTexture {
+  type: number;
   renderer: Renderer | null = null;
   texture: WebGLTexture | null = null;
   boundId: number | null = null;
   boundVersion: number | null = null;
+
+  constructor(type: number) {
+    this.type = type;
+  }
 
   bind(renderer: Renderer): void {
     renderer.textureManager.bind(this);
@@ -57,15 +62,18 @@ export class GLTexture {
     if (this.texture == null) {
       this.texture = gl.createTexture();
       gl.activeTexture(gl.TEXTURE0 + id);
-      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+      gl.bindTexture(this.type, this.texture);
       this._init();
     } else {
       gl.activeTexture(gl.TEXTURE0 + id);
-      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+      gl.bindTexture(this.type, this.texture);
     }
   }
 
   _bindTick(): void {
+    // TODO: Do something with this
+    const {renderer} = this;
+    renderer!.gl.activeTexture(renderer!.gl.TEXTURE0 + this.boundId!);
     this._init();
   }
 
@@ -172,7 +180,6 @@ export class GLTexture {
         ATTRIBUTE_TYPE_MAP[type ?? 'unsignedByte'],
         source,
       );
-      gl.generateMipmap(target);
     } else {
       const {width, height} = options;
       if (width == null || height == null) {
@@ -191,7 +198,6 @@ export class GLTexture {
         ATTRIBUTE_TYPE_MAP[type ?? 'unsignedByte'],
         source ?? null,
       );
-      gl.generateMipmap(target);
     }
     return 2;
   }

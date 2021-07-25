@@ -54,10 +54,14 @@ export class GLAttributeManager {
         '(or set it through the shader)');
     }
     const attribute = attributes[index];
+
+    /*
     if (!attribute.enabled) {
       gl.enableVertexAttribArray(index);
       attribute.enabled = true;
     }
+    */
+    gl.enableVertexAttribArray(index);
     gl.vertexAttribPointer(
       index,
       size,

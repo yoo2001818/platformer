@@ -8,3 +8,4 @@ declare module '*.png' {
   export default path;
 }
 
+declare const require: any;

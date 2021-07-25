@@ -16,7 +16,7 @@ export function setUniforms(
   entry: UniformEntry,
 ): void {
   if (entry == null) {
-    throw new Error('Unregistered uniform');
+    // noop
   } else if (isUniformType(entry)) {
     const {gl} = renderer;
     switch (entry.type) {
