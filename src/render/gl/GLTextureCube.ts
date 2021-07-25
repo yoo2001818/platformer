@@ -56,9 +56,8 @@ export class GLTextureCube extends GLTexture {
       }
     });
     if (fulfilled && !this.mipmapGenerated) {
-      const {renderer} = this;
       this._setParameters(TEXTURE_CUBE_MAP, this.options);
-      renderer!.gl.generateMipmap(TEXTURE_CUBE_MAP);
+      this._generateMipmap(TEXTURE_CUBE_MAP);
       this.mipmapGenerated = true;
     }
   }

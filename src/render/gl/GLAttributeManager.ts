@@ -55,6 +55,7 @@ export class GLAttributeManager {
     }
     const attribute = attributes[index];
 
+    // enableVertexAttribArray seems to be stored inside VAO...
     /*
     if (!attribute.enabled) {
       gl.enableVertexAttribArray(index);

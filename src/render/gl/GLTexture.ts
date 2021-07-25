@@ -61,19 +61,16 @@ export class GLTexture {
     const {gl} = renderer;
     if (this.texture == null) {
       this.texture = gl.createTexture();
-      gl.activeTexture(gl.TEXTURE0 + id);
+      this._active();
       gl.bindTexture(this.type, this.texture);
       this._init();
     } else {
-      gl.activeTexture(gl.TEXTURE0 + id);
+      this._active();
       gl.bindTexture(this.type, this.texture);
     }
   }
 
   _bindTick(): void {
-    // TODO: Do something with this
-    const {renderer} = this;
-    renderer!.gl.activeTexture(renderer!.gl.TEXTURE0 + this.boundId!);
     this._init();
   }
 
@@ -91,18 +88,31 @@ export class GLTexture {
   }
 
   _init(): void {
-
-    /*
-    if (this.uploadFulfilled === 0) {
-      this._setParameters(TEXTURE_2D, this.options);
-    }
-    this.uploadFulfilled =
-      this._texImage2D(TEXTURE_2D, this.options, this.uploadFulfilled);
-    */
   }
 
   _invalidate(): void {
-    // this.uploadFulfilled = 0;
+  }
+
+  _active(): void {
+    const {renderer, boundId} = this;
+    if (renderer == null || boundId == null) {
+      return;
+    }
+    const {gl, textureManager} = renderer;
+    if (textureManager.activeId !== boundId) {
+      gl.activeTexture(gl.TEXTURE0 + boundId);
+      textureManager.activeId = boundId;
+    }
+  }
+
+  _generateMipmap(target: number): void {
+    const {renderer} = this;
+    if (renderer == null) {
+      return;
+    }
+    this._active();
+    const {gl} = renderer;
+    gl.generateMipmap(target);
   }
 
   _setParameters(target: number, params: GLTextureParameters): void {
@@ -110,6 +120,7 @@ export class GLTexture {
     if (renderer == null) {
       return;
     }
+    this._active();
     const {gl} = renderer;
     gl.texParameteri(
       target,
@@ -150,6 +161,7 @@ export class GLTexture {
     if (source instanceof HTMLImageElement && !source.complete) {
       if (fulfilled === 0) {
         // Perform loading routine
+        this._active();
         gl.texImage2D(
           target,
           0,
@@ -171,6 +183,7 @@ export class GLTexture {
       // TODO: IE doesn't support ImageBitmap. Oh well.
       source instanceof ImageBitmap
     ) {
+      this._active();
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
       gl.texImage2D(
         target,
@@ -186,6 +199,7 @@ export class GLTexture {
         throw new Error('Texture with array-based source requires width ' +
           'and height');
       }
+      this._active();
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
       gl.texImage2D(
         target,

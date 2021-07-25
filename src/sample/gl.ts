@@ -10,13 +10,13 @@ import {GLGeometry} from '../render/gl/GLGeometry';
 import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
+import {GLTextureCube} from '../render/gl/GLTextureCube';
 import {Renderer} from '../render/gl/Renderer';
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 import {createImage} from '../render/utils/createImage';
 
 // import monkey from './monkey.obj';
 import logo from './logo.png';
-import { GLTextureCube } from '../render/gl/GLTextureCube';
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -130,6 +130,7 @@ function main() {
     ],
   });
 
+  gl!.enable(gl!.CULL_FACE);
   gl!.enable(gl!.DEPTH_TEST);
   gl!.depthFunc(gl!.LEQUAL);
 
@@ -158,26 +159,21 @@ function main() {
 
     vao.bind(renderer);
     shader.bind(renderer);
-    geometry.bind(renderer, shader);
-    shader.setAttribute('aInstanced', {buffer: instanceVbo, divisor: 1});
     shader.setUniforms({
       uProjection,
       uView,
       uModel,
       uTexture: texture,
     });
-    gl!.enable(gl!.CULL_FACE);
     geometry.drawInstanced(100);
 
     skyVao.bind(renderer);
     skyShader.bind(renderer);
-    skyGeom.bind(renderer, shader);
     skyShader.setUniforms({
       uInverseProjection,
       uInverseView,
       uTexture: skyTexture,
     });
-    gl!.disable(gl!.CULL_FACE);
     skyGeom.draw();
 
     requestAnimationFrame(update);

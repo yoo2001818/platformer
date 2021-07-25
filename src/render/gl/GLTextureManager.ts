@@ -5,11 +5,13 @@ export class GLTextureManager {
   renderer: Renderer;
   boundTextures: (GLTexture | null)[];
   boundVersion: number;
+  activeId: number;
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
     this.boundTextures = [];
     this.boundVersion = 0;
+    this.activeId = 0;
     this.init();
   }
 
