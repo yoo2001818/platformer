@@ -1,14 +1,14 @@
-import {Renderer} from './Renderer';
+import {GLRenderer} from './GLRenderer';
 
 export class GLVertexArray {
-  renderer: Renderer | null = null;
+  renderer: GLRenderer | null = null;
   vao: WebGLVertexArrayObjectOES | null = null;
 
   // TODO: This can be refactored to separate non-VAO and VAO variant
   constructor() {
   }
 
-  bind(renderer: Renderer): void {
+  bind(renderer: GLRenderer): void {
     if (renderer.vaoExt == null) {
       throw new Error('VAO is not supported');
     }

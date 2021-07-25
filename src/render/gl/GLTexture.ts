@@ -1,4 +1,4 @@
-import {Renderer} from './Renderer';
+import {GLRenderer} from './GLRenderer';
 import {ArrayBufferView} from './types';
 import {ATTRIBUTE_TYPE_MAP, TEXTURE_FORMAT_MAP, TEXTURE_PARAM_MAP} from './utils';
 
@@ -41,7 +41,7 @@ export const TEXTURE_CUBE_MAP = 0x8513;
 
 export class GLTexture {
   type: number;
-  renderer: Renderer | null = null;
+  renderer: GLRenderer | null = null;
   texture: WebGLTexture | null = null;
   boundId: number | null = null;
   boundVersion: number | null = null;
@@ -50,11 +50,11 @@ export class GLTexture {
     this.type = type;
   }
 
-  bind(renderer: Renderer): void {
+  bind(renderer: GLRenderer): void {
     renderer.textureManager.bind(this);
   }
 
-  _bind(renderer: Renderer, id: number, version: number): void {
+  _bind(renderer: GLRenderer, id: number, version: number): void {
     this.boundId = id;
     this.boundVersion = version;
     this.renderer = renderer;

@@ -1,4 +1,4 @@
-import type {Renderer} from './Renderer';
+import type {GLRenderer} from './GLRenderer';
 import {ArrayBufferView, BufferValue, GLAttributeType} from './types';
 import {flattenBuffer, inferBufferType, TYPE_LENGTHS} from './utils';
 
@@ -16,7 +16,7 @@ export class GLBuffer {
   dataType: GLAttributeType | null = null;
   byteLength: number | null = null;
   initialValue: ArrayBufferLike | ArrayBufferView | null;
-  renderer: Renderer | null = null;
+  renderer: GLRenderer | null = null;
   buffer: WebGLBuffer | null = null;
 
   constructor(
@@ -44,7 +44,7 @@ export class GLBuffer {
     return flattenBuffer(value);
   }
 
-  bind(renderer: Renderer): void {
+  bind(renderer: GLRenderer): void {
     throw new Error('Not implemented');
   }
 

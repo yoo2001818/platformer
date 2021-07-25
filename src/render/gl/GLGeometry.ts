@@ -4,7 +4,7 @@ import {GLArrayBuffer} from './GLArrayBuffer';
 import {GLBuffer} from './GLBuffer';
 import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLShader} from './GLShader';
-import {Renderer} from './Renderer';
+import {GLRenderer} from './GLRenderer';
 import {ArrayBufferView, AttributeOptions, BufferValue} from './types';
 import {ATTRIBUTE_TYPE_MAP, flattenBuffer, inferBufferType, TYPE_LENGTHS} from './utils';
 import {mergeArrayBuffers} from './utils/mergeArrayBuffers';
@@ -49,7 +49,7 @@ const TRIANGLES = 4;
 export class GLGeometry {
   options!: BakedGeometryOptions;
   managedBuffers: GLBuffer[] = [];
-  renderer: Renderer | null = null;
+  renderer: GLRenderer | null = null;
 
   constructor(options: GLGeometryOptions) {
     this.set(options);
@@ -112,7 +112,7 @@ export class GLGeometry {
     buffer.set(mergeArrayBuffers(bufferInserts));
   }
 
-  bind(renderer: Renderer, shader: GLShader): void {
+  bind(renderer: GLRenderer, shader: GLShader): void {
     const {options} = this;
     for (const key in options.attributes) {
       if (key in options.attributes) {

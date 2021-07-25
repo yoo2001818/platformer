@@ -1,4 +1,4 @@
-import type {Renderer} from '../Renderer';
+import type {GLRenderer} from '../GLRenderer';
 import {GLTexture} from '../GLTexture';
 
 import {UniformEntry} from './types';
@@ -11,7 +11,7 @@ import {
 } from './utils';
 
 export function setUniforms(
-  renderer: Renderer,
+  renderer: GLRenderer,
   value: unknown,
   entry: UniformEntry,
 ): void {

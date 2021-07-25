@@ -11,7 +11,7 @@ import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {GLTextureCube} from '../render/gl/GLTextureCube';
-import {Renderer} from '../render/gl/Renderer';
+import {GLRenderer} from '../render/gl/GLRenderer';
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 import {createImage} from '../render/utils/createImage';
 
@@ -34,7 +34,7 @@ function main() {
 
   gl.viewport(0, 0, 800, 600);
 
-  const renderer = new Renderer(gl);
+  const renderer = new GLRenderer(gl);
   const shader = new GLShader(`
     #version 100
     precision lowp float;

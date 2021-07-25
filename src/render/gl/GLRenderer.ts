@@ -5,7 +5,7 @@ import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLVertexArray} from './GLVertexArray';
 import {GLShader} from './GLShader';
 
-export class Renderer {
+export class GLRenderer {
   gl: WebGLRenderingContext;
   vaoExt: OES_vertex_array_object | null;
   instanceExt: ANGLE_instanced_arrays | null;

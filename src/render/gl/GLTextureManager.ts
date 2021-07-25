@@ -1,13 +1,13 @@
 import type {GLTexture} from './GLTexture';
-import {Renderer} from './Renderer';
+import {GLRenderer} from './GLRenderer';
 
 export class GLTextureManager {
-  renderer: Renderer;
+  renderer: GLRenderer;
   boundTextures: (GLTexture | null)[];
   boundVersion: number;
   activeId: number;
 
-  constructor(renderer: Renderer) {
+  constructor(renderer: GLRenderer) {
     this.renderer = renderer;
     this.boundTextures = [];
     this.boundVersion = 0;

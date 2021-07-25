@@ -1,4 +1,4 @@
-import type {Renderer} from './Renderer';
+import type {GLRenderer} from './GLRenderer';
 import {extractUniforms} from './uniform/extractUniforms';
 import {extractAttributes} from './attribute/extractAttributes';
 import {UniformEntry} from './uniform/types';
@@ -60,7 +60,7 @@ function getTypeSize(gl: WebGLRenderingContext, type: number): number {
 export class GLShader {
   vertCode: string;
   fragCode: string;
-  renderer: Renderer | null = null;
+  renderer: GLRenderer | null = null;
   vertShader: WebGLShader | null = null;
   fragShader: WebGLShader | null = null;
   program: WebGLProgram | null = null;
@@ -75,7 +75,7 @@ export class GLShader {
     this.fragCode = fragCode;
   }
 
-  bind(renderer: Renderer): void {
+  bind(renderer: GLRenderer): void {
     if (this.program == null) {
       this.renderer = renderer;
       const {gl} = renderer;

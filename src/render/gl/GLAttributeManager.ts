@@ -1,4 +1,4 @@
-import {Renderer} from './Renderer';
+import {GLRenderer} from './GLRenderer';
 import {AttributeOptions} from './types';
 import {ATTRIBUTE_TYPE_MAP} from './utils';
 
@@ -8,11 +8,11 @@ interface AttributeData {
 }
 
 export class GLAttributeManager {
-  renderer: Renderer;
+  renderer: GLRenderer;
   attributes: AttributeData[];
   standardAttributes: string[];
 
-  constructor(renderer: Renderer) {
+  constructor(renderer: GLRenderer) {
     this.renderer = renderer;
     this.attributes = [];
     this.standardAttributes = [];

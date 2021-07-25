@@ -1,5 +1,5 @@
 import {GLBuffer, UsageType} from './GLBuffer';
-import type {Renderer} from './Renderer';
+import type {GLRenderer} from './GLRenderer';
 import {ArrayBufferView, BufferValue} from './types';
 import {parseIndices} from './utils';
 
@@ -17,7 +17,7 @@ export class GLElementArrayBuffer extends GLBuffer {
     return parseIndices(value);
   }
 
-  bind(renderer: Renderer): void {
+  bind(renderer: GLRenderer): void {
     if (this.buffer == null) {
       this.renderer = renderer;
       this.buffer = renderer.gl.createBuffer();

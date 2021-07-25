@@ -1,5 +1,5 @@
 import {GLBuffer, UsageType} from './GLBuffer';
-import type {Renderer} from './Renderer';
+import type {GLRenderer} from './GLRenderer';
 import {BufferValue} from './types';
 
 const ARRAY_BUFFER = 0x8892;
@@ -12,7 +12,7 @@ export class GLArrayBuffer extends GLBuffer {
     super(ARRAY_BUFFER, initialValue, usage);
   }
 
-  bind(renderer: Renderer): void {
+  bind(renderer: GLRenderer): void {
     if (this.buffer == null) {
       this.renderer = renderer;
       this.buffer = renderer.gl.createBuffer();
