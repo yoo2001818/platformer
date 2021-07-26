@@ -1,2 +1,3 @@
 export * from './Component';
-export * from './createComponent';
+export * from './ObjectComponent';
+export * from './Float32ArrayComponent';
