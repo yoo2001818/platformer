@@ -1,7 +1,7 @@
 import {mat4} from 'gl-matrix';
 
 import {EntityStore} from '../core/EntityStore';
-import {createComponent} from '../core/components/createComponent';
+import {ObjectComponent} from '../core/components';
 
 const mat = mat4.create();
 
@@ -9,8 +9,8 @@ console.log(mat);
 
 const store = new EntityStore();
 
-const posComp = createComponent<{x: number; y: number;}>();
-const velComp = createComponent<{x: number; y: number;}>();
+const posComp = new ObjectComponent<{x: number; y: number;}>();
+const velComp = new ObjectComponent<{x: number; y: number;}>();
 
 store.registerComponents({
   pos: posComp,

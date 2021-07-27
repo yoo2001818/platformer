@@ -31,7 +31,7 @@ export class Float32ArrayComponent implements Component<Float32Array> {
     return entity._getRawMap(this, null);
   }
 
-  set(entity: Entity, value: Float32Array | null): void {
+  set(entity: Entity, value: Float32Array): void {
     // Compare hash before writing
     const prevHash = this.getHashCode(this.get(entity));
     const nextHash = this.getHashCode(value);
