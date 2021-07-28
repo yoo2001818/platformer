@@ -1,5 +1,6 @@
 import {Component} from './components/Component';
 import {Entity} from './Entity';
+import {EntityChunk} from './EntityChunk';
 import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
 import {sortEntity} from './sortEntity';
@@ -176,6 +177,28 @@ export class EntityStore {
         return;
       }
       callback(entity, ...args as TValues);
+    });
+  }
+
+  forEachChunkWith(
+    components: (Component<any> | string)[],
+    callback: (chunk: EntityChunk) => void,
+  ): void {
+    const mappedComponents = components.map((component) => {
+      if (typeof component === 'string') {
+        return this.getComponent(component);
+      }
+      return component;
+    });
+    this.forEachGroup((group) => {
+      // Check for hashCode
+      const passed = mappedComponents.every(
+        (component) => group.hashCodes[component.getIndex()!] !== 0,
+      );
+      if (!passed) {
+        return;
+      }
+      group.forEachChunk(callback);
     });
   }
 }

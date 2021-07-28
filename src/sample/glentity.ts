@@ -11,6 +11,7 @@ import {GLShader} from '../render/gl/GLShader';
 import {GLVertexArray} from '../render/gl/GLVertexArray';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {GLRenderer} from '../render/gl/GLRenderer';
+import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 import {createImage} from '../render/utils/createImage';
 
 import logo from './logo.png';
@@ -48,7 +49,7 @@ function main() {
 
     attribute vec3 aPosition;
     attribute vec2 aTexCoord;
-    // attribute vec3 aInstanced;
+    attribute vec3 aInstanced;
 
     uniform mat4 uView;
     uniform mat4 uProjection;
@@ -57,7 +58,7 @@ function main() {
     varying vec2 vTexCoord;
 
     void main() {
-      gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
+      gl_Position = uProjection * uView * uModel * vec4(aPosition + aInstanced, 1.0);
       vTexCoord = aTexCoord;
     }
   `, `
@@ -86,7 +87,11 @@ function main() {
   gl!.enable(gl!.DEPTH_TEST);
   gl!.depthFunc(gl!.LEQUAL);
 
-  function update(delta: number) {
+  let lastTime = 0;
+
+  function update(time: number) {
+    const delta = time - lastTime;
+    lastTime = time;
     const entity = store.create();
     entity.set('pos', new Float32Array([
       1, 0, 0, 0,
@@ -95,16 +100,16 @@ function main() {
       0, 0, 0, 1,
     ]));
     entity.set('vel', new Float32Array([
-      (Math.random() * 2 - 1) * 0.2,
-      (Math.random() * 2 - 1) * 0.2,
-      (Math.random() * 2 - 1) * 0.2,
+      (Math.random() * 2 - 1) * 20,
+      (Math.random() * 2 - 1) * 20,
+      (Math.random() * 2 - 1) * 20,
       1,
     ]));
 
     store.forEachWith([posComp, velComp], (entity, pos, vel) => {
-      pos[12] += vel[0];
-      pos[13] += vel[1];
-      pos[14] += vel[2];
+      pos[12] += vel[0] * delta / 1000;
+      pos[13] += vel[1] * delta / 1000;
+      pos[14] += vel[2] * delta / 1000;
       const boundary = 10;
       if (
         pos[12] < -boundary || pos[12] > boundary ||
@@ -128,19 +133,31 @@ function main() {
 
     const uView = mat4.create();
     mat4.translate(uView, uView, [0, 0, -25]);
-    mat4.rotateX(uView, uView, Math.PI * delta / 2000);
-    mat4.rotateY(uView, uView, Math.PI * delta / 3000);
+    mat4.rotateX(uView, uView, Math.PI * time / 2000);
+    mat4.rotateY(uView, uView, Math.PI * time / 3000);
 
-    store.forEachWith([posComp], (entity, pos) => {
+    const instancedBuffer = new GLArrayBuffer(null, 'stream');
+
+    store.forEachChunkWith([posComp], (chunk) => {
+      // Create chunk data...
+      const posData = posComp.getChunkArray(chunk)!;
+      const chunkData = new Float32Array(chunk.size * 3);
+      for (let i = 0; i < chunk.size; i += 1) {
+        chunkData[i * 3] = posData[i * 16 + 12];
+        chunkData[i * 3 + 1] = posData[i * 16 + 13];
+        chunkData[i * 3 + 2] = posData[i * 16 + 14];
+      }
+      instancedBuffer.set(chunkData);
       vao.bind(renderer);
       shader.bind(renderer);
+      shader.setAttribute('aInstanced', {buffer: instancedBuffer, divisor: 1});
       shader.setUniforms({
         uProjection,
         uView,
-        uModel: pos,
+        uModel: mat4.create(),
         uTexture: texture,
       });
-      geometry.draw();
+      geometry.drawInstanced(chunk.size);
     });
 
     requestAnimationFrame(update);

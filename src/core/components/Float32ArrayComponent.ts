@@ -55,6 +55,10 @@ export class Float32ArrayComponent implements Component<Float32Array> {
     return value == null ? 0 : 1;
   }
 
+  getChunkArray(chunk: EntityChunk): Float32Array | null {
+    return chunk._getRawMap<Float32Array>(this);
+  }
+
   initChunk(chunk: EntityChunk, value: Float32Array | null): void {
     if (value == null) {
       // Do nothing if chunk doesn't have Float32Array
