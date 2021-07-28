@@ -30,7 +30,9 @@ function update() {
   entity.set('pos', {x: 400, y: 0});
   entity.set('vel', {x: Math.random() * 10 - 5, y: 5});
 
-  store.forEachWith([posComp, velComp], (entity, pos, vel) => {
+  store.forEachWith([posComp, velComp], (entity) => {
+    const pos = entity.get(posComp)!;
+    const vel = entity.get(velComp)!;
     pos.x += vel.x;
     pos.y += vel.y;
     if (pos.y > 600) {
@@ -43,7 +45,8 @@ function update() {
   ctx.clearRect(0, 0, 800, 600);
   ctx.fillStyle = '#000';
 
-  store.forEachWith([posComp, velComp], (entity, pos, vel) => {
+  store.forEachWith([posComp, velComp], (entity) => {
+    const pos = entity.get(posComp)!;
     ctx.fillRect(pos.x, pos.y, 10, 10);
   });
 

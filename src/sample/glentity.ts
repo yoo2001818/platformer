@@ -108,8 +108,9 @@ function main() {
       ]));
     }
 
-    /*
-    store.forEachWith([posComp, velComp], (entity, pos, vel) => {
+    store.forEachWith([posComp, velComp], (entity) => {
+      const pos = posComp.get(entity)!;
+      const vel = velComp.get(entity)!;
       pos[12] += vel[0] * delta / 1000;
       pos[13] += vel[1] * delta / 1000;
       pos[14] += vel[2] * delta / 1000;
@@ -122,7 +123,8 @@ function main() {
         entity.destroy();
       }
     });
-    */
+
+    /*
     store.forEachChunkWith([posComp, velComp], (chunk) => {
       const pos = posComp.getChunkArray(chunk)!;
       const vel = velComp.getChunkArray(chunk)!;
@@ -141,6 +143,7 @@ function main() {
         }
       }
     });
+    */
 
     store.sort();
 
