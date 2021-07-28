@@ -1,1 +1,1 @@
-import './sample/gl';
+import './sample/glentity';
