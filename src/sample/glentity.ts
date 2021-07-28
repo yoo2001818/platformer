@@ -92,31 +92,53 @@ function main() {
   function update(time: number) {
     const delta = time - lastTime;
     lastTime = time;
-    const entity = store.create();
-    entity.set('pos', new Float32Array([
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1,
-    ]));
-    entity.set('vel', new Float32Array([
-      (Math.random() * 2 - 1) * 20,
-      (Math.random() * 2 - 1) * 20,
-      (Math.random() * 2 - 1) * 20,
-      1,
-    ]));
+    for (let i = 0; i < 2000; i += 1) {
+      const entity = store.create();
+      entity.set('pos', new Float32Array([
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+      ]));
+      entity.set('vel', new Float32Array([
+        (Math.random() * 2 - 1) * 20,
+        (Math.random() * 2 - 1) * 20,
+        (Math.random() * 2 - 1) * 20,
+        1,
+      ]));
+    }
 
+    /*
     store.forEachWith([posComp, velComp], (entity, pos, vel) => {
       pos[12] += vel[0] * delta / 1000;
       pos[13] += vel[1] * delta / 1000;
       pos[14] += vel[2] * delta / 1000;
-      const boundary = 10;
+      const boundary = 20;
       if (
         pos[12] < -boundary || pos[12] > boundary ||
         pos[13] < -boundary || pos[13] > boundary ||
         pos[14] < -boundary || pos[14] > boundary
       ) {
         entity.destroy();
+      }
+    });
+    */
+    store.forEachChunkWith([posComp, velComp], (chunk) => {
+      const pos = posComp.getChunkArray(chunk)!;
+      const vel = velComp.getChunkArray(chunk)!;
+      for (let i = 0; i < chunk.size; i += 1) {
+        pos[i * 16 + 12] += vel[i * 4 + 0] * delta / 1000;
+        pos[i * 16 + 13] += vel[i * 4 + 1] * delta / 1000;
+        pos[i * 16 + 14] += vel[i * 4 + 2] * delta / 1000;
+        const boundary = 20;
+        if (
+          chunk.isValid(i) &&
+          (pos[i * 16 + 12] < -boundary || pos[i * 16 + 12] > boundary ||
+          pos[i * 16 + 13] < -boundary || pos[i * 16 + 13] > boundary ||
+          pos[i * 16 + 14] < -boundary || pos[i * 16 + 14] > boundary)
+        ) {
+          chunk.getAt(i)!.destroy();
+        }
       }
     });
 
@@ -132,21 +154,24 @@ function main() {
     );
 
     const uView = mat4.create();
-    mat4.translate(uView, uView, [0, 0, -25]);
+    mat4.translate(uView, uView, [0, 0, -40]);
     mat4.rotateX(uView, uView, Math.PI * time / 2000);
     mat4.rotateY(uView, uView, Math.PI * time / 3000);
 
     const instancedBuffer = new GLArrayBuffer(null, 'stream');
 
+    const chunkData = new Float32Array(2048 * 3);
+
     store.forEachChunkWith([posComp], (chunk) => {
       // Create chunk data...
       const posData = posComp.getChunkArray(chunk)!;
-      const chunkData = new Float32Array(chunk.size * 3);
-      for (let i = 0; i < chunk.size; i += 1) {
-        chunkData[i * 3] = posData[i * 16 + 12];
-        chunkData[i * 3 + 1] = posData[i * 16 + 13];
-        chunkData[i * 3 + 2] = posData[i * 16 + 14];
-      }
+      let chunkPos = 0;
+      chunk.forEach((_, offset) => {
+        chunkData[chunkPos] = posData[offset * 16 + 12];
+        chunkData[chunkPos + 1] = posData[offset * 16 + 13];
+        chunkData[chunkPos + 2] = posData[offset * 16 + 14];
+        chunkPos += 3;
+      });
       instancedBuffer.set(chunkData);
       vao.bind(renderer);
       shader.bind(renderer);

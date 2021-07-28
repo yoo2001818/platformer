@@ -21,11 +21,23 @@ export class EntityGroup {
       }
       return chunk;
     }
-    const newChunk = new EntityChunk(this, 32, entity);
+    const nextSize = this._getNextSize();
+    const newChunk = new EntityChunk(this, nextSize, entity);
     newChunk.allocate(entity);
     this.chunks.push(newChunk);
     this.availableChunks.push(newChunk);
     return newChunk;
+  }
+
+  _getNextSize(): number {
+    const size = this.chunks.length;
+    if (size < 5) {
+      return 32;
+    }
+    if (size > 11) {
+      return 2048;
+    }
+    return 1 << size;
   }
 
   _handleAvailable(chunk: EntityChunk): void {

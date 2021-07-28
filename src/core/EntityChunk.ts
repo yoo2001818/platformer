@@ -5,17 +5,23 @@ import type {EntityGroup} from './EntityGroup';
 export class EntityChunk {
   group: EntityGroup;
   entities: (Entity | null)[];
+  assignedOffsets: boolean[];
+  releasedOffsets: number[];
   componentMap: unknown[];
   maxSize: number;
   size: number;
+  maxOffset: number;
   defragNeeded: boolean;
 
   constructor(group: EntityGroup, maxSize: number, protoEntity: Entity) {
     this.group = group;
     this.entities = Array.from({length: maxSize}, () => null);
+    this.assignedOffsets = Array.from({length: maxSize}, () => false);
+    this.releasedOffsets = [];
     this.componentMap = [];
     this.maxSize = maxSize;
     this.size = 0;
+    this.maxOffset = 0;
     this.defragNeeded = false;
     this.init(protoEntity);
   }
@@ -43,12 +49,29 @@ export class EntityChunk {
     });
   }
 
+  isValid(offset: number): boolean {
+    return this.assignedOffsets[offset];
+  }
+
+  getAt(offset: number): Entity | null {
+    return this.entities[offset];
+  }
+
   canAllocate(): boolean {
     return this.size < this.maxSize;
   }
 
   allocate(entity: Entity): void {
-    const offset = this.entities.findIndex((entity) => entity == null);
+    let offset: number;
+    if (this.releasedOffsets.length > 0) {
+      offset = this.releasedOffsets.pop()!;
+      if (this.releasedOffsets.length === 0) {
+        this.defragNeeded = false;
+      }
+    } else {
+      offset = this.maxOffset;
+      this.maxOffset += 1;
+    }
     this.size += 1;
     // Move all components to the entity chunk
     entity.store.getComponents().forEach((component) => {
@@ -61,6 +84,7 @@ export class EntityChunk {
     entity.chunkOffset = offset;
     entity._markUnfloating();
     this.entities[offset] = entity;
+    this.assignedOffsets[offset] = true;
   }
 
   _handleFloat(entity: Entity): void {
@@ -75,8 +99,14 @@ export class EntityChunk {
       }
     });
     this.entities[offset] = null;
+    this.assignedOffsets[offset] = false;
     this.size -= 1;
-    this.defragNeeded = true;
+    if (offset >= this.maxOffset - 1) {
+      this.maxOffset = offset;
+    } else {
+      this.releasedOffsets.push(offset);
+      this.defragNeeded = true;
+    }
     if (this.size === this.maxSize - 1) {
       this.group._handleAvailable(this);
     }
@@ -91,8 +121,14 @@ export class EntityChunk {
     entity.chunkOffset = 0;
     // Skip copying
     this.entities[offset] = null;
+    this.assignedOffsets[offset] = false;
     this.size -= 1;
-    this.defragNeeded = true;
+    if (offset >= this.maxOffset) {
+      this.maxOffset = offset - 1;
+    } else {
+      this.releasedOffsets.push(offset);
+      this.defragNeeded = true;
+    }
     if (this.size === this.maxSize - 1) {
       this.group._handleAvailable(this);
     }
@@ -101,11 +137,16 @@ export class EntityChunk {
     }
   }
 
-  forEach(callback: (entity: Entity) => void): void {
-    this.entities.forEach((entity) => {
-      if (entity != null && entity.isValid()) {
-        callback(entity);
+  forEach(callback: (entity: Entity, offset: number) => void): void {
+    for (let i = 0; i < this.maxOffset; i += 1) {
+      if (this.assignedOffsets[i]) {
+        callback(this.entities[i]!, i);
       }
-    });
+    }
+    // this.entities.forEach((entity, offset) => {
+    //   if (entity != null) {
+    //     callback(entity, offset);
+    //   }
+    // });
   }
 }
