@@ -118,7 +118,7 @@ export class Entity {
 
   getHashCodes(): number[] {
     return this.store.getComponents().map((component) => {
-      return component.getHashCode(this);
+      return component.getHashCode(component.get(this));
     });
   }
 }

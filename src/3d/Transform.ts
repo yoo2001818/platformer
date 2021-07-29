@@ -137,4 +137,25 @@ export class Transform {
     quat.setAxisAngle(tmp, axis, rad);
     return this.rotate(tmp);
   }
+
+  lookAt(target: vec3): this {
+    // https://stackoverflow.com/a/51170230
+    const to = vec3.create();
+    vec3.subtract(to, target, this.getPosition());
+    vec3.normalize(to, to);
+
+    const rot = vec3.create();
+    vec3.cross(rot, [0, 0, 1], to);
+    vec3.normalize(rot, rot);
+    if (vec3.sqrLen(rot) === 0) {
+      vec3.copy(rot, [0, 1, 0]);
+    }
+
+    const dot = vec3.dot([0, 0, 1], to);
+    const angle = Math.acos(dot);
+
+    const out = quat.create();
+    quat.setAxisAngle(out, rot, angle);
+    return this.setRotation(out);
+  }
 }

@@ -52,7 +52,7 @@ export class EntityStore {
     return this.components;
   }
 
-  create(): Entity {
+  create(options?: {[key: string]: any;}): Entity {
     // Check if there is any deleted entities
     if (this.deletedEntities.length > 0) {
       const entity = this.deletedEntities.pop()!;
@@ -63,6 +63,11 @@ export class EntityStore {
     const entity = new Entity(this, this.entities.length);
     this.entities.push(entity);
     entity._markFloating();
+    if (options != null) {
+      Object.keys(options).forEach((key) => {
+        entity.set(key, options[key]);
+      });
+    }
     return entity;
   }
 

@@ -1,1 +1,1 @@
-import './sample/glentity';
+import './sample/gltransform';

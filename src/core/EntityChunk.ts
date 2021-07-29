@@ -77,7 +77,9 @@ export class EntityChunk {
     entity.store.getComponents().forEach((component) => {
       if (component.setChunk != null) {
         const value = component.get(entity);
-        component.setChunk(this, offset, value);
+        if (value != null) {
+          component.setChunk(this, offset, value);
+        }
       }
     });
     entity.chunk = this;
