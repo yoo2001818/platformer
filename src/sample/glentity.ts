@@ -92,7 +92,7 @@ function main() {
   function update(time: number) {
     const delta = time - lastTime;
     lastTime = time;
-    for (let i = 0; i < 2000; i += 1) {
+    for (let i = 0; i < 1; i += 1) {
       const entity = store.create();
       entity.set('pos', new Float32Array([
         1, 0, 0, 0,
