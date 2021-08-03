@@ -1,9 +1,10 @@
-import {Entity} from '../core/Entity';
+import {EntityChunk} from '../core/EntityChunk';
 
 import {GLGeometry} from './gl/GLGeometry';
-import {GLRenderer} from './gl/GLRenderer';
+import {Renderer} from './Renderer';
 
 export interface Material {
-  render(entity: Entity, geometry: GLGeometry, renderer: GLRenderer): void;
+  id: number;
+  render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void;
   dispose(): void;
 }
