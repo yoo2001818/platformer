@@ -25,4 +25,9 @@ export class GLRenderer {
     this.attributeManager = new GLAttributeManager(this);
     this.textureManager = new GLTextureManager(this);
   }
+
+  getAspectRatio(): number {
+    const canvas = this.gl.canvas;
+    return canvas.width / canvas.height;
+  }
 }

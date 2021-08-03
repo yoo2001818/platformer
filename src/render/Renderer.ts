@@ -1,11 +1,13 @@
+import {Entity} from '../core/Entity';
 import {EntityStore} from '../core/EntityStore';
 
 import {GLRenderer} from './gl/GLRenderer';
-import {Mesh} from './Mesh';
+import {MeshComponent} from './MeshComponent';
 
 export class Renderer {
   glRenderer: GLRenderer;
   entityStore: EntityStore;
+  camera: Entity | null;
   resources: Map<number, unknown>;
 
   constructor(
@@ -14,7 +16,12 @@ export class Renderer {
   ) {
     this.glRenderer = glRenderer;
     this.entityStore = entityStore;
+    this.camera = null;
     this.resources = new Map();
+  }
+
+  getAspectRatio(): number {
+    return this.glRenderer.getAspectRatio();
   }
 
   getResource<T>(id: number, onCreate: () => T): T {
@@ -28,13 +35,20 @@ export class Renderer {
     return newItem;
   }
 
+  setCamera(camera: Entity): void {
+    this.camera = camera;
+  }
+
   render(): void {
-    const {entityStore} = this;
-    entityStore.forEachChunkWith(['mesh'], (chunk) => {
-      // Let's just hope that it exists
-      const mesh = chunk.getAt(0)!.get<Mesh>('mesh')!;
+    const {entityStore, camera} = this;
+    if (camera == null) {
+      return;
+    }
+    const meshComp = entityStore.getComponent<MeshComponent>('mesh');
+    entityStore.forEachChunkWith([meshComp], (chunk) => {
+      const mesh = meshComp.getChunk(chunk, 0);
       if (mesh != null) {
-        mesh.render(chunk, renderer);
+        mesh.render(chunk, this);
       }
     });
   }

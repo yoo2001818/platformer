@@ -1,3 +1,5 @@
+import {Camera} from '../3d/Camera';
+import {Transform} from '../3d/Transform';
 import {TransformComponent} from '../3d/TransformComponent';
 import {EntityChunk} from '../core/EntityChunk';
 
@@ -44,13 +46,19 @@ export class BasicMaterial implements Material {
 
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void {
     // Bind the shaders
-    const {glRenderer, entityStore} = renderer;
+    const {glRenderer, entityStore, camera} = renderer;
     this.shader.bind(glRenderer);
     geometry.bind(glRenderer, this.shader);
 
     // Get the necessary components
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
+    const cameraData = camera!.get<Camera>('camera')!;
+    const cameraTransform = camera!.get<Transform>(transformComp)!;
+    this.shader.setUniforms({
+      uView: cameraData.getView(cameraTransform),
+      uProjection: cameraData.getProjection(renderer.getAspectRatio()),
+    });
     chunk.forEach((entity) => {
       const transform = entity.get(transformComp);
       if (transform == null) {
