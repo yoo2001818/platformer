@@ -20,6 +20,10 @@ export class Camera {
     this.view = mat4.create() as Float32Array;
   }
 
+  setOptions(options: CameraOptions): void {
+    this.options = options;
+  }
+
   getProjection(aspect: number): Float32Array {
     const {type, near, far, fov} = this.options;
     switch (type) {

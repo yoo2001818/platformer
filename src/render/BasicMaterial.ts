@@ -150,15 +150,15 @@ export class BasicMaterial implements Material {
       uView: cameraData.getView(cameraTransform),
       uProjection: cameraData.getProjection(renderer.getAspectRatio()),
       uPointLights: [{
-        position: [0, 0, 0],
+        position: [20, 0, 0],
         color: '#ffffff',
-        intensity: [0.1, 1, 1, 0.001],
+        intensity: [0.3, 1, 1, 0.001],
       }],
       uMaterial: {
-        ambient: '#ff0000',
-        diffuse: '#00ff00',
-        specular: '#0000ff',
-        shininess: 1,
+        ambient: '#FFD229',
+        diffuse: '#FFD229',
+        specular: '#ffffff',
+        shininess: 100,
       },
     });
     chunk.forEach((entity) => {

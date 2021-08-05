@@ -1,5 +1,3 @@
-import {vec3} from 'gl-matrix';
-
 import {EntityStore} from '../core/EntityStore';
 import {Float32ArrayComponent, ObjectComponent} from '../core/components';
 import {calcNormals} from '../geom/calcNormals';
@@ -15,6 +13,7 @@ import {Transform} from '../3d/Transform';
 import {Camera} from '../3d/Camera';
 import {MeshComponent} from '../render/MeshComponent';
 import {Mesh} from '../render/Mesh';
+import {OrbitCameraController} from '../input/OrbitCameraController';
 
 const store = new EntityStore();
 
@@ -66,6 +65,13 @@ function main() {
     }),
   });
 
+  const orbitController = new OrbitCameraController(
+    canvas,
+    document.body,
+    cameraEntity,
+    30,
+  );
+
   renderer.setCamera(cameraEntity);
 
   let lastTime = 0;
@@ -104,48 +110,12 @@ function main() {
       }
     });
 
-    const cameraPos = cameraEntity.get(posComp)!;
-    cameraPos
-      .rotateY(delta / 700)
-      // .rotateX(delta / 800)
-      .setPosition(vec3.transformQuat(
-        vec3.create(),
-        [0, 0, 40],
-        cameraPos.getRotation(),
-      ));
-
     store.sort();
 
-    /*
-    const instancedBuffer = new GLArrayBuffer(null, 'stream');
-
-    const chunkData = new Float32Array(2048 * 3);
-
-    store.forEachChunkWith([posComp, velComp], (chunk) => {
-      // Create chunk data...
-      // const posData = posComp.getChunkArray(chunk)!;
-      let chunkPos = 0;
-      chunk.forEach((entity) => {
-        const pos = posComp.get(entity)!;
-        chunkData.set(pos.getPosition(), chunkPos);
-        chunkPos += 3;
-      });
-      instancedBuffer.set(chunkData);
-      vao.bind(renderer);
-      shader.bind(renderer);
-      shader.setAttribute('aInstanced', {buffer: instancedBuffer, divisor: 1});
-      shader.setUniforms({
-        uProjection: cameraEntity.get(cameraComp)!.getProjection(800 / 600),
-        uView: cameraEntity.get(cameraComp)!.getView(cameraEntity.get(posComp)!),
-        uModel: mat4.create(),
-        uTexture: texture,
-      });
-      geometry.drawInstanced(chunk.size);
-    });
-    */
     gl!.clearColor(0, 0, 0, 255);
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
     renderer.render();
+    orbitController.update(delta);
 
     requestAnimationFrame(update);
   }
