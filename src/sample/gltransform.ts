@@ -107,7 +107,7 @@ function main() {
     const cameraPos = cameraEntity.get(posComp)!;
     cameraPos
       .rotateY(delta / 700)
-      .rotateX(delta / 800)
+      // .rotateX(delta / 800)
       .setPosition(vec3.transformQuat(
         vec3.create(),
         [0, 0, 40],
@@ -143,6 +143,8 @@ function main() {
       geometry.drawInstanced(chunk.size);
     });
     */
+    gl!.clearColor(0, 0, 0, 255);
+    gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
     renderer.render();
 
     requestAnimationFrame(update);
