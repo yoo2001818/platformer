@@ -1,3 +1,4 @@
+/* eslint-disable eslint-comments/no-unlimited-disable */
 import {EntityStore} from '../core/EntityStore';
 import {Float32ArrayComponent, ObjectComponent} from '../core/components';
 import {calcNormals} from '../geom/calcNormals';
