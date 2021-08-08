@@ -57,12 +57,20 @@ function main() {
   const glRenderer = new GLRenderer(gl);
   const renderer = new Renderer(glRenderer, store);
 
+  const skyboxTexture = new GLTextureEquirectangular({
+    width: 4096,
+    height: 2048,
+    source: createImage(require('./green_point_park_2k.jpg')),
+    magFilter: 'linear',
+    minFilter: 'linearMipmapLinear',
+  });
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
   const material = new BasicMaterial({
     albedo: '#ffffff',
     metalic: 0.1,
     roughness: 0.05,
+    environment: skyboxTexture,
   });
 
   gl!.enable(gl!.CULL_FACE);
@@ -99,6 +107,7 @@ function main() {
         `,
         /* glsl */`
           #version 100
+          #extension GL_EXT_shader_texture_lod : enable
           precision lowp float;
 
           varying vec2 vPosition;
@@ -111,15 +120,11 @@ function main() {
             vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
             viewPos /= viewPos.w;
             vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-            gl_FragColor = vec4(textureCube(uTexture, dir).xyz, 1.0);
+            gl_FragColor = vec4(textureCubeLodEXT(uTexture, dir, 9.0).xyz, 1.0);
           }
         `,
         {
-          uTexture: new GLTextureEquirectangular({
-            width: 4096,
-            height: 2048,
-            source: createImage(require('./green_point_park_2k.jpg')),
-          }),
+          uTexture: skyboxTexture,
         },
       ),
       new Geometry(quad()),
@@ -154,6 +159,7 @@ function main() {
         albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
         metalic: 0,
         roughness: 0.2,
+        environment: skyboxTexture,
       }),
       new Geometry(calcNormals(quad())),
     ),

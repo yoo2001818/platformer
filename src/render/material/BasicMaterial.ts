@@ -19,11 +19,13 @@ export interface BasicMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture;
   metalic: number | GLTexture;
   roughness: number | GLTexture;
+  environment?: GLTexture;
 }
 
 const ALBEDO_BIT = 1;
 const METALIC_BIT = 2;
-const ROUGHNESS_BIT = 3;
+const ROUGHNESS_BIT = 4;
+const ENVIRONMENT_BIT = 8;
 
 const SHADER_BANK = new ShaderBank(
   (textureBits: number, numLights: number) => `${textureBits}/${numLights}`,
@@ -60,6 +62,7 @@ const SHADER_BANK = new ShaderBank(
     ${textureBits & ALBEDO_BIT ? '#define USE_ALBEDO_MAP' : ''}
     ${textureBits & METALIC_BIT ? '#define USE_METALIC_MAP' : ''}
     ${textureBits & ROUGHNESS_BIT ? '#define USE_ROUGHNESS_MAP' : ''}
+    ${textureBits & ENVIRONMENT_BIT ? '#define USE_ENVIRONMENT_MAP' : ''}
 
     #define GAMMA 2.2
     #define PI 3.14159
@@ -82,6 +85,9 @@ const SHADER_BANK = new ShaderBank(
     uniform Material uMaterial;
     #ifdef USE_ALBEDO_MAP
     uniform sampler2D uAlbedoMap;
+    #endif
+    #ifdef USE_ENVIRONMENT_MAP
+    uniform samplerCube uEnvironmentMap;
     #endif
 
     void main() {
@@ -180,6 +186,11 @@ export class BasicMaterial implements Material {
     if (options.albedo instanceof GLTexture) {
       featureBits |= ALBEDO_BIT;
       uniformOptions.uAlbedoMap = options.albedo;
+    }
+
+    if (options.environment instanceof GLTexture) {
+      featureBits |= ENVIRONMENT_BIT;
+      uniformOptions.uEnvironmentMap = options.environment;
     }
 
     const shader = SHADER_BANK.get(featureBits, this.lights.length);

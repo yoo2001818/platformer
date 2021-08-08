@@ -146,6 +146,7 @@ export class GLTextureEquirectangular extends GLTexture {
         fb.unbind();
         fb.dispose();
         // Finally, generate a mipmap if desired.
+        this._setParameters(TEXTURE_CUBE_MAP, this.options);
         if (options.mipmap !== false) {
           this.generateMipmap();
         }

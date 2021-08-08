@@ -26,6 +26,7 @@ export class GLRenderer {
     this.instanceExt = gl.getExtension('ANGLE_instanced_arrays');
     this.uintExt = gl.getExtension('OES_element_index_uint');
     this.anisotropic = gl.getExtension('EXT_texture_filter_anisotropic');
+    gl.getExtension('EXT_shader_texture_lod');
     this.attributeManager = new GLAttributeManager(this);
     this.textureManager = new GLTextureManager(this);
   }
