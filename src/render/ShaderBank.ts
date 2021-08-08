@@ -1,10 +1,15 @@
 import {GLShader} from './gl/GLShader';
 
 export class ShaderBank<T extends any[]> {
+  _getId: (...args: T) => string;
   _onGenerate: (...args: T) => GLShader;
   instances: Map<string, GLShader>;
 
-  constructor(onGenerate: (...args: T) => GLShader) {
+  constructor(
+    getId: (...args: T) => string,
+    onGenerate: (...args: T) => GLShader,
+  ) {
+    this._getId = getId;
     this._onGenerate = onGenerate;
     this.instances = new Map();
   }
@@ -16,6 +21,13 @@ export class ShaderBank<T extends any[]> {
   }
 
   get(...values: T): GLShader {
-    return this._onGenerate(...values);
+    const id = this._getId(...values);
+    const instance = this.instances.get(id);
+    if (instance != null) {
+      return instance;
+    }
+    const newInstance = this._onGenerate(...values);
+    this.instances.set(id, newInstance);
+    return newInstance;
   }
 }

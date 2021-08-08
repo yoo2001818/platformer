@@ -1,8 +1,6 @@
 export interface LightOptions {
   color: string;
-  ambient: number;
-  diffuse: number;
-  specular: number;
+  power: number;
   attenuation: number;
 }
 

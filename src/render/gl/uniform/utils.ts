@@ -57,7 +57,7 @@ export function convertFloatArray(
     buf[3] = 1;
     return buf;
   }
-  throw new Error(`Unexpect value ${value}`);
+  return floatBuf[size];
 }
 
 export function convertInt(value: unknown): number {
@@ -95,6 +95,6 @@ export function convertIntArray(
   if (value instanceof Int32Array) {
     return value;
   }
-  throw new Error(`Unexpect value ${value}`);
+  return intBuf[size];
 }
 

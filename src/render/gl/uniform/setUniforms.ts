@@ -15,6 +15,9 @@ export function setUniforms(
   value: unknown,
   entry: UniformEntry,
 ): void {
+  if (value == null) {
+    return;
+  }
   if (entry == null) {
     // noop
   } else if (isUniformType(entry)) {

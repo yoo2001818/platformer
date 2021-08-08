@@ -15,7 +15,11 @@ import {Camera} from '../3d/Camera';
 import {MeshComponent} from '../render/MeshComponent';
 import {Mesh} from '../render/Mesh';
 import {Light} from '../render/Light';
+import {createImage} from '../render/utils/createImage';
+import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {OrbitCameraController} from '../input/OrbitCameraController';
+
+import logo from './logo.png';
 
 const store = new EntityStore();
 
@@ -52,8 +56,13 @@ function main() {
   const glRenderer = new GLRenderer(gl);
   const renderer = new Renderer(glRenderer, store);
 
+  const texture = new GLTexture2D({source: createImage(logo)});
   const geometry = new Geometry(calcNormals(box()));
-  const material = new BasicMaterial();
+  const material = new BasicMaterial({
+    albedo: texture,
+    metalic: 0,
+    roughness: 0.02,
+  });
 
   gl!.enable(gl!.CULL_FACE);
   gl!.enable(gl!.DEPTH_TEST);
@@ -63,9 +72,7 @@ function main() {
     transform: new Transform().translate([20, 0, 0]),
     light: new Light({
       color: '#ffffff',
-      ambient: 0.3,
-      diffuse: 1,
-      specular: 1,
+      power: 1,
       attenuation: 0.0001,
     }),
   });
