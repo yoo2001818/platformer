@@ -130,14 +130,14 @@ function main() {
     });
 
     lightEntity.get(posComp)!.setPosition([
-      Math.cos(time / 1000) * 20,
-      Math.sin(time / 1000) * 20,
+      Math.cos(time / 1000) * 30,
+      Math.sin(time / 1000) * 30,
       0,
     ]);
 
     lightBox.get(posComp)!.setPosition([
-      Math.cos(time / 1000) * 20,
-      Math.sin(time / 1000) * 20,
+      Math.cos(time / 1000) * 30,
+      Math.sin(time / 1000) * 30,
       0,
     ]);
 

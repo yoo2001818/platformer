@@ -9,6 +9,7 @@ import {Material} from './Material';
 import {Renderer} from './Renderer';
 import {Light} from './Light';
 import {createId} from './utils/createId';
+import {PBR} from './shader/pbr';
 
 export class BasicMaterial implements Material {
   id: number;
@@ -17,7 +18,7 @@ export class BasicMaterial implements Material {
   lights: unknown[] = [];
   constructor() {
     this.id = createId();
-    this.shader = new GLShader(`
+    this.shader = new GLShader(/* glsl */`
       #version 100
       precision highp float;
 
@@ -42,19 +43,18 @@ export class BasicMaterial implements Material {
         vNormal = (uView * uModel * vec4(aNormal, 0.0)).xyz;
         vTexCoord = aTexCoord;
       } 
-    `, `
+    `, /* glsl */`
       #version 100
       precision highp float;
 
       #define NUM_POINT_LIGHTS 1
       #define GAMMA 2.2
+      #define PI 3.14159
 
       struct Material {
-        vec3 ambient;
-        vec3 diffuse;
-        vec3 specular;
-
-        float shininess;
+        vec3 albedo;
+        float metalic;
+        float roughness;
       };
 
       struct PointLight {
@@ -71,61 +71,41 @@ export class BasicMaterial implements Material {
       uniform PointLight uPointLights[NUM_POINT_LIGHTS];
       uniform Material uMaterial;
 
-      vec3 normal;
-      vec3 fragPos;
-      vec3 ambient;
-      vec3 diffuse;
-      vec3 specular;
+      vec3 gNormal;
+      vec3 gFragPos;
+      vec3 gAlbedo;
+      vec3 gReflection;
 
-      vec3 calcPhong(vec3 lightDir, vec3 viewDir) {
-        // Diffuse
-        float lambertian = max(dot(lightDir, normal), 0.0);
+      ${PBR}
 
-        // Specular
-        float spec = 0.0;
-        float fresnel = 0.0;
-        if (lambertian > 0.0) {
-          vec3 halfDir = normalize(lightDir + viewDir);
-          float specAngle = max(dot(halfDir, normal), 0.0);
-
-          spec = pow(specAngle, uMaterial.shininess);
-          fresnel = pow(1.0 - max(0.0, dot(halfDir, viewDir)), 5.0);
-        }
-
-        return vec3(lambertian, spec, fresnel);
-      }
-
-      vec3 calcPoint(PointLight light, vec3 viewDir) {
+      vec3 calcPoint(PointLight light, vec3 V) {
         vec3 lightPos = (uView * vec4(light.position, 1.0)).xyz;
-        vec3 lightDir = lightPos - fragPos;
+        vec3 L = lightPos - gFragPos;
+        vec3 N = gNormal;
 
-        float distance = length(lightDir);
-        lightDir = lightDir / distance;
+        float distance = length(L);
+        L = L / distance;
 
         // Attenuation
         float attenuation = 1.0 / ( 1.0 +
           light.intensity.w * (distance * distance));
 
-        vec3 phong = calcPhong(lightDir, viewDir);
+        float dotNL = max(dot(N, L), 0.0);
 
-        // Combine everything together
-        vec3 result = diffuse * light.intensity.g * phong.x;
-        result += specular * light.intensity.b * phong.y;
-        result += ambient * light.intensity.r;
-        result *= attenuation;
-        result *= light.color;
+        vec3 brdf = brdfCookTorr(L, V, N, uMaterial.roughness, gAlbedo, gReflection);
 
-        return result;
+        // return vec3(pow(1.0 - dotNL, 5.0));
+        return brdf * light.color * attenuation * dotNL;
       }
 
       void main() {
-        fragPos = vPosition;
+        gFragPos = vPosition;
         vec3 viewDir = normalize(-vPosition);
-        normal = normalize(vNormal);
+        gNormal = normalize(vNormal);
 
-        ambient = pow(uMaterial.ambient, vec3(GAMMA));
-        diffuse = pow(uMaterial.diffuse, vec3(GAMMA));
-        specular = pow(uMaterial.specular, vec3(GAMMA));
+        vec3 linearAlbedo = pow(uMaterial.albedo, vec3(GAMMA));
+        gAlbedo = mix(linearAlbedo, vec3(0.0), uMaterial.metalic);
+        gReflection = mix(vec3(0.04), linearAlbedo, uMaterial.metalic);
 
         vec3 result = vec3(0.0, 0.0, 0.0);
 
@@ -181,10 +161,9 @@ export class BasicMaterial implements Material {
       uProjection: cameraData.getProjection(renderer.getAspectRatio()),
       uPointLights: this.lights,
       uMaterial: {
-        ambient: '#FFD229',
-        diffuse: '#FFD229',
-        specular: '#ffffff',
-        shininess: 100,
+        albedo: '#FFD229',
+        metalic: 0,
+        roughness: 0.01,
       },
     });
     chunk.forEach((entity) => {
