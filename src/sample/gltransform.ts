@@ -14,6 +14,7 @@ import {Transform} from '../3d/Transform';
 import {Camera} from '../3d/Camera';
 import {MeshComponent} from '../render/MeshComponent';
 import {Mesh} from '../render/Mesh';
+import {Light} from '../render/Light';
 import {OrbitCameraController} from '../input/OrbitCameraController';
 
 const store = new EntityStore();
@@ -21,6 +22,7 @@ const store = new EntityStore();
 const posComp = new TransformComponent();
 const velComp = new Float32ArrayComponent(4);
 const cameraComp = new ObjectComponent<Camera>();
+const lightComp = new ObjectComponent<Light>();
 const meshComp = new MeshComponent();
 
 store.registerComponents({
@@ -28,6 +30,7 @@ store.registerComponents({
   vel: velComp,
   camera: cameraComp,
   mesh: meshComp,
+  light: lightComp,
 });
 
 function main() {
@@ -55,6 +58,21 @@ function main() {
   gl!.enable(gl!.CULL_FACE);
   gl!.enable(gl!.DEPTH_TEST);
   gl!.depthFunc(gl!.LEQUAL);
+
+  const lightEntity = store.create({
+    transform: new Transform().translate([20, 0, 0]),
+    light: new Light({
+      color: '#ffffff',
+      ambient: 0.3,
+      diffuse: 1,
+      specular: 1,
+      attenuation: 0.0001,
+    }),
+  });
+  const lightBox = store.create({
+    transform: new Transform(),
+    mesh: new Mesh(material, geometry),
+  });
 
   const cameraEntity = store.create({
     transform: new Transform().translate([0, 0, 40]),
@@ -110,6 +128,18 @@ function main() {
         entity.destroy();
       }
     });
+
+    lightEntity.get(posComp)!.setPosition([
+      Math.cos(time / 1000) * 20,
+      Math.sin(time / 1000) * 20,
+      0,
+    ]);
+
+    lightBox.get(posComp)!.setPosition([
+      Math.cos(time / 1000) * 20,
+      Math.sin(time / 1000) * 20,
+      0,
+    ]);
 
     store.sort();
 

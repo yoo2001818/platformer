@@ -7,11 +7,14 @@ import {GLGeometry} from './gl/GLGeometry';
 import {GLShader} from './gl/GLShader';
 import {Material} from './Material';
 import {Renderer} from './Renderer';
+import {Light} from './Light';
 import {createId} from './utils/createId';
 
 export class BasicMaterial implements Material {
   id: number;
   shader: GLShader;
+  frameId = 0;
+  lights: unknown[] = [];
   constructor() {
     this.id = createId();
     this.shader = new GLShader(`
@@ -135,9 +138,36 @@ export class BasicMaterial implements Material {
     `);
   }
 
+  _prepare(renderer: Renderer): void {
+    // Collect all lights in the world
+    const {entityStore, frameId} = renderer;
+    this.frameId = frameId;
+    this.lights = [];
+    // Bake the lights...
+    entityStore.forEachWith(['light', 'transform'], (entity) => {
+      const transform = entity.get<Transform>('transform')!;
+      const light = entity.get<Light>('light')!;
+      const lightOptions = light.options;
+      this.lights.push({
+        position: transform.getPosition(),
+        color: lightOptions.color,
+        intensity: [
+          lightOptions.ambient,
+          lightOptions.diffuse,
+          lightOptions.specular,
+          lightOptions.attenuation,
+        ],
+      });
+    });
+  }
+
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void {
+    const {glRenderer, entityStore, camera, frameId} = renderer;
+    if (frameId !== this.frameId) {
+      this._prepare(renderer);
+    }
+
     // Bind the shaders
-    const {glRenderer, entityStore, camera} = renderer;
     this.shader.bind(glRenderer);
     geometry.bind(glRenderer, this.shader);
 
@@ -149,11 +179,7 @@ export class BasicMaterial implements Material {
     this.shader.setUniforms({
       uView: cameraData.getView(cameraTransform),
       uProjection: cameraData.getProjection(renderer.getAspectRatio()),
-      uPointLights: [{
-        position: [20, 0, 0],
-        color: '#ffffff',
-        intensity: [0.3, 1, 1, 0.001],
-      }],
+      uPointLights: this.lights,
       uMaterial: {
         ambient: '#FFD229',
         diffuse: '#FFD229',

@@ -9,6 +9,7 @@ export class Renderer {
   entityStore: EntityStore;
   camera: Entity | null;
   resources: Map<number, unknown>;
+  frameId: number;
 
   constructor(
     glRenderer: GLRenderer,
@@ -18,6 +19,7 @@ export class Renderer {
     this.entityStore = entityStore;
     this.camera = null;
     this.resources = new Map();
+    this.frameId = 0;
   }
 
   getAspectRatio(): number {
@@ -44,11 +46,13 @@ export class Renderer {
     if (camera == null) {
       return;
     }
+    this.frameId += 1;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     entityStore.forEachChunkWith([meshComp], (chunk) => {
       const mesh = meshComp.getChunk(chunk, 0);
       if (mesh != null) {
-        mesh.render(chunk, this);
+        const glGeometry = mesh.geometry.getGLGeometry(this);
+        mesh.material.render(chunk, glGeometry, this);
       }
     });
   }
