@@ -121,6 +121,13 @@ export class GLShader {
     }
   }
 
+  hasUniform(name: string): boolean {
+    if (this.uniforms == null) {
+      throw new Error('Uniforms are not initialized');
+    }
+    return name in this.uniforms;
+  }
+
   setUniforms(uniforms: unknown): void {
     const {renderer} = this;
     if (renderer == null) {

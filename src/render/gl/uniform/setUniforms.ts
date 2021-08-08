@@ -18,6 +18,10 @@ export function setUniforms(
   if (value == null) {
     return;
   }
+  if (typeof value === 'function') {
+    setUniforms(renderer, value(), entry);
+    return;
+  }
   if (entry == null) {
     // noop
   } else if (isUniformType(entry)) {

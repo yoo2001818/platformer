@@ -23,7 +23,7 @@ export class GLTexture2D extends GLTexture {
     if (this.uploadFulfilled < 2) {
       this.uploadFulfilled =
         this._texImage2D(TEXTURE_2D, this.options, this.uploadFulfilled);
-      if (this.uploadFulfilled === 2) {
+      if (this.uploadFulfilled === 2 && this.options.mipmap !== false) {
         this._generateMipmap(TEXTURE_2D);
       }
     }

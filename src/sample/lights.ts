@@ -17,6 +17,8 @@ import {Light} from '../render/Light';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
+import {ShaderMaterial} from '../render/material/ShaderMaterial';
+import {GLTextureCube} from '../render/gl/GLTextureCube';
 
 const store = new EntityStore();
 
@@ -75,6 +77,58 @@ function main() {
       far: 1000,
       near: 0.1,
     }),
+  });
+
+  store.create({
+    name: 'skybox',
+    transform: new Transform(),
+    mesh: new Mesh(
+      new ShaderMaterial(
+        /* glsl */`
+          #version 100
+          precision lowp float;
+
+          attribute vec3 aPosition;
+
+          varying vec2 vPosition;
+
+          void main() {
+            vPosition = aPosition.xy;
+            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+          }
+        `,
+        /* glsl */`
+          #version 100
+          precision lowp float;
+
+          varying vec2 vPosition;
+
+          uniform samplerCube uTexture;
+          uniform mat4 uInverseView;
+          uniform mat4 uInverseProjection;
+
+          void main() {
+            vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
+            viewPos /= viewPos.w;
+            vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
+            gl_FragColor = vec4(textureCube(uTexture, dir).xyz, 1.0);
+          }
+        `,
+        {
+          uTexture: new GLTextureCube({
+            sources: [
+              createImage(require('./sky1.png')),
+              createImage(require('./sky2.png')),
+              createImage(require('./sky3.png')),
+              createImage(require('./sky4.png')),
+              createImage(require('./sky5.png')),
+              createImage(require('./sky6.png')),
+            ],
+          }),
+        },
+      ),
+      new Geometry(quad()),
+    ),
   });
 
   store.create({
