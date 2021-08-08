@@ -228,4 +228,8 @@ export class GLTexture {
     this._invalidate();
   }
 
+  generateMipmap(): void {
+    this._generateMipmap(this.type);
+  }
+
 }

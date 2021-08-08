@@ -4,6 +4,7 @@ import {GLTextureManager} from './GLTextureManager';
 import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLVertexArray} from './GLVertexArray';
 import {GLShader} from './GLShader';
+import {GLFrameBuffer} from './GLFrameBuffer';
 
 export class GLRenderer {
   gl: WebGLRenderingContext;
@@ -13,6 +14,7 @@ export class GLRenderer {
   anisotropic: EXT_texture_filter_anisotropic | null;
   attributeManager: GLAttributeManager;
   textureManager: GLTextureManager;
+  boundFrameBuffer: GLFrameBuffer | null = null;
   boundArrayBuffer: GLArrayBuffer | null = null;
   boundElementArrayBuffer: GLElementArrayBuffer | null = null;
   boundVertexArray: GLVertexArray | null = null;

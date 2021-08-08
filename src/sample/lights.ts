@@ -158,7 +158,7 @@ function main() {
       new BasicMaterial({
         albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
         metalic: 0,
-        roughness: 0.4,
+        roughness: 0.2,
       }),
       new Geometry(calcNormals(quad())),
     ),
