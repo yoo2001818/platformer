@@ -2,11 +2,14 @@ import {Geometry} from './Geometry';
 import {Material} from './Material';
 
 export class Mesh {
-  material: Material;
-  geometry: Geometry;
+  materials: Material[];
+  geometries: Geometry[];
 
-  constructor(material: Material, geometry: Geometry) {
-    this.material = material;
-    this.geometry = geometry;
+  constructor(
+    material: Material | Material[],
+    geometry: Geometry | Geometry[],
+  ) {
+    this.materials = Array.isArray(material) ? material : [material];
+    this.geometries = Array.isArray(geometry) ? geometry : [geometry];
   }
 }

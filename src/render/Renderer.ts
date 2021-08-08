@@ -51,8 +51,14 @@ export class Renderer {
     entityStore.forEachChunkWith([meshComp], (chunk) => {
       const mesh = meshComp.getChunk(chunk, 0);
       if (mesh != null) {
-        const glGeometry = mesh.geometry.getGLGeometry(this);
-        mesh.material.render(chunk, glGeometry, this);
+        mesh.materials.forEach((material, index) => {
+          const geometry = mesh.geometries[index];
+          if (geometry == null) {
+            throw new Error('Geometry is null');
+          }
+          const glGeometry = geometry.getGLGeometry(this);
+          material.render(chunk, glGeometry, this);
+        });
       }
     });
   }
