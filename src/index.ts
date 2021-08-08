@@ -1,1 +1,1 @@
-import './sample/gltransform';
+import './sample/lights';

@@ -121,7 +121,7 @@ export class GLTexture {
       return;
     }
     this._active();
-    const {gl} = renderer;
+    const {gl, anisotropic} = renderer;
     gl.texParameteri(
       target,
       gl.TEXTURE_MAG_FILTER,
@@ -130,7 +130,7 @@ export class GLTexture {
     gl.texParameteri(
       target,
       gl.TEXTURE_MIN_FILTER,
-      TEXTURE_PARAM_MAP[params.minFilter ?? 'nearestMipmapLinear'],
+      TEXTURE_PARAM_MAP[params.minFilter ?? 'linearMipmapLinear'],
     );
     gl.texParameteri(
       target,
@@ -142,6 +142,14 @@ export class GLTexture {
       gl.TEXTURE_WRAP_T,
       TEXTURE_PARAM_MAP[params.wrapT ?? 'repeat'],
     );
+    if (anisotropic) {
+      const max = gl.getParameter(anisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+      gl.texParameterf(
+        target,
+        anisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
+        max,
+      );
+    }
   }
 
   _texImage2D(

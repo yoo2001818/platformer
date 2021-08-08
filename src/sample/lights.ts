@@ -1,27 +1,26 @@
 import {EntityStore} from '../core/EntityStore';
 import {Float32ArrayComponent, ObjectComponent} from '../core/components';
-import {calcNormals} from '../geom/calcNormals';
-import {box} from '../geom/box';
-// import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
-// import {parseObj} from '../geom/loader/obj';
+import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
+import {parseObj} from '../geom/loader/obj';
 import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
 import {BasicMaterial} from '../render/material/BasicMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
+import {calcNormals} from '../geom/calcNormals';
+import {quad} from '../geom/quad';
 import {TransformComponent} from '../3d/TransformComponent';
 import {Transform} from '../3d/Transform';
 import {Camera} from '../3d/Camera';
 import {MeshComponent} from '../render/MeshComponent';
 import {Mesh} from '../render/Mesh';
 import {Light} from '../render/Light';
-import {createImage} from '../render/utils/createImage';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
+import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
-
-import logo from './logo.png';
 
 const store = new EntityStore();
 
+const nameComp = new ObjectComponent<string>();
 const posComp = new TransformComponent();
 const velComp = new Float32ArrayComponent(4);
 const cameraComp = new ObjectComponent<Camera>();
@@ -29,6 +28,7 @@ const lightComp = new ObjectComponent<Light>();
 const meshComp = new MeshComponent();
 
 store.registerComponents({
+  name: nameComp,
   transform: posComp,
   vel: velComp,
   camera: cameraComp,
@@ -55,30 +55,17 @@ function main() {
   const glRenderer = new GLRenderer(gl);
   const renderer = new Renderer(glRenderer, store);
 
-  const texture = new GLTexture2D({source: createImage(logo)});
-  const geometry = new Geometry(calcNormals(box()));
+  // const texture = new GLTexture2D({source: createImage(logo)});
+  const teapot = parseObj(require('./teapot.obj').default);
   const material = new BasicMaterial({
-    albedo: texture,
-    metalic: 0,
-    roughness: 0.02,
+    albedo: '#ffffff',
+    metalic: 0.1,
+    roughness: 0.05,
   });
 
   gl!.enable(gl!.CULL_FACE);
   gl!.enable(gl!.DEPTH_TEST);
   gl!.depthFunc(gl!.LEQUAL);
-
-  const lightEntity = store.create({
-    transform: new Transform().translate([20, 0, 0]),
-    light: new Light({
-      color: '#ffffff',
-      power: 1,
-      attenuation: 0.0001,
-    }),
-  });
-  const lightBox = store.create({
-    transform: new Transform(),
-    mesh: new Mesh(material, geometry),
-  });
 
   const cameraEntity = store.create({
     transform: new Transform().translate([0, 0, 40]),
@@ -90,11 +77,64 @@ function main() {
     }),
   });
 
+  store.create({
+    name: 'teapotBase',
+    transform: new Transform(),
+    mesh: new Mesh(
+      material,
+      new Geometry(bakeChannelGeom(teapot[0].geometry)),
+    ),
+  });
+
+  store.create({
+    name: 'teapotLid',
+    transform: new Transform(),
+    mesh: new Mesh(
+      material,
+      new Geometry(bakeChannelGeom(teapot[1].geometry)),
+    ),
+  });
+
+  store.create({
+    name: 'floor',
+    transform: new Transform()
+      .rotateX(-Math.PI / 2)
+      .setScale([10, 10, 10]),
+    mesh: new Mesh(
+      new BasicMaterial({
+        albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
+        metalic: 0,
+        roughness: 0.4,
+      }),
+      new Geometry(calcNormals(quad())),
+    ),
+  });
+
+  store.create({
+    name: 'light',
+    transform: new Transform().translate([5, 5, 5]),
+    light: new Light({
+      color: '#ffaaaa',
+      power: 2,
+      attenuation: 0.0001,
+    }),
+  });
+
+  store.create({
+    name: 'light',
+    transform: new Transform().translate([-5, 5, -5]),
+    light: new Light({
+      color: '#aaaaff',
+      power: 2,
+      attenuation: 0.00001,
+    }),
+  });
+
   const orbitController = new OrbitCameraController(
     canvas,
     document.body,
     cameraEntity,
-    30,
+    10,
   );
 
   renderer.setCamera(cameraEntity);
@@ -104,48 +144,6 @@ function main() {
   function update(time: number) {
     const delta = time - lastTime;
     lastTime = time;
-    for (let i = 0; i < 1; i += 1) {
-      const entity = store.create();
-      entity.set('transform', new Transform());
-      entity.set('vel', new Float32Array([
-        (Math.random() * 2 - 1) * 20,
-        (Math.random() * 2 - 1) * 20,
-        (Math.random() * 2 - 1) * 20,
-        1,
-      ]));
-      entity.set('mesh', new Mesh(material, geometry));
-    }
-
-    store.forEachWith([posComp, velComp], (entity) => {
-      const pos = posComp.get(entity)!;
-      const vel = velComp.get(entity)!;
-      pos.translate([
-        vel[0] * delta / 1000,
-        vel[1] * delta / 1000,
-        vel[2] * delta / 1000,
-      ]);
-      const posVec = pos.getPosition();
-      const boundary = 20;
-      if (
-        posVec[0] < -boundary || posVec[0] > boundary ||
-        posVec[1] < -boundary || posVec[1] > boundary ||
-        posVec[2] < -boundary || posVec[2] > boundary
-      ) {
-        entity.destroy();
-      }
-    });
-
-    lightEntity.get(posComp)!.setPosition([
-      Math.cos(time / 1000) * 30,
-      Math.sin(time / 1000) * 30,
-      0,
-    ]);
-
-    lightBox.get(posComp)!.setPosition([
-      Math.cos(time / 1000) * 30,
-      Math.sin(time / 1000) * 30,
-      0,
-    ]);
 
     store.sort();
 

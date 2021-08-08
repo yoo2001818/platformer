@@ -1,20 +1,19 @@
 import {vec3} from 'gl-matrix';
 
-import {Camera} from '../3d/Camera';
-import {Transform} from '../3d/Transform';
-import {TransformComponent} from '../3d/TransformComponent';
-import {EntityChunk} from '../core/EntityChunk';
-
-import {GLGeometry} from './gl/GLGeometry';
-import {GLShader} from './gl/GLShader';
-import {Material} from './Material';
-import {Renderer} from './Renderer';
-import {Light} from './Light';
-import {createId} from './utils/createId';
-import {PBR} from './shader/pbr';
-import {POINT_LIGHT} from './shader/light';
-import {GLTexture} from './gl/GLTexture';
-import {ShaderBank} from './ShaderBank';
+import {Camera} from '../../3d/Camera';
+import {Transform} from '../../3d/Transform';
+import {TransformComponent} from '../../3d/TransformComponent';
+import {EntityChunk} from '../../core/EntityChunk';
+import {GLGeometry} from '../gl/GLGeometry';
+import {GLShader} from '../gl/GLShader';
+import {Material} from '../Material';
+import {Renderer} from '../Renderer';
+import {Light} from '../Light';
+import {createId} from '../utils/createId';
+import {PBR} from '../shader/pbr';
+import {POINT_LIGHT} from '../shader/light';
+import {GLTexture} from '../gl/GLTexture';
+import {ShaderBank} from '../ShaderBank';
 
 export interface BasicMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture;

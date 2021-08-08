@@ -10,6 +10,7 @@ export class GLRenderer {
   vaoExt: OES_vertex_array_object | null;
   instanceExt: ANGLE_instanced_arrays | null;
   uintExt: OES_element_index_uint | null;
+  anisotropic: EXT_texture_filter_anisotropic | null;
   attributeManager: GLAttributeManager;
   textureManager: GLTextureManager;
   boundArrayBuffer: GLArrayBuffer | null = null;
@@ -22,6 +23,7 @@ export class GLRenderer {
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
     this.instanceExt = gl.getExtension('ANGLE_instanced_arrays');
     this.uintExt = gl.getExtension('OES_element_index_uint');
+    this.anisotropic = gl.getExtension('EXT_texture_filter_anisotropic');
     this.attributeManager = new GLAttributeManager(this);
     this.textureManager = new GLTextureManager(this);
   }
