@@ -1,3 +1,5 @@
+import {vec3} from 'gl-matrix';
+
 import {Camera} from '../3d/Camera';
 import {Transform} from '../3d/Transform';
 import {TransformComponent} from '../3d/TransformComponent';
@@ -79,7 +81,7 @@ export class BasicMaterial implements Material {
       ${PBR}
 
       vec3 calcPoint(PointLight light, vec3 V) {
-        vec3 lightPos = (uView * vec4(light.position, 1.0)).xyz;
+        vec3 lightPos = light.position;
         vec3 L = lightPos - gFragPos;
         vec3 N = gNormal;
 
@@ -120,7 +122,8 @@ export class BasicMaterial implements Material {
 
   _prepare(renderer: Renderer): void {
     // Collect all lights in the world
-    const {entityStore, frameId} = renderer;
+    const {entityStore, camera, frameId} = renderer;
+    const cameraData = camera!.get<Camera>('camera')!;
     this.frameId = frameId;
     this.lights = [];
     // Bake the lights...
@@ -128,8 +131,14 @@ export class BasicMaterial implements Material {
       const transform = entity.get<Transform>('transform')!;
       const light = entity.get<Light>('light')!;
       const lightOptions = light.options;
+      const posVec = vec3.create();
+      vec3.transformMat4(
+        posVec,
+        transform.getPosition(),
+        cameraData.getView(camera!),
+      );
       this.lights.push({
-        position: transform.getPosition(),
+        position: posVec,
         color: lightOptions.color,
         intensity: [
           lightOptions.ambient,
@@ -155,9 +164,8 @@ export class BasicMaterial implements Material {
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
     const cameraData = camera!.get<Camera>('camera')!;
-    const cameraTransform = camera!.get<Transform>(transformComp)!;
     this.shader.setUniforms({
-      uView: cameraData.getView(cameraTransform),
+      uView: cameraData.getView(camera!),
       uProjection: cameraData.getProjection(renderer.getAspectRatio()),
       uPointLights: this.lights,
       uMaterial: {

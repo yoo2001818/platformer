@@ -1,5 +1,7 @@
 import {mat4} from 'gl-matrix';
 
+import {Entity} from '../core/Entity';
+
 import {Transform} from './Transform';
 
 export interface CameraOptions {
@@ -45,7 +47,8 @@ export class Camera {
     return this.projection;
   }
 
-  getView(transform: Transform): Float32Array {
+  getView(entity: Entity): Float32Array {
+    const transform = entity.get<Transform>('transform')!;
     mat4.invert(this.view, transform.getMatrix());
     return this.view;
   }
