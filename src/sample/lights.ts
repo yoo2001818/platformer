@@ -18,7 +18,7 @@ import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
-import {GLTextureCube} from '../render/gl/GLTextureCube';
+import {GLTextureEquirectangular} from '../render/gl/GLTextureEquirectangular';
 
 const store = new EntityStore();
 
@@ -115,15 +115,10 @@ function main() {
           }
         `,
         {
-          uTexture: new GLTextureCube({
-            sources: [
-              createImage(require('./sky1.png')),
-              createImage(require('./sky2.png')),
-              createImage(require('./sky3.png')),
-              createImage(require('./sky4.png')),
-              createImage(require('./sky5.png')),
-              createImage(require('./sky6.png')),
-            ],
+          uTexture: new GLTextureEquirectangular({
+            width: 4096,
+            height: 2048,
+            source: createImage(require('./green_point_park_2k.jpg')),
           }),
         },
       ),

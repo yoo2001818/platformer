@@ -15,6 +15,8 @@ export interface GLFrameBufferOptions {
   depth?: GLFrameBufferTarget;
   stencil?: GLFrameBufferTarget;
   depthStencil?: GLFrameBufferTarget;
+  width: number;
+  height: number;
 }
 
 export const COLOR_ATTACHMENT = 0x8CE0;
@@ -33,13 +35,27 @@ export class GLFrameBuffer {
 
   bind(renderer: GLRenderer): void {
     if (this.framebuffer == null) {
+      const {gl} = renderer;
       this.renderer = renderer;
       this.framebuffer = renderer.gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+      this._set(this.options);
+      renderer.boundFrameBuffer = this;
     }
     if (renderer.boundFrameBuffer !== this) {
       const {gl} = renderer;
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
-      this._set(this.options);
+      renderer.boundFrameBuffer = this;
+    }
+  }
+
+  unbind(): void {
+    const {renderer} = this;
+    if (renderer != null && renderer.boundFrameBuffer != null) {
+      const {gl} = renderer;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      renderer.boundFrameBuffer = null;
+      renderer.setViewport();
     }
   }
 
@@ -60,20 +76,22 @@ export class GLFrameBuffer {
     }
     const {gl} = renderer;
     if (attachment instanceof GLTexture) {
+      attachment.bind(renderer);
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
         fbTarget,
         attachment.type,
-        attachment,
+        attachment.texture,
         0,
       );
     } else if ('texture' in attachment) {
       const {target, texture} = attachment;
+      texture.bind(renderer);
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
         fbTarget,
         target != null ? TEXTURE_CUBE_MAP_DIRS[target] : texture.type,
-        texture,
+        texture.texture,
         0,
       );
     } else {
@@ -82,6 +100,11 @@ export class GLFrameBuffer {
   }
 
   _set(options: GLFrameBufferOptions): void {
+    const {renderer} = this;
+    if (renderer == null) {
+      throw new Error('Renderer is not supplied');
+    }
+    const {gl} = renderer;
     if (Array.isArray(options.color)) {
       options.color.forEach((item, index) => {
         this._setItem(COLOR_ATTACHMENT + index, item);
@@ -98,6 +121,7 @@ export class GLFrameBuffer {
     if (options.depthStencil != null) {
       this._setItem(DEPTH_STENCIL_ATTACHMENT, options.depthStencil);
     }
+    gl.viewport(0, 0, options.width, options.height);
   }
 
   set(options: GLFrameBufferOptions): void {

@@ -88,6 +88,8 @@ export function setUniforms(
         if (value instanceof GLTexture) {
           const samplerId = renderer.textureManager.bind(value);
           gl.uniform1i(entry.location, samplerId);
+        } else if (typeof value === 'number') {
+          gl.uniform1i(entry.location, value);
         }
         break;
       }

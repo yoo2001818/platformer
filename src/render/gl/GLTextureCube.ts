@@ -23,7 +23,7 @@ export const TEXTURE_CUBE_MAP_DIRS = [
 
 export interface GLTextureCubeOptions
   extends GLTextureParameters, Omit<GLTextureTexImage, 'source'> {
-  sources: GLTextureCandidate[];
+  sources?: GLTextureCandidate[];
 }
 
 export class GLTextureCube extends GLTexture {
@@ -46,7 +46,7 @@ export class GLTextureCube extends GLTexture {
           TEXTURE_CUBE_MAP_DIRS[i],
           {
             ...this.options,
-            source: this.options.sources[i],
+            source: this.options.sources?.[i],
           },
           value,
         );
