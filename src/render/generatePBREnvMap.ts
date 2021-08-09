@@ -60,6 +60,7 @@ const BAKE_SHADER = new GLShader(
       }
       if (mod(mipPos.y, 0.5) >= 0.25) {
         front = front * -1.0;
+        up = up * vec3(1.0, 1.0, -1.0);
       }
       right = cross(front, up);
       vec3 coord = front + up * blockPos.y + right * blockPos.x;

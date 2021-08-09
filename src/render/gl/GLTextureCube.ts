@@ -49,6 +49,7 @@ export class GLTextureCube extends GLTexture {
             source: this.options.sources?.[i],
           },
           value,
+          false,
         );
       }
       if (this.uploadFulfilled[i] < 2) {

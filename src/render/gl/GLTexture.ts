@@ -156,6 +156,7 @@ export class GLTexture {
     target: number,
     options: GLTextureTexImage,
     fulfilled = 0,
+    flipY = true,
   ): number {
     const {renderer} = this;
     if (renderer == null) {
@@ -192,7 +193,7 @@ export class GLTexture {
       source instanceof ImageBitmap
     ) {
       this._active();
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
       gl.texImage2D(
         target,
         0,
@@ -208,7 +209,7 @@ export class GLTexture {
           'and height');
       }
       this._active();
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
       gl.texImage2D(
         target,
         0,

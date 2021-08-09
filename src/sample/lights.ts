@@ -19,7 +19,8 @@ import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
 import {GLTextureEquirectangular} from '../render/gl/GLTextureEquirectangular';
-import { generatePBREnvMap } from '../render/generatePBREnvMap';
+import {generatePBREnvMap} from '../render/generatePBREnvMap';
+import { GLTextureCube } from '../render/gl/GLTextureCube';
 
 const store = new EntityStore();
 
@@ -43,8 +44,8 @@ function main() {
   const canvas = document.createElement('canvas');
   const gl = canvas.getContext('webgl');
 
-  canvas.width = 800;
-  canvas.height = 600;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
   document.body.appendChild(canvas);
 
@@ -53,11 +54,11 @@ function main() {
     return;
   }
 
-  gl.viewport(0, 0, 800, 600);
-
   const glRenderer = new GLRenderer(gl);
   const renderer = new Renderer(glRenderer, store);
+  glRenderer.setViewport();
 
+  //*
   const skyboxTexture = new GLTextureEquirectangular({
     width: 4096,
     height: 2048,
@@ -65,6 +66,18 @@ function main() {
     magFilter: 'linear',
     minFilter: 'linearMipmapLinear',
   });
+  /*/
+  const skyboxTexture = new GLTextureCube({
+    sources: [
+      createImage(require('./sky1.png')),
+      createImage(require('./sky2.png')),
+      createImage(require('./sky3.png')),
+      createImage(require('./sky4.png')),
+      createImage(require('./sky5.png')),
+      createImage(require('./sky6.png')),
+    ],
+  });
+  // */
   const pbrTexture = new GLTexture2D({
     width: 2048,
     height: 4096,
@@ -128,7 +141,7 @@ function main() {
             vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
             viewPos /= viewPos.w;
             vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-            gl_FragColor = vec4(textureCubeLodEXT(uTexture, dir, 9.0).xyz, 1.0);
+            gl_FragColor = vec4(textureCubeLodEXT(uTexture, dir, 0.0).xyz, 1.0);
           }
         `,
         {
@@ -189,6 +202,16 @@ function main() {
     transform: new Transform().translate([-5, 5, -5]),
     light: new Light({
       color: '#aaaaff',
+      power: 2,
+      attenuation: 0.00001,
+    }),
+  });
+
+  store.create({
+    name: 'light',
+    transform: new Transform().translate([0, 0, 15]),
+    light: new Light({
+      color: '#ffffff',
       power: 2,
       attenuation: 0.00001,
     }),
