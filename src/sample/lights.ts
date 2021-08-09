@@ -20,7 +20,7 @@ import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
 import {GLTextureEquirectangular} from '../render/gl/GLTextureEquirectangular';
 import {generatePBREnvMap} from '../render/generatePBREnvMap';
-import { GLTextureCube } from '../render/gl/GLTextureCube';
+import {CUBE_PACK} from '../render/shader/cubepack';
 
 const store = new EntityStore();
 
@@ -91,7 +91,7 @@ function main() {
     albedo: '#ffffff',
     metalic: 0.1,
     roughness: 0.05,
-    environment: skyboxTexture,
+    environment: pbrTexture,
   });
 
   gl!.enable(gl!.CULL_FACE);
@@ -128,12 +128,13 @@ function main() {
         `,
         /* glsl */`
           #version 100
-          #extension GL_EXT_shader_texture_lod : enable
           precision lowp float;
+
+          ${CUBE_PACK}
 
           varying vec2 vPosition;
 
-          uniform samplerCube uTexture;
+          uniform sampler2D uTexture;
           uniform mat4 uInverseView;
           uniform mat4 uInverseProjection;
 
@@ -141,11 +142,11 @@ function main() {
             vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
             viewPos /= viewPos.w;
             vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-            gl_FragColor = vec4(textureCubeLodEXT(uTexture, dir, 0.0).xyz, 1.0);
+            gl_FragColor = vec4(textureCubePackLod(uTexture, dir, 0.0).xyz, 1.0);
           }
         `,
         {
-          uTexture: skyboxTexture,
+          uTexture: pbrTexture,
         },
       ),
       new Geometry(quad()),
@@ -173,15 +174,30 @@ function main() {
   store.create({
     name: 'floor',
     transform: new Transform()
-      // .rotateX(-Math.PI / 2)
-      .setScale([10, 20, 10]),
+      .rotateX(-Math.PI / 2)
+      .setScale([10, 10, 10]),
     mesh: new Mesh(
       new BasicMaterial({
-        // albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
+        albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
+        metalic: 0,
+        roughness: 0.2,
+        environment: pbrTexture,
+      }),
+      new Geometry(calcNormals(quad())),
+    ),
+  });
+
+  store.create({
+    name: 'envMapDebug',
+    transform: new Transform()
+      .rotateX(-Math.PI / 2)
+      .setScale([2.5, 5, 10])
+      .setPosition([15, 0, 0]),
+    mesh: new Mesh(
+      new BasicMaterial({
         albedo: pbrTexture,
         metalic: 0,
         roughness: 0.2,
-        environment: skyboxTexture,
       }),
       new Geometry(calcNormals(quad())),
     ),
@@ -209,7 +225,7 @@ function main() {
 
   store.create({
     name: 'light',
-    transform: new Transform().translate([0, 0, 15]),
+    transform: new Transform().translate([15, 5, 0]),
     light: new Light({
       color: '#ffffff',
       power: 2,
@@ -235,6 +251,7 @@ function main() {
 
     store.sort();
 
+    skyboxTexture.bind(glRenderer);
     if (skyboxTexture.isReady() && !pbrBuilt) {
       pbrBuilt = true;
       generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);

@@ -14,6 +14,7 @@ import {PBR} from '../shader/pbr';
 import {POINT_LIGHT} from '../shader/light';
 import {GLTexture} from '../gl/GLTexture';
 import {ShaderBank} from '../ShaderBank';
+import {CUBE_PACK} from '../shader/cubepack';
 
 export interface BasicMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture;
@@ -43,6 +44,7 @@ const SHADER_BANK = new ShaderBank(
     uniform mat4 uModel;
 
     varying vec3 vPosition;
+    varying vec3 vWorldNormal;
     varying vec3 vNormal;
     varying vec2 vTexCoord;
 
@@ -51,6 +53,7 @@ const SHADER_BANK = new ShaderBank(
       gl_Position = uProjection * pos;
       vPosition = pos.xyz;
       // TODO Normal 3x3 matrix
+      vWorldNormal = (uModel * vec4(aNormal, 0.0)).xyz;
       vNormal = (uView * uModel * vec4(aNormal, 0.0)).xyz;
       vTexCoord = aTexCoord;
     } 
@@ -75,8 +78,10 @@ const SHADER_BANK = new ShaderBank(
 
     ${POINT_LIGHT}
     ${PBR}
+    ${CUBE_PACK}
 
     varying vec3 vPosition;
+    varying vec3 vWorldNormal;
     varying vec3 vNormal;
     varying vec2 vTexCoord;
 
@@ -87,7 +92,7 @@ const SHADER_BANK = new ShaderBank(
     uniform sampler2D uAlbedoMap;
     #endif
     #ifdef USE_ENVIRONMENT_MAP
-    uniform samplerCube uEnvironmentMap;
+    uniform sampler2D uEnvironmentMap;
     #endif
 
     void main() {
@@ -119,6 +124,10 @@ const SHADER_BANK = new ShaderBank(
 
         result += radiance * brdf;
       }
+
+      #ifdef USE_ENVIRONMENT_MAP
+        result += albedo * pow(textureCubePackLod(uEnvironmentMap, vWorldNormal, 6.0).rgb, vec3(GAMMA));
+      #endif
 
       gl_FragColor = vec4(pow(result, vec3(1.0 / GAMMA)), 1.0);
     } 
