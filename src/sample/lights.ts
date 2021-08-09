@@ -19,6 +19,7 @@ import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
 import {GLTextureEquirectangular} from '../render/gl/GLTextureEquirectangular';
+import { generatePBREnvMap } from '../render/generatePBREnvMap';
 
 const store = new EntityStore();
 
@@ -63,6 +64,13 @@ function main() {
     source: createImage(require('./green_point_park_2k.jpg')),
     magFilter: 'linear',
     minFilter: 'linearMipmapLinear',
+  });
+  const pbrTexture = new GLTexture2D({
+    width: 2048,
+    height: 4096,
+    source: null,
+    magFilter: 'linear',
+    minFilter: 'linear',
   });
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
@@ -152,11 +160,12 @@ function main() {
   store.create({
     name: 'floor',
     transform: new Transform()
-      .rotateX(-Math.PI / 2)
-      .setScale([10, 10, 10]),
+      // .rotateX(-Math.PI / 2)
+      .setScale([10, 20, 10]),
     mesh: new Mesh(
       new BasicMaterial({
-        albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
+        // albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
+        albedo: pbrTexture,
         metalic: 0,
         roughness: 0.2,
         environment: skyboxTexture,
@@ -195,12 +204,18 @@ function main() {
   renderer.setCamera(cameraEntity);
 
   let lastTime = 0;
+  let pbrBuilt = false;
 
   function update(time: number) {
     const delta = time - lastTime;
     lastTime = time;
 
     store.sort();
+
+    if (skyboxTexture.isReady() && !pbrBuilt) {
+      pbrBuilt = true;
+      generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
+    }
 
     gl!.clearColor(0, 0, 0, 255);
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);

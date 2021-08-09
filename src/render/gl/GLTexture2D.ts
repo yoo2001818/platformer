@@ -37,4 +37,8 @@ export class GLTexture2D extends GLTexture {
     this.options = options;
     this.uploadFulfilled = 0;
   }
+
+  isReady(): boolean {
+    return this.uploadFulfilled === 2;
+  }
 }

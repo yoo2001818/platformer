@@ -19,11 +19,10 @@ const EQUIRECTANGULAR_SHADER = new GLShader(
 
     varying vec3 vPosition;
 
-    uniform mat4 uView;
-    uniform mat4 uProjection;
+    uniform mat4 uTransform;
 
     void main() {
-      vPosition = (uProjection * uView * vec4(aPosition.xy, 1.0, 1.0)).xyz;
+      vPosition = (uTransform * vec4(aPosition.xy, 1.0, 1.0)).xyz;
       gl_Position = vec4(aPosition.xy, 1.0, 1.0);
     }
   `,
@@ -56,14 +55,16 @@ const EQUIRECTANGULAR_MATRIXES = [
   mat4.lookAt(mat4.create(), [0, 0, 0], [0, -1, 0], [0, 0, -1]),
   mat4.lookAt(mat4.create(), [0, 0, 0], [0, 0, 1], [0, -1, 0]),
   mat4.lookAt(mat4.create(), [0, 0, 0], [0, 0, -1], [0, -1, 0]),
-];
-const EQUIRECTANGULAR_PROJECTION = mat4.perspective(
-  mat4.create(),
-  Math.PI / 2,
-  1,
-  0.1,
-  10,
-);
+].map((v) => {
+  const proj = mat4.perspective(
+    mat4.create(),
+    Math.PI / 2,
+    1,
+    0.1,
+    10,
+  );
+  return mat4.mul(v, proj, v);
+});
 
 export class GLTextureEquirectangular extends GLTexture {
   texture2D: GLTexture2D;
@@ -130,8 +131,7 @@ export class GLTextureEquirectangular extends GLTexture {
         // Draw to each side.
         EQUIRECTANGULAR_MATRIXES.forEach((matrix, i) => {
           EQUIRECTANGULAR_SHADER.setUniforms({
-            uProjection: EQUIRECTANGULAR_PROJECTION,
-            uView: matrix,
+            uTransform: matrix,
             uTexture: texture2D,
           });
           fb.set({
@@ -157,5 +157,9 @@ export class GLTextureEquirectangular extends GLTexture {
         this._bind(renderer, this.boundId!, this.boundVersion!);
       }
     }
+  }
+
+  isReady(): boolean {
+    return this.uploadFulfilled === 2;
   }
 }

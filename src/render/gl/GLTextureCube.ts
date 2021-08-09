@@ -55,9 +55,11 @@ export class GLTextureCube extends GLTexture {
         fulfilled = false;
       }
     });
-    if (fulfilled && !this.mipmapGenerated && this.options.mipmap !== false) {
+    if (fulfilled && !this.mipmapGenerated) {
       this._setParameters(TEXTURE_CUBE_MAP, this.options);
-      this._generateMipmap(TEXTURE_CUBE_MAP);
+      if (this.options.mipmap !== false) {
+        this._generateMipmap(TEXTURE_CUBE_MAP);
+      }
       this.mipmapGenerated = true;
     }
   }
@@ -71,5 +73,9 @@ export class GLTextureCube extends GLTexture {
     this.options = options;
     this.uploadFulfilled = [0, 0, 0, 0, 0, 0];
     this.mipmapGenerated = false;
+  }
+
+  isReady(): boolean {
+    return this.mipmapGenerated;
   }
 }

@@ -24,7 +24,7 @@ export interface GLTextureParameters {
 }
 
 export interface GLTextureTexImage {
-  source?: GLTextureCandidate;
+  source?: GLTextureCandidate | null;
   width?: number;
   height?: number;
   mipmap?: boolean;
@@ -230,6 +230,10 @@ export class GLTexture {
 
   generateMipmap(): void {
     this._generateMipmap(this.type);
+  }
+
+  isReady(): boolean {
+    return false;
   }
 
 }
