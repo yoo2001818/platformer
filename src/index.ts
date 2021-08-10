@@ -1,1 +1,1 @@
-import './sample/lights';
+import './sample/roughness';

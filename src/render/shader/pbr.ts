@@ -1,4 +1,6 @@
 export const PBR = /* glsl */`
+  #define PI 3.141592
+
   float distributionGGX(vec3 N, vec3 M, float a) {
     float a2 = a * a;
     float dotNM = max(dot(N, M), 0.0);
@@ -15,10 +17,23 @@ export const PBR = /* glsl */`
     return nom / 2.0;
   }
 
-  float geometrySmith(vec3 L, vec3 V, vec3 M, float lambdaL, float lambdaV) {
-    float dotMV = max(dot(M, V), 0.0);
-    float dotML = max(dot(M, L), 0.0);
-    return (dotMV * dotML) / (1.0 + lambdaV + lambdaL);
+  float geometrySchlickGGX(float dotNV, float roughness) {
+    float a = roughness;
+    float k = (a * a) / 2.0;
+    float nom = dotNV;
+    float denom = dotNV * (1.0 - k) + k;
+
+    return nom / denom;
+  }
+
+  float geometrySmith(float roughness, float dotNV, float dotNL) {
+    float ggx1 = geometrySchlickGGX(dotNL, roughness);
+    float ggx2 = geometrySchlickGGX(dotNV, roughness);
+    return ggx1 * ggx2;
+  }
+
+  vec3 fresnelSchlickRoughness(float dotNL, vec3 F0, float roughness) {
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - dotNL, 5.0);
   }
 
   vec3 fresnelSchlick(float dotNL, vec3 F0) {
@@ -46,7 +61,7 @@ export const PBR = /* glsl */`
 
     float D = distributionGGX(N, H, roughness);
     vec3 F = fresnelSchlick(dotNL, reflection);
-    float G = geometrySmith(L, V, N, lambdaGGX(roughness), lambdaGGX(roughness));
+    float G = geometrySmith(roughness, dotNV, dotNL);
 
     vec3 spec = specCookTorr(D, F, G, dotNL, dotNV);
 
@@ -54,5 +69,48 @@ export const PBR = /* glsl */`
     vec3 kD = vec3(1.0) - kS;
 
     return kD * albedo / PI + spec;
+  }
+
+  float vanDerCorput(int n, int base) {
+    float invBase = 1.0 / float(base);
+    float denom   = 1.0;
+    float result  = 0.0;
+
+    for (int i = 0; i < 32; ++i) {
+      if (n > 0) {
+        denom = mod(float(n), 2.0);
+        result += denom * invBase;
+        invBase = invBase / 2.0;
+        n = int(float(n) / 2.0);
+      }
+    }
+
+    return result;
+  }
+
+  vec2 hammersley(int i, int N) {
+    return vec2(float(i)/float(N), vanDerCorput(i, 2));
+  }
+
+  vec3 importanceSampleGGX(vec2 Xi, vec3 N, float roughness) {
+    float a = roughness * roughness;
+
+    float phi = 2.0 * PI * Xi.x;
+    float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    // from spherical coordinates to cartesian coordinates
+    vec3 H;
+    H.x = cos(phi) * sinTheta;
+    H.y = sin(phi) * sinTheta;
+    H.z = cosTheta;
+  
+    // from tangent-space vector to world-space sample vector
+    vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 tangent = normalize(cross(up, N));
+    vec3 bitangent = cross(N, tangent);
+  
+    vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+    return normalize(sampleVec);
   }
 `;

@@ -21,6 +21,7 @@ export interface BasicMaterialOptions {
   metalic: number | GLTexture;
   roughness: number | GLTexture;
   environment?: GLTexture;
+  brdf?: GLTexture;
 }
 
 const ALBEDO_BIT = 1;
@@ -68,7 +69,6 @@ const SHADER_BANK = new ShaderBank(
     ${textureBits & ENVIRONMENT_BIT ? '#define USE_ENVIRONMENT_MAP' : ''}
 
     #define GAMMA 2.2
-    #define PI 3.14159
 
     struct Material {
       vec3 albedo;
@@ -86,13 +86,16 @@ const SHADER_BANK = new ShaderBank(
     varying vec2 vTexCoord;
 
     uniform mat4 uView;
+    #if NUM_POINT_LIGHTS > 0
     uniform PointLight uPointLights[NUM_POINT_LIGHTS];
+    #endif
     uniform Material uMaterial;
     #ifdef USE_ALBEDO_MAP
     uniform sampler2D uAlbedoMap;
     #endif
     #ifdef USE_ENVIRONMENT_MAP
     uniform sampler2D uEnvironmentMap;
+    uniform sampler2D uBRDFMap;
     #endif
 
     void main() {
@@ -109,24 +112,42 @@ const SHADER_BANK = new ShaderBank(
       vec3 linearAlbedo = pow(materialAlbedo, vec3(GAMMA));
       vec3 albedo = mix(linearAlbedo, vec3(0.0), uMaterial.metalic);
       vec3 reflection = mix(vec3(0.04), linearAlbedo, uMaterial.metalic);
+      float roughness = uMaterial.roughness;
 
       vec3 result = vec3(0.0, 0.0, 0.0);
 
-      for (int i = 0; i < NUM_POINT_LIGHTS; i += 1) {
-        PointLight light = uPointLights[i];
+      #if NUM_POINT_LIGHTS > 0
+        for (int i = 0; i < NUM_POINT_LIGHTS; i += 1) {
+          PointLight light = uPointLights[i];
 
-        vec3 L = light.position - vPosition;
-        float lightDist = length(L);
-        L = L / lightDist;
+          vec3 L = light.position - vPosition;
+          float lightDist = length(L);
+          L = L / lightDist;
 
-        vec3 radiance = calcPoint(L, V, N, light, lightDist);
-        vec3 brdf = brdfCookTorr(L, V, N, uMaterial.roughness * uMaterial.roughness, albedo, reflection);
+          vec3 radiance = calcPoint(L, V, N, light, lightDist);
+          vec3 brdf = brdfCookTorr(L, V, N, roughness * roughness, albedo, reflection);
 
-        result += radiance * brdf;
-      }
+          result += radiance * brdf;
+        }
+      #endif
 
       #ifdef USE_ENVIRONMENT_MAP
-        result += albedo * pow(textureCubePackLod(uEnvironmentMap, vWorldNormal, 6.0).rgb, vec3(GAMMA));
+      {
+        float dotNV = max(dot(N, V), 0.0);
+        vec3 R = reflect(-V, N);
+        vec3 envColor = pow(textureCubePackLod(uEnvironmentMap, R, roughness * 6.0).rgb, vec3(GAMMA));
+        vec3 F = fresnelSchlickRoughness(dotNV, reflection, roughness * roughness);
+        vec2 envBRDF = texture2D(uBRDFMap, vec2(dotNV, roughness)).rg;
+
+        vec3 spec = envColor * (F * envBRDF.x + envBRDF.y);
+
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+
+        vec3 irradiance = pow(textureCubePackLodInt(uEnvironmentMap, N, 6.0).rgb, vec3(GAMMA));
+
+        result += kD * albedo * irradiance + spec;
+      }
       #endif
 
       gl_FragColor = vec4(pow(result, vec3(1.0 / GAMMA)), 1.0);
@@ -200,6 +221,7 @@ export class BasicMaterial implements Material {
     if (options.environment instanceof GLTexture) {
       featureBits |= ENVIRONMENT_BIT;
       uniformOptions.uEnvironmentMap = options.environment;
+      uniformOptions.uBRDFMap = options.brdf;
     }
 
     const shader = SHADER_BANK.get(featureBits, this.lights.length);

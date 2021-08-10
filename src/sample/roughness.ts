@@ -6,7 +6,6 @@ import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
 import {BasicMaterial} from '../render/material/BasicMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
-import {calcNormals} from '../geom/calcNormals';
 import {quad} from '../geom/quad';
 import {TransformComponent} from '../3d/TransformComponent';
 import {Transform} from '../3d/Transform';
@@ -59,7 +58,6 @@ function main() {
   const renderer = new Renderer(glRenderer, store);
   glRenderer.setViewport();
 
-  //*
   const skyboxTexture = new GLTextureEquirectangular({
     width: 4096,
     height: 2048,
@@ -67,18 +65,6 @@ function main() {
     magFilter: 'linear',
     minFilter: 'linearMipmapLinear',
   });
-  /*/
-  const skyboxTexture = new GLTextureCube({
-    sources: [
-      createImage(require('./sky1.png')),
-      createImage(require('./sky2.png')),
-      createImage(require('./sky3.png')),
-      createImage(require('./sky4.png')),
-      createImage(require('./sky5.png')),
-      createImage(require('./sky6.png')),
-    ],
-  });
-  // */
   const pbrTexture = new GLTexture2D({
     width: 2048,
     height: 4096,
@@ -89,13 +75,6 @@ function main() {
   const brdfTexture = generateBRDFMap(glRenderer);
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
-  const material = new BasicMaterial({
-    albedo: '#ffffff',
-    metalic: 0,
-    roughness: 0.002,
-    environment: pbrTexture,
-    brdf: brdfTexture,
-  });
 
   gl!.enable(gl!.CULL_FACE);
   gl!.enable(gl!.DEPTH_TEST);
@@ -156,102 +135,44 @@ function main() {
     ),
   });
 
-  store.create({
-    name: 'teapotBase',
-    transform: new Transform(),
-    mesh: new Mesh(
-      material,
-      new Geometry(bakeChannelGeom(teapot[0].geometry)),
-    ),
-  });
+  for (let y = 0; y < 10; y += 1) {
+    for (let x = 0; x < 10; x += 1) {
+      const roughness = x / 10;
+      const metalic = y / 10;
 
-  store.create({
-    name: 'teapotLid',
-    transform: new Transform(),
-    mesh: new Mesh(
-      material,
-      new Geometry(bakeChannelGeom(teapot[1].geometry)),
-    ),
-  });
+      store.create({
+        name: 'teapotBase',
+        transform: new Transform()
+          .setPosition([x * 4, y * 4, 0]),
+        mesh: new Mesh(
+          new BasicMaterial({
+            albedo: '#ffffff',
+            metalic,
+            roughness,
+            environment: pbrTexture,
+            brdf: brdfTexture,
+          }),
+          new Geometry(bakeChannelGeom(teapot[0].geometry)),
+        ),
+      });
 
-  store.create({
-    name: 'floor',
-    transform: new Transform()
-      .rotateX(-Math.PI / 2)
-      .setScale([10, 10, 10]),
-    mesh: new Mesh(
-      new BasicMaterial({
-        albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
-        metalic: 0,
-        roughness: 0.5,
-        environment: pbrTexture,
-        brdf: brdfTexture,
-      }),
-      new Geometry(calcNormals(quad())),
-    ),
-  });
-
-  store.create({
-    name: 'envMapDebug',
-    transform: new Transform()
-      .rotateX(-Math.PI / 2)
-      .setScale([2.5, 5, 10])
-      .setPosition([15, 0, 0]),
-    mesh: new Mesh(
-      new BasicMaterial({
-        albedo: pbrTexture,
-        metalic: 0,
-        roughness: 0.2,
-      }),
-      new Geometry(calcNormals(quad())),
-    ),
-  });
-
-  store.create({
-    name: 'brdfMapDebug',
-    transform: new Transform()
-      .rotateX(-Math.PI / 2)
-      .setScale([2.5, 2.5, 2.5])
-      .setPosition([-15, 0, 0]),
-    mesh: new Mesh(
-      new BasicMaterial({
-        albedo: brdfTexture,
-        metalic: 0,
-        roughness: 0.2,
-      }),
-      new Geometry(calcNormals(quad())),
-    ),
-  });
-
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([5, 5, 5]),
-    light: new Light({
-      color: '#ffaaaa',
-      power: 2,
-      attenuation: 0.0001,
-    }),
-  });
-
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([-5, 5, -5]),
-    light: new Light({
-      color: '#aaaaff',
-      power: 2,
-      attenuation: 0.00001,
-    }),
-  });
-
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([15, 5, 0]),
-    light: new Light({
-      color: '#ffffff',
-      power: 2,
-      attenuation: 0.00001,
-    }),
-  });
+      store.create({
+        name: 'teapotLid',
+        transform: new Transform()
+          .setPosition([x * 4, y * 4, 0]),
+        mesh: new Mesh(
+          new BasicMaterial({
+            albedo: '#ffffff',
+            metalic,
+            roughness,
+            environment: pbrTexture,
+            brdf: brdfTexture,
+          }),
+          new Geometry(bakeChannelGeom(teapot[1].geometry)),
+        ),
+      });
+    }
+  }
 
   const orbitController = new OrbitCameraController(
     canvas,
