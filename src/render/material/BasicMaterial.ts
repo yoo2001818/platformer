@@ -120,7 +120,7 @@ const SHADER_BANK = new ShaderBank(
         L = L / lightDist;
 
         vec3 radiance = calcPoint(L, V, N, light, lightDist);
-        vec3 brdf = brdfCookTorr(L, V, N, uMaterial.roughness, albedo, reflection);
+        vec3 brdf = brdfCookTorr(L, V, N, uMaterial.roughness * uMaterial.roughness, albedo, reflection);
 
         result += radiance * brdf;
       }

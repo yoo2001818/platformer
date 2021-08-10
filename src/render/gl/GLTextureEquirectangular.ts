@@ -86,8 +86,8 @@ export class GLTextureEquirectangular extends GLTexture {
       ...options,
       wrapS: 'clampToEdge',
       wrapT: 'clampToEdge',
-      minFilter: 'linear',
-      magFilter: 'linear',
+      minFilter: 'nearest',
+      magFilter: 'nearest',
       mipmap: false,
     });
     this.options = options;

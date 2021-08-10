@@ -1,14 +1,14 @@
 export const CUBE_PACK = /* glsl */`
   #extension GL_EXT_shader_texture_lod : enable
-  const vec2 cubePackSize = vec2(1.0 / 1024.0, 1.0 / 2048.0);
+  const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
 
   vec4 textureCubePackLodInt(sampler2D smp, vec3 dir, float lod) {
     // Mipmap constraining
     float mipBounds = pow(2.0, -lod);
     float mipStart = 1.0 - mipBounds;
     // Get texel size corresponding with the mip size
-    vec2 packSize = cubePackSize / mipBounds;
-    vec2 boxSize = vec2(0.5, 0.25) - 1.0 * packSize;
+    vec2 packSize = cubePackTexelSize / mipBounds;
+    vec2 boxSize = vec2(0.5, 0.25) - 2.0 * packSize;
     // Get texture bounds
     vec2 uv;
     vec3 absDir = abs(dir);
@@ -51,7 +51,7 @@ export const CUBE_PACK = /* glsl */`
         uv += vec2(0.0, 0.75);
       }
     }
-    uv += 0.5 * packSize;
+    uv += 1.0 * packSize;
     uv = uv * mipBounds + mipStart;
     return texture2DLodEXT(smp, uv, 0.0);
   }

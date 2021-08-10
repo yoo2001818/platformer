@@ -142,7 +142,7 @@ function main() {
             vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
             viewPos /= viewPos.w;
             vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-            gl_FragColor = vec4(textureCubePackLod(uTexture, dir, 0.0).xyz, 1.0);
+            gl_FragColor = vec4(textureCubePackLod(uTexture, dir, 6.0).xyz, 1.0);
           }
         `,
         {
@@ -259,14 +259,13 @@ function main() {
 
     gl!.clearColor(0, 0, 0, 255);
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
-    renderer.render();
     orbitController.update(delta);
+    renderer.render();
 
     requestAnimationFrame(update);
   }
 
   requestAnimationFrame(update);
-  update(0);
   console.log(store);
 }
 

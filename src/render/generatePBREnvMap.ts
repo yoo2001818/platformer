@@ -32,6 +32,19 @@ const BAKE_SHADER = new GLShader(
 
     uniform samplerCube uSource;
 
+    vec3 unpackRGBE(vec4 value) {
+      vec3 rgb = value.rgb;
+      rgb *= pow(2.0, value.a * 255.0 - 128.0);
+      return rgb;
+    }
+
+    vec4 packRGBE(vec3 value) {
+      float v = max(value.r, max(value.g, value.b));
+      float e = ceil(log2(v));
+      float s = pow(2.0, e);
+      return vec4(value / s, (e + 128.0) / 255.0);
+    }
+
     float vanDerCorput(int n, int base) {
       float invBase = 1.0 / float(base);
       float denom   = 1.0;
@@ -99,10 +112,16 @@ const BAKE_SHADER = new GLShader(
       return prefilteredColor;
     }
 
+    const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
+
     void main() {
       // Retrieve mipmap level
       vec2 logPos = floor(-log2(1.0 - vPosition));
       float mipLevel = min(logPos.x, logPos.y);
+      if (mipLevel > 6.0) {
+        gl_FragColor = vec4(0.0);
+        return;
+      }
       float mipBounds = pow(2.0, -mipLevel);
       float mipStart = 1.0 - mipBounds;
       vec2 mipPos = (vPosition - mipStart) / mipBounds;
@@ -114,6 +133,9 @@ const BAKE_SHADER = new GLShader(
       // | X+ Y+
       // +------> X
       vec2 blockPos = fract(mipPos * vec2(2.0, 4.0)) * 2.0 - 1.0;
+      vec2 packSize = cubePackTexelSize * vec2(2.0, 4.0) / mipBounds;
+      // Calculate underscan factor
+      blockPos /= max(1.0 - (2.0 * packSize), 0.0002);
       vec3 front;
       vec3 up;
       vec3 right;
@@ -134,8 +156,10 @@ const BAKE_SHADER = new GLShader(
       right = cross(front, up);
       vec3 coord = front + up * blockPos.y + right * blockPos.x;
       // Run radiance / irradiance calculation
-      vec4 result = runSample(coord, min(mipLevel / 6.0, 1.0));
-      gl_FragColor = vec4(result.rgb, 1.0);
+      vec4 result = runSample(coord, pow(min(mipLevel / 6.0, 1.0), 2.0));
+      // vec4 result = vec4(sign(abs(blockPos) - 1.0), 0.0, 1.0);
+      // vec4 result = vec4(normalize(coord) * 0.5 + 0.5, 0.0);
+      gl_FragColor = vec4(result);
     }
   `,
 );
