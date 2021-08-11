@@ -141,11 +141,13 @@ function main() {
           uniform mat4 uInverseView;
           uniform mat4 uInverseProjection;
 
+          const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
+
           void main() {
             vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
             viewPos /= viewPos.w;
             vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-            gl_FragColor = vec4(textureCubePackLod(uTexture, dir, 6.0).xyz, 1.0);
+            gl_FragColor = vec4(textureCubePackLod(uTexture, dir, 6.0, cubePackTexelSize).xyz, 1.0);
           }
         `,
         {

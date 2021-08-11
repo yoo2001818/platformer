@@ -5,6 +5,7 @@ import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
+import {CUBE_PACK} from '../shader/cubepack';
 import {PBR} from '../shader/pbr';
 
 const BAKE_QUAD = new GLGeometry(quad());
@@ -45,6 +46,7 @@ const BAKE_SHADER = new GLShader(
     }
 
     ${PBR}
+    ${CUBE_PACK}
 
     vec4 runSample(vec3 direction, float roughness) {
       vec3 N = normalize(direction);    
@@ -73,6 +75,7 @@ const BAKE_SHADER = new GLShader(
     const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
 
     void main() {
+      vec4 pos = cubePackReverseLookup(vPosition, cubePackTexelSize);
       // Retrieve mipmap level
       vec2 logPos = floor(-log2(1.0 - vPosition));
       float mipLevel = min(logPos.x, logPos.y);

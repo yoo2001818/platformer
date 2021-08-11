@@ -12,6 +12,7 @@
     "import/no-cycle": 0,
     "no-alert": 0,
     "id-length": 0,
-    "@typescript-eslint/no-var-requires": 0
+    "@typescript-eslint/no-var-requires": 0,
+    "@shopify/binary-assignment-parens": 0
   }
 }

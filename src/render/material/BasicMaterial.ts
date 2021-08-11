@@ -98,6 +98,8 @@ const SHADER_BANK = new ShaderBank(
     uniform sampler2D uBRDFMap;
     #endif
 
+    const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
+
     void main() {
       vec3 V = normalize(-vPosition);
       vec3 N = normalize(vNormal);
@@ -135,7 +137,7 @@ const SHADER_BANK = new ShaderBank(
       {
         float dotNV = max(dot(N, V), 0.0);
         vec3 R = reflect(-V, N);
-        vec3 envColor = pow(textureCubePackLod(uEnvironmentMap, R, roughness * 6.0).rgb, vec3(GAMMA));
+        vec3 envColor = pow(textureCubePackLod(uEnvironmentMap, R, roughness * 6.0, cubePackTexelSize).rgb, vec3(GAMMA));
         vec3 F = fresnelSchlickRoughness(dotNV, reflection, roughness * roughness);
         vec2 envBRDF = texture2D(uBRDFMap, vec2(dotNV, roughness)).rg;
 
@@ -144,7 +146,7 @@ const SHADER_BANK = new ShaderBank(
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
 
-        vec3 irradiance = pow(textureCubePackLodInt(uEnvironmentMap, N, 6.0).rgb, vec3(GAMMA));
+        vec3 irradiance = pow(textureCubePackLodInt(uEnvironmentMap, N, 6.0, cubePackTexelSize).rgb, vec3(GAMMA));
 
         result += kD * albedo * irradiance + spec;
       }
