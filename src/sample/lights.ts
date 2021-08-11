@@ -23,6 +23,7 @@ import {CUBE_PACK} from '../render/shader/cubepack';
 import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
+import { RGBE } from '../render/shader/hdr';
 
 const store = new EntityStore();
 
@@ -64,7 +65,8 @@ function main() {
   const skyboxTexture = new GLTexture2D({
     width: 4096,
     height: 2048,
-    source: createImage(require('./green_point_park_2k.jpg')),
+    format: 'rgba',
+    source: createImage(require('./green_point_park_2k.rgbe.png')),
     magFilter: 'nearest',
     minFilter: 'nearest',
     mipmap: false,
@@ -94,13 +96,6 @@ function main() {
   const brdfTexture = generateBRDFMap(glRenderer);
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
-  const material = new BasicMaterial({
-    albedo: '#ffffff',
-    metalic: 0,
-    roughness: 0.002,
-    environment: pbrTexture,
-    brdf: brdfTexture,
-  });
 
   gl!.enable(gl!.CULL_FACE);
   gl!.enable(gl!.DEPTH_TEST);
@@ -116,134 +111,7 @@ function main() {
     }),
   });
 
-  store.create({
-    name: 'skybox',
-    transform: new Transform(),
-    mesh: new Mesh(
-      new ShaderMaterial(
-        /* glsl */`
-          #version 100
-          precision lowp float;
-
-          attribute vec3 aPosition;
-
-          varying vec2 vPosition;
-
-          void main() {
-            vPosition = aPosition.xy;
-            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
-          }
-        `,
-        /* glsl */`
-          #version 100
-          precision lowp float;
-
-          ${CUBE_PACK}
-
-          varying vec2 vPosition;
-
-          uniform sampler2D uTexture;
-          uniform mat4 uInverseView;
-          uniform mat4 uInverseProjection;
-
-          const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
-
-          void main() {
-            vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
-            viewPos /= viewPos.w;
-            vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-            gl_FragColor = vec4(textureCubePackLod(uTexture, dir, 6.0, cubePackTexelSize).xyz, 1.0);
-          }
-        `,
-        {
-          uTexture: pbrTexture,
-        },
-      ),
-      new Geometry(quad()),
-    ),
-  });
-
-  store.create({
-    name: 'teapotBase',
-    transform: new Transform(),
-    mesh: new Mesh(
-      material,
-      new Geometry(bakeChannelGeom(teapot[0].geometry)),
-    ),
-  });
-
-  store.create({
-    name: 'teapotLid',
-    transform: new Transform(),
-    mesh: new Mesh(
-      material,
-      new Geometry(bakeChannelGeom(teapot[1].geometry)),
-    ),
-  });
-
-  store.create({
-    name: 'floor',
-    transform: new Transform()
-      .rotateX(-Math.PI / 2)
-      .setScale([10, 10, 10]),
-    mesh: new Mesh(
-      new BasicMaterial({
-        albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
-        metalic: 0,
-        roughness: 0.5,
-        environment: pbrTexture,
-        brdf: brdfTexture,
-      }),
-      new Geometry(calcNormals(quad())),
-    ),
-  });
-
-
-  store.create({
-    name: 'brdfMapDebug',
-    transform: new Transform()
-      .rotateX(-Math.PI / 2)
-      .setScale([2.5, 2.5, 2.5])
-      .setPosition([-15, 0, 0]),
-    mesh: new Mesh(
-      new BasicMaterial({
-        albedo: brdfTexture,
-        metalic: 0,
-        roughness: 0.2,
-      }),
-      new Geometry(calcNormals(quad())),
-    ),
-  });
-
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([5, 5, 5]),
-    light: new Light({
-      color: '#ffaaaa',
-      power: 2,
-      attenuation: 0.0001,
-    }),
-  });
-
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([-5, 5, -5]),
-    light: new Light({
-      color: '#aaaaff',
-      power: 2,
-      attenuation: 0.00001,
-    }),
-  });
-
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([15, 5, 0]),
-    light: new Light({
-      color: '#ffffff',
-      power: 2,
-      attenuation: 0.00001,
-    }),
-  });
+  // TODO Initialization should be here
 
   const orbitController = new OrbitCameraController(
     canvas,
@@ -267,10 +135,17 @@ function main() {
     if (skyboxTexture.isReady() && !pbrBuilt) {
       pbrBuilt = true;
       const mip =
-        generateCubePackEquirectangular(glRenderer, skyboxTexture, 2048, 6);
+        generateCubePackEquirectangular(glRenderer, skyboxTexture, 2048, 8);
       pbrTexture = generatePBREnvMap(glRenderer, mip);
       mip.dispose();
       // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
+      const material = new BasicMaterial({
+        albedo: '#ffffff',
+        metalic: 0,
+        roughness: 0.002,
+        environment: pbrTexture,
+        brdf: brdfTexture,
+      });
       store.create({
         name: 'envMapDebug',
         transform: new Transform()
@@ -285,6 +160,135 @@ function main() {
           }),
           new Geometry(calcNormals(quad())),
         ),
+      });
+      store.create({
+        name: 'skybox',
+        transform: new Transform(),
+        mesh: new Mesh(
+          new ShaderMaterial(
+            /* glsl */`
+              #version 100
+              precision lowp float;
+
+              attribute vec3 aPosition;
+
+              varying vec2 vPosition;
+
+              void main() {
+                vPosition = aPosition.xy;
+                gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+              }
+            `,
+            /* glsl */`
+              #version 100
+              precision lowp float;
+
+              ${CUBE_PACK}
+              ${RGBE}
+
+              varying vec2 vPosition;
+
+              uniform sampler2D uTexture;
+              uniform mat4 uInverseView;
+              uniform mat4 uInverseProjection;
+
+              const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
+
+              void main() {
+                vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
+                viewPos /= viewPos.w;
+                vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
+                gl_FragColor = vec4(unpackHDR(textureCubePackLod(uTexture, dir, 3.0, cubePackTexelSize)), 1.0);
+              }
+            `,
+            {
+              uTexture: pbrTexture,
+            },
+          ),
+          new Geometry(quad()),
+        ),
+      });
+
+      store.create({
+        name: 'teapotBase',
+        transform: new Transform(),
+        mesh: new Mesh(
+          material,
+          new Geometry(bakeChannelGeom(teapot[0].geometry)),
+        ),
+      });
+
+      store.create({
+        name: 'teapotLid',
+        transform: new Transform(),
+        mesh: new Mesh(
+          material,
+          new Geometry(bakeChannelGeom(teapot[1].geometry)),
+        ),
+      });
+
+      store.create({
+        name: 'floor',
+        transform: new Transform()
+          .rotateX(-Math.PI / 2)
+          .setScale([10, 10, 10]),
+        mesh: new Mesh(
+          new BasicMaterial({
+            albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
+            metalic: 0,
+            roughness: 0.5,
+            environment: pbrTexture,
+            brdf: brdfTexture,
+          }),
+          new Geometry(calcNormals(quad())),
+        ),
+      });
+
+
+      store.create({
+        name: 'brdfMapDebug',
+        transform: new Transform()
+          .rotateX(-Math.PI / 2)
+          .setScale([2.5, 2.5, 2.5])
+          .setPosition([-15, 0, 0]),
+        mesh: new Mesh(
+          new BasicMaterial({
+            albedo: brdfTexture,
+            metalic: 0,
+            roughness: 0.2,
+          }),
+          new Geometry(calcNormals(quad())),
+        ),
+      });
+
+      store.create({
+        name: 'light',
+        transform: new Transform().translate([5, 5, 5]),
+        light: new Light({
+          color: '#ffaaaa',
+          power: 2,
+          attenuation: 0.0001,
+        }),
+      });
+
+      store.create({
+        name: 'light',
+        transform: new Transform().translate([-5, 5, -5]),
+        light: new Light({
+          color: '#aaaaff',
+          power: 2,
+          attenuation: 0.00001,
+        }),
+      });
+
+      store.create({
+        name: 'light',
+        transform: new Transform().translate([15, 5, 0]),
+        light: new Light({
+          color: '#ffffff',
+          power: 2,
+          attenuation: 0.00001,
+        }),
       });
     }
 

@@ -5,7 +5,10 @@ import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {CUBE_PACK} from '../shader/cubepack';
+import {RGBE} from '../shader/hdr';
 import {PBR} from '../shader/pbr';
+
+import {generateHammersleyMap} from './generateHammersleyMap';
 
 const BAKE_QUAD = new GLGeometry(quad());
 const BAKE_SHADER = new GLShader(
@@ -31,40 +34,45 @@ const BAKE_SHADER = new GLShader(
 
     uniform vec2 uTexelSize;
     uniform sampler2D uSource;
-
-    vec3 unpackRGBE(vec4 value) {
-      vec3 rgb = value.rgb;
-      rgb *= pow(2.0, value.a * 255.0 - 128.0);
-      return rgb;
-    }
-
-    vec4 packRGBE(vec3 value) {
-      float v = max(value.r, max(value.g, value.b));
-      float e = ceil(log2(v));
-      float s = pow(2.0, e);
-      return vec4(value / s, (e + 128.0) / 255.0);
-    }
+    uniform sampler2D uHammersleyMap;
 
     ${PBR}
     ${CUBE_PACK}
+    ${RGBE}
 
-    vec4 runSample(vec3 direction, float roughness) {
+    vec3 runSample(vec3 direction, float roughness, float resolution) {
       vec3 N = normalize(direction);    
       vec3 R = N;
       vec3 V = R;
 
       const int SAMPLE_COUNT = 1024;
       float totalWeight = 0.0;   
-      vec4 prefilteredColor = vec4(0.0);     
+      vec3 prefilteredColor = vec3(0.0);     
       for (int i = 0; i < SAMPLE_COUNT; ++i) {
-        vec2 Xi = hammersley(i, SAMPLE_COUNT);
+        vec2 Xi = hammersleyFromMap(uHammersleyMap, i, SAMPLE_COUNT);
         vec3 H = importanceSampleGGX(Xi, N, roughness);
-        vec3 L = normalize(2.0 * dot(V, H) * H - V);
 
-        float NdotL = max(dot(N, L), 0.0);
-        if (NdotL > 0.0) {
-          prefilteredColor += textureCubePackLodInt(uSource, L, 0.0, uTexelSize) * NdotL;
-          totalWeight += NdotL;
+        float dotHV = max(dot(H, V), 0.0);
+
+        vec3 L = normalize(2.0 * dot(H, V) * H - V);
+
+        float dotNH = max(dot(N, H), 0.0);
+
+        float D = distributionGGX(dotNH, roughness);
+        float pdf = (D * dotNH / (4.0 * dotHV)) + 0.0001; 
+
+        float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
+        float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
+
+        float mipLevel = 0.0;
+        if (roughness > 0.0) {
+          mipLevel = 0.5 * log2(saSample / saTexel);
+        }
+
+        float dotNL = max(dot(N, L), 0.0);
+        if (dotNL > 0.0) {
+          prefilteredColor += unpackHDR(textureCubePackLod(uSource, L, min(mipLevel, 8.0), uTexelSize)) * dotNL;
+          totalWeight += dotNL;
         }
       }
       prefilteredColor = prefilteredColor / totalWeight;
@@ -76,9 +84,10 @@ const BAKE_SHADER = new GLShader(
       vec4 pos = cubePackReverseLookup(vPosition, uTexelSize);
       float mipLevel = pos.w;
       vec3 coord = pos.xyz;
+      float resolution = 1.0 / uTexelSize.x / 2.0;
       // Run radiance / irradiance calculation
-      vec4 result = runSample(coord, pow(min(mipLevel / 6.0, 1.0), 2.0));
-      gl_FragColor = vec4(result);
+      vec3 result = runSample(coord, pow(min(mipLevel / 6.0, 1.0), 2.0), resolution);
+      gl_FragColor = packHDR(result);
     }
   `,
 );
@@ -93,6 +102,7 @@ export function generatePBREnvMap(
   if (width == null || height == null) {
     throw new Error('The width/height of target buffer must be specified');
   }
+  const hammersleyMap = generateHammersleyMap(1024);
   const target = new GLTexture2D({
     ...source.options,
     source: null,
@@ -111,9 +121,11 @@ export function generatePBREnvMap(
     uniforms: {
       uTexelSize: [1 / width, 1 / height],
       uSource: source,
+      uHammersleyMap: hammersleyMap,
     },
   });
   fb.dispose();
+  hammersleyMap.dispose();
 
   return target;
 }

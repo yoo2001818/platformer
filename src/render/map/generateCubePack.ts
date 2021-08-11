@@ -5,6 +5,7 @@ import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {CUBE_PACK} from '../shader/cubepack';
+import {RGBE} from '../shader/hdr';
 
 const GEOM_QUAD = new GLGeometry(quad());
 const MIP_SHADER = new GLShader(
@@ -32,6 +33,7 @@ const MIP_SHADER = new GLShader(
     uniform sampler2D uSource;
 
     ${CUBE_PACK}
+    ${RGBE}
 
     void main() {
       vec4 pos = cubePackReverseFace(vPosition);
@@ -45,16 +47,16 @@ const MIP_SHADER = new GLShader(
       float targetMipLevel = mipLevel - 1.0;
       vec2 mipTexel = uTexelSize / pow(2.0, -targetMipLevel);
       // Probe 4 neighboring pixels
-      vec4 samples = vec4(0.0);
-      samples += textureCubePackFaceLodInt(uSource,
-        uv + mipTexel * vec2(-1.0, -1.0), face, targetMipLevel);
-      samples += textureCubePackFaceLodInt(uSource,
-        uv + mipTexel * vec2(1.0, -1.0), face, targetMipLevel);
-      samples += textureCubePackFaceLodInt(uSource,
-        uv + mipTexel * vec2(-1.0, 1.0), face, targetMipLevel);
-      samples += textureCubePackFaceLodInt(uSource,
-        uv + mipTexel * vec2(1.0, 1.0), face, targetMipLevel);
-      gl_FragColor = samples / 4.0;
+      vec3 samples = vec3(0.0);
+      samples += unpackHDR(textureCubePackFaceLodInt(uSource,
+        uv + mipTexel * vec2(-1.0, -1.0), face, targetMipLevel));
+      samples += unpackHDR(textureCubePackFaceLodInt(uSource,
+        uv + mipTexel * vec2(1.0, -1.0), face, targetMipLevel));
+      samples += unpackHDR(textureCubePackFaceLodInt(uSource,
+        uv + mipTexel * vec2(-1.0, 1.0), face, targetMipLevel));
+      samples += unpackHDR(textureCubePackFaceLodInt(uSource,
+        uv + mipTexel * vec2(1.0, 1.0), face, targetMipLevel));
+      gl_FragColor = packHDR(samples / 4.0);
     }
   `,
 );
@@ -129,6 +131,7 @@ const EQUI_SHADER = new GLShader(
     uniform sampler2D uSource;
 
     ${CUBE_PACK}
+    ${RGBE}
 
     const vec2 invAtan = vec2(0.1591, 0.3183);
 

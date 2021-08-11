@@ -1,9 +1,8 @@
 export const PBR = /* glsl */`
   #define PI 3.141592
 
-  float distributionGGX(vec3 N, vec3 M, float a) {
+  float distributionGGX(float dotNM, float a) {
     float a2 = a * a;
-    float dotNM = max(dot(N, M), 0.0);
     float dotNM2 = dotNM * dotNM;
     float nom = dotNM * a2;
     float denom = (dotNM2 * (a2 - 1.0) + 1.0);
@@ -59,7 +58,9 @@ export const PBR = /* glsl */`
 
     vec3 H = normalize(V + L);
 
-    float D = distributionGGX(N, H, roughness);
+    float dotNH = max(dot(N, H), 0.0);
+
+    float D = distributionGGX(dotNH, roughness);
     vec3 F = fresnelSchlick(dotNL, reflection);
     float G = geometrySmith(roughness, dotNV, dotNL);
 
@@ -90,6 +91,13 @@ export const PBR = /* glsl */`
 
   vec2 hammersley(int i, int N) {
     return vec2(float(i)/float(N), vanDerCorput(i, 2));
+  }
+
+  vec2 hammersleyFromMap(sampler2D map, int i, int N) {
+    float pos = float(i) / float(N);
+    vec4 tex = texture2D(map, vec2(pos, 0.5));
+    float value = dot(tex.rgb, 1.0 / vec3(1.0, 255.0, 65025.0));
+    return vec2(pos, value);
   }
 
   vec3 importanceSampleGGX(vec2 Xi, vec3 N, float roughness) {

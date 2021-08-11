@@ -6,6 +6,8 @@ import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {PBR} from '../shader/pbr';
 
+import {generateHammersleyMap} from './generateHammersleyMap';
+
 const BRDF_QUAD = new GLGeometry(quad());
 const BRDF_SHADER = new GLShader(
   /* glsl */`
@@ -27,6 +29,8 @@ const BRDF_SHADER = new GLShader(
 
     varying vec2 vPosition;
 
+    uniform sampler2D uHammersleyMap;
+
     ${PBR}
 
     vec2 integrateBRDF(float NdotV, float roughness) {
@@ -42,7 +46,7 @@ const BRDF_SHADER = new GLShader(
   
       const int SAMPLE_COUNT = 1024;
       for (int i = 0; i < SAMPLE_COUNT; ++i) {
-        vec2 Xi = hammersley(i, SAMPLE_COUNT);
+        vec2 Xi = hammersleyFromMap(uHammersleyMap, i, SAMPLE_COUNT);
         vec3 H  = importanceSampleGGX(Xi, N, roughness);
         vec3 L  = normalize(2.0 * dot(V, H) * H - V);
 
@@ -76,6 +80,8 @@ const BRDF_SHADER = new GLShader(
 );
 
 export function generateBRDFMap(renderer: GLRenderer): GLTexture2D {
+  const hammersleyMap = generateHammersleyMap(1024);
+
   const texture = new GLTexture2D({
     width: 512,
     height: 512,
@@ -97,9 +103,12 @@ export function generateBRDFMap(renderer: GLRenderer): GLTexture2D {
     frameBuffer: fb,
     shader: BRDF_SHADER,
     geometry: BRDF_QUAD,
-    uniforms: {},
+    uniforms: {
+      uHammersleyMap: hammersleyMap,
+    },
   });
   fb.dispose();
+  hammersleyMap.dispose();
 
   return texture;
 }
