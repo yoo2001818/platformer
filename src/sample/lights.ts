@@ -66,7 +66,7 @@ function main() {
     width: 4096,
     height: 2048,
     format: 'rgba',
-    source: createImage(require('./green_point_park_2k.rgbe.png')),
+    source: createImage(require('./studio_country_hall_2k.rgbe.png')),
     magFilter: 'nearest',
     minFilter: 'nearest',
     mipmap: false,
@@ -142,7 +142,7 @@ function main() {
       const material = new BasicMaterial({
         albedo: '#ffffff',
         metalic: 0,
-        roughness: 0.002,
+        roughness: 0.12,
         environment: pbrTexture,
         brdf: brdfTexture,
       });
@@ -183,8 +183,8 @@ function main() {
               #version 100
               precision lowp float;
 
-              ${CUBE_PACK}
               ${RGBE}
+              ${CUBE_PACK}
 
               varying vec2 vPosition;
 
@@ -198,7 +198,9 @@ function main() {
                 vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
                 viewPos /= viewPos.w;
                 vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-                gl_FragColor = vec4(unpackHDR(textureCubePackLod(uTexture, dir, 3.0, cubePackTexelSize)), 1.0);
+                vec3 result = textureCubePackLodHDR(uTexture, dir, 3.0, cubePackTexelSize);
+                result = result / (result + 1.0);
+                gl_FragColor = vec4(result, 1.0);
               }
             `,
             {

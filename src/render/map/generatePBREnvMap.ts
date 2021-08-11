@@ -33,12 +33,13 @@ const BAKE_SHADER = new GLShader(
     varying vec2 vPosition;
 
     uniform vec2 uTexelSize;
+    uniform float uMaxLevel;
     uniform sampler2D uSource;
     uniform sampler2D uHammersleyMap;
 
     ${PBR}
-    ${CUBE_PACK}
     ${RGBE}
+    ${CUBE_PACK}
 
     vec3 runSample(vec3 direction, float roughness, float resolution) {
       vec3 N = normalize(direction);    
@@ -71,7 +72,7 @@ const BAKE_SHADER = new GLShader(
 
         float dotNL = max(dot(N, L), 0.0);
         if (dotNL > 0.0) {
-          prefilteredColor += unpackHDR(textureCubePackLod(uSource, L, min(mipLevel, 8.0), uTexelSize)) * dotNL;
+          prefilteredColor += textureCubePackLodHDR(uSource, L, min(mipLevel, 8.0), uTexelSize) * dotNL;
           totalWeight += dotNL;
         }
       }
@@ -80,13 +81,45 @@ const BAKE_SHADER = new GLShader(
       return prefilteredColor;
     }
 
+    vec3 runIrradianceSample(vec3 normal) {
+      vec3 irradiance = vec3(0.0);  
+
+      vec3 up = vec3(0.0, 1.0, 0.0);
+      vec3 right = normalize(cross(up, normal));
+      up = normalize(cross(normal, right));
+
+      float sampleDelta = 0.025;
+      float nrSamples = 0.0; 
+      for (int phiI = 0; phiI < 100; ++phiI) {
+        float phi = float(phiI) / 100.0 * 2.0 * PI;
+        for (int thetaI = 0; thetaI < 25; ++thetaI) {
+          float theta = float(thetaI) / 25.0 * 0.5 * PI;
+          // spherical to cartesian (in tangent space)
+          vec3 tangentSample = vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+          // tangent space to world
+          vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
+
+          irradiance += textureCubePackLodHDR(uSource, sampleVec, 0.0, uTexelSize) * cos(theta) * sin(theta);
+          nrSamples += 1.0;
+        }
+      }
+      irradiance = PI * irradiance * (1.0 / nrSamples);
+      return irradiance;
+    }
+
     void main() {
       vec4 pos = cubePackReverseLookup(vPosition, uTexelSize);
       float mipLevel = pos.w;
       vec3 coord = pos.xyz;
       float resolution = 1.0 / uTexelSize.x / 2.0;
-      // Run radiance / irradiance calculation
-      vec3 result = runSample(coord, pow(min(mipLevel / 6.0, 1.0), 2.0), resolution);
+      vec3 result;
+      if (mipLevel < uMaxLevel) {
+        // radiance calculation
+        result = runSample(coord, pow(min(mipLevel / (uMaxLevel - 1.0), 1.0), 2.0), resolution);
+      } else {
+        // irradiance calculation
+        result = runIrradianceSample(coord);
+      }
       gl_FragColor = packHDR(result);
     }
   `,
@@ -97,6 +130,7 @@ const BAKE_SHADER = new GLShader(
 export function generatePBREnvMap(
   renderer: GLRenderer,
   source: GLTexture2D,
+  maxLevel = 7,
 ): GLTexture2D {
   const {width, height} = source.options;
   if (width == null || height == null) {
@@ -122,6 +156,7 @@ export function generatePBREnvMap(
       uTexelSize: [1 / width, 1 / height],
       uSource: source,
       uHammersleyMap: hammersleyMap,
+      uMaxLevel: maxLevel,
     },
   });
   fb.dispose();

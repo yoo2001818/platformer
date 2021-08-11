@@ -1,7 +1,7 @@
 export const CUBE_PACK = /* glsl */`
   #extension GL_EXT_shader_texture_lod : enable
 
-  vec4 textureCubePackLodInt(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
+  vec2 cubePackLookup(vec3 dir, float lod, vec2 texelSize) {
     // Mipmap constraining
     float mipBounds = pow(2.0, -lod);
     float mipStart = 1.0 - mipBounds;
@@ -52,6 +52,11 @@ export const CUBE_PACK = /* glsl */`
     }
     uv += 1.0 * packSize;
     uv = uv * mipBounds + mipStart;
+    return uv;
+  }
+
+  vec4 textureCubePackLodInt(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
+    vec2 uv = cubePackLookup(dir, lod, texelSize);
     return texture2DLodEXT(smp, uv, 0.0);
   }
 
@@ -60,6 +65,33 @@ export const CUBE_PACK = /* glsl */`
     float lodMax = lodMin + 1.0;
     vec4 resMin = textureCubePackLodInt(smp, dir, lodMin, texelSize);
     vec4 resMax = textureCubePackLodInt(smp, dir, lodMax, texelSize);
+    return mix(resMin, resMax, fract(lod));
+  }
+
+  vec3 textureCubePackLodIntHDR(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
+    vec2 uv = cubePackLookup(dir, lod, texelSize);
+    // We can't use GPU's internal bilinear filtering in this case...
+    // Instead, we snap to nearest texel and retrieve it.
+    vec2 lowUV = floor(uv * (1.0 / texelSize) + texelSize * 0.5) * texelSize;
+    vec2 highUV = lowUV + texelSize;
+    vec2 factor = fract(uv * (1.0 / texelSize) + texelSize * 0.5);
+
+    vec3 llPixel = unpackHDR(texture2DLodEXT(smp, lowUV, 0.0));
+    vec3 hhPixel = unpackHDR(texture2DLodEXT(smp, highUV, 0.0));
+    vec3 hlPixel = unpackHDR(texture2DLodEXT(smp, vec2(highUV.x, lowUV.y), 0.0));
+    vec3 lhPixel = unpackHDR(texture2DLodEXT(smp, vec2(lowUV.x, highUV.y), 0.0));
+
+    vec3 xlPixel = mix(llPixel, hlPixel, factor.x);
+    vec3 xhPixel = mix(lhPixel, hhPixel, factor.x);
+    vec3 pixel = mix(xlPixel, xhPixel, factor.y);
+    return pixel;
+  }
+
+  vec3 textureCubePackLodHDR(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
+    float lodMin = floor(lod);
+    float lodMax = lodMin + 1.0;
+    vec3 resMin = textureCubePackLodIntHDR(smp, dir, lodMin, texelSize);
+    vec3 resMax = textureCubePackLodIntHDR(smp, dir, lodMax, texelSize);
     return mix(resMin, resMax, fract(lod));
   }
 

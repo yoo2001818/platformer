@@ -32,8 +32,8 @@ const MIP_SHADER = new GLShader(
     uniform vec2 uTexelSize;
     uniform sampler2D uSource;
 
-    ${CUBE_PACK}
     ${RGBE}
+    ${CUBE_PACK}
 
     void main() {
       vec4 pos = cubePackReverseFace(vPosition);
@@ -130,8 +130,8 @@ const EQUI_SHADER = new GLShader(
     uniform vec2 uTexelSize;
     uniform sampler2D uSource;
 
-    ${CUBE_PACK}
     ${RGBE}
+    ${CUBE_PACK}
 
     const vec2 invAtan = vec2(0.1591, 0.3183);
 
