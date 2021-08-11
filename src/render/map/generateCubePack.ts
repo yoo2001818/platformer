@@ -6,7 +6,7 @@ import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {CUBE_PACK} from '../shader/cubepack';
 
-const MIP_QUAD = new GLGeometry(quad());
+const GEOM_QUAD = new GLGeometry(quad());
 const MIP_SHADER = new GLShader(
   /* glsl */`
     #version 100
@@ -88,7 +88,7 @@ export function generateCubePackMipMap(
     const toB = i % 2 === 0;
     renderer.draw({
       frameBuffer: toB ? pingPongFBtoB : pingPongFBtoA,
-      geometry: MIP_QUAD,
+      geometry: GEOM_QUAD,
       shader: MIP_SHADER,
       uniforms: {
         uLevel: i + 1,
@@ -100,8 +100,56 @@ export function generateCubePackMipMap(
   const output = maxLevel % 2 === 0 ? pingPongA : pingPongB;
   const other = maxLevel % 2 === 0 ? pingPongB : pingPongA;
   other.dispose();
+  pingPongFBtoA.dispose();
+  pingPongFBtoB.dispose();
   return output;
 }
+
+const EQUI_SHADER = new GLShader(
+  /* glsl */`
+    #version 100
+    precision highp float;
+
+    attribute vec3 aPosition;
+
+    varying vec2 vPosition;
+
+    void main() {
+      vPosition = aPosition.xy * 0.5 + 0.5;
+      gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+    }
+  `,
+  /* glsl */`
+    #version 100
+    precision highp float;
+
+    varying vec2 vPosition;
+
+    uniform vec2 uTexelSize;
+    uniform sampler2D uSource;
+
+    ${CUBE_PACK}
+
+    const vec2 invAtan = vec2(0.1591, 0.3183);
+
+    void main() {
+      vec4 pos = cubePackReverseLookup(vPosition, uTexelSize);
+      float mipLevel = pos.w;
+      vec3 dir = pos.xyz;
+      if (mipLevel >= 1.0) {
+        gl_FragColor = vec4(0.0);
+        return;
+      }
+
+      // Run equirectangular mapping
+      vec2 uv = vec2(atan(dir.z, dir.x), asin(dir.y));
+      uv *= invAtan;
+      uv += 0.5;
+
+      gl_FragColor = texture2D(uSource, uv);
+    }
+  `,
+);
 
 export function generateCubePackEquirectangular(
   renderer: GLRenderer,
@@ -111,4 +159,26 @@ export function generateCubePackEquirectangular(
 ): GLTexture2D {
   const width = size;
   const height = size * 2;
+  const target = new GLTexture2D({
+    ...source.options,
+    width,
+    height,
+    source: null,
+  });
+  const fb = new GLFrameBuffer({
+    color: target,
+    width,
+    height,
+  });
+  renderer.draw({
+    frameBuffer: fb,
+    geometry: GEOM_QUAD,
+    shader: EQUI_SHADER,
+    uniforms: {
+      uTexelSize: [1 / width, 1 / height],
+      uSource: source,
+    },
+  });
+  fb.dispose();
+  return generateCubePackMipMap(renderer, target, maxLevel);
 }
