@@ -17,10 +17,10 @@ import {ShaderBank} from '../ShaderBank';
 import {CUBE_PACK} from '../shader/cubepack';
 
 export interface BasicMaterialOptions {
-  albedo: string | Float32Array | number[] | GLTexture;
+  albedo: string | Float32Array | number[] | GLTexture | null;
   metalic: number | GLTexture;
   roughness: number | GLTexture;
-  environment?: GLTexture;
+  environment?: GLTexture | null;
   brdf?: GLTexture;
 }
 

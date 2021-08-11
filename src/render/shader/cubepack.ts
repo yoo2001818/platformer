@@ -91,7 +91,7 @@ export const CUBE_PACK = /* glsl */`
     vec2 blockPos = fract(mipWorkPos);
     vec2 facePos = floor(mipWorkPos);
     float face = facePos.x + facePos.y * 2.0;
-    return vec3(blockPos, face, mipLevel);
+    return vec4(blockPos, face, mipLevel);
   }
 
   vec4 cubePackReverseLookup(vec2 uv, vec2 texelSize) {

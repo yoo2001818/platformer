@@ -39,7 +39,7 @@ const MIP_SHADER = new GLShader(
       float face = pos.z;
       vec2 uv = pos.xy;
       if (mipLevel != uLevel) {
-        discard;
+        gl_FragColor = texture2DLodEXT(uSource, vPosition, 0.0);
         return;
       }
       float targetMipLevel = mipLevel - 1.0;
@@ -135,7 +135,7 @@ const EQUI_SHADER = new GLShader(
     void main() {
       vec4 pos = cubePackReverseLookup(vPosition, uTexelSize);
       float mipLevel = pos.w;
-      vec3 dir = pos.xyz;
+      vec3 dir = normalize(pos.xyz);
       if (mipLevel >= 1.0) {
         gl_FragColor = vec4(0.0);
         return;

@@ -18,10 +18,11 @@ import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
-import {GLTextureEquirectangular} from '../render/gl/GLTextureEquirectangular';
 import {CUBE_PACK} from '../render/shader/cubepack';
-import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
+// import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {generateBRDFMap} from '../render/map/generateBRDFMap';
+import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
+import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 
 const store = new EntityStore();
 
@@ -60,12 +61,13 @@ function main() {
   glRenderer.setViewport();
 
   //*
-  const skyboxTexture = new GLTextureEquirectangular({
+  const skyboxTexture = new GLTexture2D({
     width: 4096,
     height: 2048,
     source: createImage(require('./green_point_park_2k.jpg')),
-    magFilter: 'linear',
-    minFilter: 'linearMipmapLinear',
+    magFilter: 'nearest',
+    minFilter: 'nearest',
+    mipmap: false,
   });
   /*/
   const skyboxTexture = new GLTextureCube({
@@ -79,6 +81,8 @@ function main() {
     ],
   });
   // */
+  let pbrTexture: GLTexture2D | null = null;
+  /*
   const pbrTexture = new GLTexture2D({
     width: 2048,
     height: 4096,
@@ -86,6 +90,7 @@ function main() {
     magFilter: 'linear',
     minFilter: 'linear',
   });
+  */
   const brdfTexture = generateBRDFMap(glRenderer);
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
@@ -193,21 +198,6 @@ function main() {
     ),
   });
 
-  store.create({
-    name: 'envMapDebug',
-    transform: new Transform()
-      .rotateX(-Math.PI / 2)
-      .setScale([2.5, 5, 10])
-      .setPosition([15, 0, 0]),
-    mesh: new Mesh(
-      new BasicMaterial({
-        albedo: pbrTexture,
-        metalic: 0,
-        roughness: 0.2,
-      }),
-      new Geometry(calcNormals(quad())),
-    ),
-  });
 
   store.create({
     name: 'brdfMapDebug',
@@ -276,7 +266,26 @@ function main() {
     skyboxTexture.bind(glRenderer);
     if (skyboxTexture.isReady() && !pbrBuilt) {
       pbrBuilt = true;
-      generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
+      const mip =
+        generateCubePackEquirectangular(glRenderer, skyboxTexture, 2048, 6);
+      pbrTexture = generatePBREnvMap(glRenderer, mip);
+      mip.dispose();
+      // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
+      store.create({
+        name: 'envMapDebug',
+        transform: new Transform()
+          .rotateX(-Math.PI / 2)
+          .setScale([2.5, 5, 10])
+          .setPosition([15, 0, 0]),
+        mesh: new Mesh(
+          new BasicMaterial({
+            albedo: pbrTexture,
+            metalic: 0,
+            roughness: 0.2,
+          }),
+          new Geometry(calcNormals(quad())),
+        ),
+      });
     }
 
     gl!.clearColor(0, 0, 0, 255);
