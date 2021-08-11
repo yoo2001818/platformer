@@ -5,6 +5,7 @@ import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLVertexArray} from './GLVertexArray';
 import {GLShader} from './GLShader';
 import {GLFrameBuffer} from './GLFrameBuffer';
+import {DrawOptions} from './types';
 
 export class GLRenderer {
   gl: WebGLRenderingContext;
@@ -31,6 +32,12 @@ export class GLRenderer {
     this.textureManager = new GLTextureManager(this);
   }
 
+  unbindFrameBuffer(): void {
+    if (renderer.boundFrameBuffer != null) {
+      renderer.boundFrameBuffer.unbind();
+    }
+  }
+
   getAspectRatio(): number {
     const canvas = this.gl.canvas;
     return canvas.width / canvas.height;
@@ -40,5 +47,22 @@ export class GLRenderer {
     const {gl} = this;
     const {canvas} = gl;
     gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+
+  draw(options: DrawOptions): void {
+    const {frameBuffer, geometry, shader, uniforms, primCount} = options;
+    if (frameBuffer != null) {
+      frameBuffer.bind(this);
+    } else {
+      this.unbindFrameBuffer();
+    }
+    shader.bind(this);
+    geometry.bind(this, shader);
+    shader.setUniforms(uniforms);
+    if (primCount != null) {
+      geometry.drawInstanced(primCount);
+    } else {
+      geometry.draw();
+    }
   }
 }

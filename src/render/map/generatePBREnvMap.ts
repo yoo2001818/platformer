@@ -1,12 +1,11 @@
-import {quad} from '../geom/quad';
-
-import {GLFrameBuffer} from './gl/GLFrameBuffer';
-import {GLGeometry} from './gl/GLGeometry';
-import {GLRenderer} from './gl/GLRenderer';
-import {GLShader} from './gl/GLShader';
-import {GLTexture} from './gl/GLTexture';
-import {GLTexture2D} from './gl/GLTexture2D';
-import {PBR} from './shader/pbr';
+import {quad} from '../../geom/quad';
+import {GLFrameBuffer} from '../gl/GLFrameBuffer';
+import {GLGeometry} from '../gl/GLGeometry';
+import {GLRenderer} from '../gl/GLRenderer';
+import {GLShader} from '../gl/GLShader';
+import {GLTexture} from '../gl/GLTexture';
+import {GLTexture2D} from '../gl/GLTexture2D';
+import {PBR} from '../shader/pbr';
 
 const BAKE_QUAD = new GLGeometry(quad());
 const BAKE_SHADER = new GLShader(
@@ -147,14 +146,13 @@ export function generatePBREnvMap(
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  // Because of the texture structure, we can perform everything on single
-  // draw call. Let's do that first.
-  BAKE_SHADER.bind(renderer);
-  BAKE_QUAD.bind(renderer, BAKE_SHADER);
-  BAKE_SHADER.setUniforms({
-    uSource: source,
+  renderer.draw({
+    frameBuffer: fb,
+    shader: BAKE_SHADER,
+    geometry: BAKE_QUAD,
+    uniforms: {
+      uSource: source,
+    },
   });
-  BAKE_QUAD.draw();
-
-  fb.unbind();
+  fb.dispose();
 }

@@ -1,4 +1,7 @@
 import type {GLArrayBuffer} from './GLArrayBuffer';
+import type {GLFrameBuffer} from './GLFrameBuffer';
+import type {GLGeometry} from './GLGeometry';
+import type {GLShader} from './GLShader';
 
 export type ArrayBufferView =
   | Int8Array
@@ -33,4 +36,12 @@ export interface AttributeOptions {
   stride?: number;
   offset?: number;
   divisor?: number;
+}
+
+export interface DrawOptions {
+  frameBuffer?: GLFrameBuffer | null;
+  geometry: GLGeometry;
+  shader: GLShader;
+  uniforms: unknown;
+  primCount?: number;
 }

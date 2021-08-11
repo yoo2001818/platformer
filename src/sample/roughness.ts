@@ -18,9 +18,9 @@ import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
 import {GLTextureEquirectangular} from '../render/gl/GLTextureEquirectangular';
-import {generatePBREnvMap} from '../render/generatePBREnvMap';
 import {CUBE_PACK} from '../render/shader/cubepack';
-import {generateBRDFMap} from '../render/generateBRDFMap';
+import {generateBRDFMap} from '../render/map/generateBRDFMap';
+import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 
 const store = new EntityStore();
 

@@ -1,11 +1,10 @@
-import {quad} from '../geom/quad';
-
-import {GLFrameBuffer} from './gl/GLFrameBuffer';
-import {GLGeometry} from './gl/GLGeometry';
-import {GLRenderer} from './gl/GLRenderer';
-import {GLShader} from './gl/GLShader';
-import {GLTexture2D} from './gl/GLTexture2D';
-import {PBR} from './shader/pbr';
+import {quad} from '../../geom/quad';
+import {GLFrameBuffer} from '../gl/GLFrameBuffer';
+import {GLGeometry} from '../gl/GLGeometry';
+import {GLRenderer} from '../gl/GLRenderer';
+import {GLShader} from '../gl/GLShader';
+import {GLTexture2D} from '../gl/GLTexture2D';
+import {PBR} from '../shader/pbr';
 
 const BRDF_QUAD = new GLGeometry(quad());
 const BRDF_SHADER = new GLShader(
@@ -94,11 +93,12 @@ export function generateBRDFMap(renderer: GLRenderer): GLTexture2D {
     width: 512,
     height: 512,
   });
-  fb.bind(renderer);
-  BRDF_SHADER.bind(renderer);
-  BRDF_QUAD.bind(renderer, BRDF_SHADER);
-  BRDF_QUAD.draw();
-  fb.unbind();
+  renderer.draw({
+    frameBuffer: fb,
+    shader: BRDF_SHADER,
+    geometry: BRDF_QUAD,
+    uniforms: {},
+  });
   fb.dispose();
 
   return texture;

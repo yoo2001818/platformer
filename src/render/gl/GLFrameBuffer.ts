@@ -61,6 +61,9 @@ export class GLFrameBuffer {
 
   dispose(): void {
     const {renderer, framebuffer} = this;
+    if (renderer != null && renderer.boundFrameBuffer === this) {
+      this.unbind();
+    }
     if (renderer != null && framebuffer != null) {
       const {gl} = renderer;
       gl.deleteFramebuffer(framebuffer);
