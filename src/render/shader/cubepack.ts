@@ -72,9 +72,9 @@ export const CUBE_PACK = /* glsl */`
     vec2 uv = cubePackLookup(dir, lod, texelSize);
     // We can't use GPU's internal bilinear filtering in this case...
     // Instead, we snap to nearest texel and retrieve it.
-    vec2 lowUV = floor(uv * (1.0 / texelSize) + texelSize * 0.5) * texelSize;
+    vec2 lowUV = (floor(uv * (1.0 / texelSize) - 0.5)) * texelSize;
     vec2 highUV = lowUV + texelSize;
-    vec2 factor = fract(uv * (1.0 / texelSize) + texelSize * 0.5);
+    vec2 factor = fract(uv * (1.0 / texelSize) - 0.5);
 
     vec3 llPixel = unpackHDR(texture2DLodEXT(smp, lowUV, 0.0));
     vec3 hhPixel = unpackHDR(texture2DLodEXT(smp, highUV, 0.0));

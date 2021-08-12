@@ -263,6 +263,7 @@ function main() {
         ),
       });
 
+      /*
       store.create({
         name: 'light',
         transform: new Transform().translate([5, 5, 5]),
@@ -292,6 +293,7 @@ function main() {
           attenuation: 0.00001,
         }),
       });
+      */
     }
 
     gl!.clearColor(0, 0, 0, 255);

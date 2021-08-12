@@ -99,7 +99,7 @@ const BAKE_SHADER = new GLShader(
           // tangent space to world
           vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
-          irradiance += textureCubePackLodHDR(uSource, sampleVec, 0.0, uTexelSize) * cos(theta) * sin(theta);
+          irradiance += textureCubePackLodHDR(uSource, sampleVec, 6.0, uTexelSize) * cos(theta) * sin(theta);
           nrSamples += 1.0;
         }
       }

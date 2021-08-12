@@ -46,7 +46,6 @@ const SHADER_BANK = new ShaderBank(
     uniform mat4 uModel;
 
     varying vec3 vPosition;
-    varying vec3 vWorldNormal;
     varying vec3 vNormal;
     varying vec2 vTexCoord;
 
@@ -55,7 +54,6 @@ const SHADER_BANK = new ShaderBank(
       gl_Position = uProjection * pos;
       vPosition = pos.xyz;
       // TODO Normal 3x3 matrix
-      vWorldNormal = (uModel * vec4(aNormal, 0.0)).xyz;
       vNormal = (uView * uModel * vec4(aNormal, 0.0)).xyz;
       vTexCoord = aTexCoord;
     } 
@@ -83,11 +81,10 @@ const SHADER_BANK = new ShaderBank(
     ${CUBE_PACK}
 
     varying vec3 vPosition;
-    varying vec3 vWorldNormal;
     varying vec3 vNormal;
     varying vec2 vTexCoord;
 
-    uniform mat4 uView;
+    uniform mat4 uInverseView;
     #if NUM_POINT_LIGHTS > 0
     uniform PointLight uPointLights[NUM_POINT_LIGHTS];
     #endif
@@ -138,8 +135,10 @@ const SHADER_BANK = new ShaderBank(
       #ifdef USE_ENVIRONMENT_MAP
       {
         float dotNV = max(dot(N, V), 0.0);
-        vec3 R = reflect(-V, N);
-        vec3 envColor = textureCubePackLodHDR(uEnvironmentMap, R, roughness * 6.0, cubePackTexelSize);
+        vec3 WV = (uInverseView * vec4(V, 0.0)).xyz;
+        vec3 WN = (uInverseView * vec4(N, 0.0)).xyz;
+        vec3 WR = reflect(-WV, WN);
+        vec3 envColor = textureCubePackLodHDR(uEnvironmentMap, WR, roughness * 6.0, cubePackTexelSize);
         vec3 F = fresnelSchlickRoughness(dotNV, reflection, roughness * roughness);
         vec2 envBRDF = texture2D(uBRDFMap, vec2(dotNV, roughness)).rg;
 
@@ -148,7 +147,7 @@ const SHADER_BANK = new ShaderBank(
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
 
-        vec3 irradiance = textureCubePackLodHDR(uEnvironmentMap, vWorldNormal, 7.0, cubePackTexelSize);
+        vec3 irradiance = textureCubePackLodHDR(uEnvironmentMap, WN, 7.0, cubePackTexelSize);
 
         result += kD * albedo * irradiance + spec;
       }
@@ -210,6 +209,7 @@ export class BasicMaterial implements Material {
       entityStore.getComponent<TransformComponent>('transform')!;
     const cameraData = camera!.get<Camera>('camera')!;
     const uniformOptions: {[key: string]: any;} = {
+      uInverseView: cameraData.getInverseView(camera!),
       uView: cameraData.getView(camera!),
       uProjection: cameraData.getProjection(renderer.getAspectRatio()),
       uPointLights: this.lights,
