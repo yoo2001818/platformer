@@ -62,7 +62,6 @@ function main() {
   const renderer = new Renderer(glRenderer, store);
   glRenderer.setViewport();
 
-  //*
   const skyboxTexture = new GLTexture2D({
     width: 4096,
     height: 2048,
@@ -72,18 +71,6 @@ function main() {
     minFilter: 'nearest',
     mipmap: false,
   });
-  /*/
-  const skyboxTexture = new GLTextureCube({
-    sources: [
-      createImage(require('./sky1.png')),
-      createImage(require('./sky2.png')),
-      createImage(require('./sky3.png')),
-      createImage(require('./sky4.png')),
-      createImage(require('./sky5.png')),
-      createImage(require('./sky6.png')),
-    ],
-  });
-  // */
   const brdfTexture = generateBRDFMap(glRenderer);
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);

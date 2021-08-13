@@ -63,6 +63,7 @@ const SHADER_BANK = new ShaderBank(
   `, /* glsl */`
     #version 100
     ${CUBE_PACK_HEADER}
+    #extension GL_OES_standard_derivatives : enable
     precision highp float;
 
     #define HDR_INPUT_${hdrType}
@@ -143,7 +144,19 @@ const SHADER_BANK = new ShaderBank(
         vec3 WV = (uInverseView * vec4(V, 0.0)).xyz;
         vec3 WN = (uInverseView * vec4(N, 0.0)).xyz;
         vec3 WR = reflect(-WV, WN);
-        vec3 envColor = textureCubePackLodHDR(uEnvironmentMap, WR, roughness * 6.0, cubePackTexelSize);
+        // This tries to take advantage of mipmap when zooming out
+        #ifdef GL_OES_standard_derivatives
+        vec3 lodDiff = max(abs(dFdx(WR)), abs(dFdy(WR)));
+        float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (cubePackTexelSize.x * 0.5) + 1.0);
+        float lod = max(roughness * 6.0, lodTarget);
+        #elif defined(WEBGL2)
+        vec3 lodDiff = max(abs(dFdx(WR)), abs(dFdy(WR)));
+        float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (cubePackTexelSize.x * 0.5) + 1.0);
+        float lod = max(roughness * 6.0, lodTarget);
+        #else
+        float lod = roughness * 6.0;
+        #endif
+        vec3 envColor = textureCubePackLodHDR(uEnvironmentMap, WR, lod, cubePackTexelSize);
         vec3 F = fresnelSchlickRoughness(dotNV, reflection, roughness * roughness);
         vec2 envBRDF = texture2D(uBRDFMap, vec2(dotNV, roughness)).rg;
 
@@ -155,6 +168,7 @@ const SHADER_BANK = new ShaderBank(
         vec3 irradiance = textureCubePackLodHDR(uEnvironmentMap, WN, 7.0, cubePackTexelSize);
 
         result += kD * albedo * irradiance + spec;
+        // result += vec3(lodTarget / 8.0, 0.0, 0.0);
       }
       #endif
 
