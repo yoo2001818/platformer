@@ -1,4 +1,6 @@
 export const CUBE_PACK = /* glsl */`
+  #extension GL_EXT_shader_texture_lod : enable
+
   highp vec2 cubePackLookup(vec3 dir, float lod, highp vec2 texelSize) {
     // Mipmap constraining
     highp float mipExp = exp2(lod);
@@ -94,7 +96,11 @@ export const CUBE_PACK = /* glsl */`
       vec3 pixel = mix(xlPixel, xhPixel, factor.y);
       return pixel;
     #else
-      return unpackHDR(texture2D(smp, uv));
+      #ifdef GL_EXT_shader_texture_lod
+        return unpackHDR(texture2DLodEXT(smp, uv, 0.0));
+      #else
+        return unpackHDR(texture2D(smp, uv));
+      #endif
     #endif
 
   }

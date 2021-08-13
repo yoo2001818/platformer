@@ -24,6 +24,9 @@ export function getHDROptions(type: HDRType): GLTextureOptions {
         // NOTE: WebGL can't render to RGB32F. However it can render to this:
         format: 'rgba',
         type: 'float',
+        wrapS: 'clampToEdge',
+        wrapT: 'clampToEdge',
+        anistropic: 0,
       };
     case 'rgbe':
       return {
@@ -34,6 +37,7 @@ export function getHDROptions(type: HDRType): GLTextureOptions {
         type: 'unsignedByte',
         wrapS: 'clampToEdge',
         wrapT: 'clampToEdge',
+        anistropic: 0,
       };
     default:
       throw new Error(`Unknown HDR type ${type}`);
