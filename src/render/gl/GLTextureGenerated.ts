@@ -4,37 +4,38 @@ import {
   GLTextureParameters,
   TEXTURE_2D,
 } from './GLTexture';
-import {GLTexture2D} from './GLTexture2D';
+import {TEXTURE_2D_PLACEHOLDER} from './GLTexture2D';
 
-export class GLTexture2DGenerated extends GLTexture2D {
-  generate: (self: GLTexture2DGenerated) => void;
+export class GLTextureGenerated extends GLTexture {
+  generate: () => GLTexture;
   dependencies: GLTexture[];
-  initialized: boolean;
+  result: GLTexture | null = null;
 
   constructor(
     options: GLTextureParameters & GLTextureFormat,
-    generate: (self: GLTexture2DGenerated) => void,
+    generate: () => GLTexture,
     dependencies: GLTexture[] = [],
   ) {
-    super({...options, source: null, mipmap: false});
+    super(TEXTURE_2D, {...options, mipmap: false});
     this.generate = generate;
     this.dependencies = dependencies;
-    this.initialized = false;
   }
 
-  _init(): void {
-    if (this.initialized) {
-      return;
+  _getInstance(): GLTexture {
+    if (!this.isReady()) {
+      return TEXTURE_2D_PLACEHOLDER;
     }
-    super._init();
-    this.initialized = true;
-    this.generate(this);
-    if (this.options.mipmap !== false) {
-      this._generateMipmap(TEXTURE_2D);
+    if (this.result == null) {
+      this.result = this.generate();
     }
+    return this.result._getInstance();
   }
 
   isReady(): boolean {
     return this.dependencies.every((v) => v.isReady());
+  }
+
+  prepare(): void {
+    this._getInstance();
   }
 }

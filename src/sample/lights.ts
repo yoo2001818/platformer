@@ -24,6 +24,7 @@ import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import { RGBE } from '../render/shader/hdr';
+import {GLTexture} from '../render/gl/GLTexture';
 
 const store = new EntityStore();
 
@@ -83,7 +84,7 @@ function main() {
     ],
   });
   // */
-  let pbrTexture: GLTexture2D | null = null;
+  let pbrTexture: GLTexture | null = null;
   /*
   const pbrTexture = new GLTexture2D({
     width: 2048,

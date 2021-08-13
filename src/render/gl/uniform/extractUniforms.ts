@@ -1,11 +1,7 @@
-import {UniformEntry, UniformSlot} from './types';
+import {UniformEntry, UniformResult, UniformSlot} from './types';
 import {isUniformType} from './utils';
 
-export function addUniform(
-  name: string,
-  type: UniformSlot,
-  output: {[key: string]: UniformEntry;},
-): void {
+function getUniformPath(name: string): (string | number)[] {
   // Parse uniform name. The uniform name is separated using [] and .
   // For example: abc.def[1].g
   // abc .def [1] .g
@@ -28,6 +24,14 @@ export function addUniform(
       tokens.push(parseInt(match[2], 10));
     }
   }
+  return tokens;
+}
+
+export function addUniform(
+  tokens: (string | number)[],
+  type: UniformSlot,
+  output: {[key: string]: UniformEntry;},
+): void {
   // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
   let current: Record<any, UniformEntry> = output;
   // Using the tokens, we recursively step into the given value...
@@ -43,7 +47,7 @@ export function addUniform(
       current[token] = newEntry;
       current = newEntry;
     } else if (isUniformType(nextEntry)) {
-      throw new Error(`${name} is invalid`);
+      throw new Error('Invalid uniform');
     } else {
       current = nextEntry as unknown as any;
     }
@@ -55,7 +59,7 @@ export function addUniform(
 export function extractUniforms(
   gl: WebGLRenderingContext,
   program: WebGLProgram,
-): UniformEntry {
+): UniformResult {
   const output: {[key: string]: UniformEntry;} = {};
   const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
   for (let i = 0; i < numUniforms; i += 1) {
@@ -65,9 +69,11 @@ export function extractUniforms(
       // position ([0]). We map each array value to an uniform.
       for (let j = 0; j < uniform.size; j += 1) {
         const newName = `${uniform.name.slice(0, -3)}[${j}]`;
-        addUniform(newName, {
+        const path = getUniformPath(newName);
+        addUniform(path, {
           location: gl.getUniformLocation(program, newName)!,
           name: newName,
+          path,
           size: 1,
           type: uniform.type,
           uniform: 'uniform',
@@ -75,14 +81,16 @@ export function extractUniforms(
       }
     } else {
       const loc = gl.getUniformLocation(program, uniform.name)!;
-      addUniform(uniform.name, {
+      const path = getUniformPath(uniform.name);
+      addUniform(path, {
         location: loc,
         name: uniform.name,
+        path,
         size: uniform.size,
         type: uniform.type,
         uniform: 'uniform',
       }, output);
     }
   }
-  return output;
+  return { uniforms: output, textures: [] };
 }

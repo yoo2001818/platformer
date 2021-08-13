@@ -43,9 +43,11 @@ export class GLFrameBuffer {
       renderer.boundFrameBuffer = this;
     }
     if (renderer.boundFrameBuffer !== this) {
+      const {options} = this;
       const {gl} = renderer;
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
       renderer.boundFrameBuffer = this;
+      gl.viewport(0, 0, options.width, options.height);
     }
   }
 
@@ -79,22 +81,25 @@ export class GLFrameBuffer {
     }
     const {gl} = renderer;
     if (attachment instanceof GLTexture) {
-      attachment.bind(renderer);
+      const inst = attachment._getInstance();
+      inst.bind(renderer);
+      console.log('bound', inst, inst._getInstance());
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
         fbTarget,
-        attachment.type,
-        attachment.texture,
+        inst.type,
+        inst.texture,
         0,
       );
     } else if ('texture' in attachment) {
       const {target, texture} = attachment;
-      texture.bind(renderer);
+      const inst = texture._getInstance();
+      inst.bind(renderer);
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
         fbTarget,
-        target != null ? TEXTURE_CUBE_MAP_DIRS[target] : texture.type,
-        texture.texture,
+        target != null ? TEXTURE_CUBE_MAP_DIRS[target] : inst.type,
+        inst.texture,
         0,
       );
     } else {

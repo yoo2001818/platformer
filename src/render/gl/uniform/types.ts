@@ -1,5 +1,6 @@
 export interface UniformSlot {
   name: string;
+  path: (string | number)[];
   size: number;
   type: number;
   uniform: 'uniform';
@@ -13,3 +14,8 @@ export type UniformContainer =
 export type UniformEntry =
   | UniformSlot
   | UniformContainer;
+
+export interface UniformResult {
+  uniforms: UniformContainer;
+  textures: UniformSlot[];
+}

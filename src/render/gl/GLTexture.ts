@@ -78,6 +78,7 @@ export class GLTexture {
     } else {
       this._active();
       gl.bindTexture(this.type, this.texture);
+      this._init();
     }
   }
 
@@ -263,6 +264,10 @@ export class GLTexture {
 
   isReady(): boolean {
     return false;
+  }
+
+  prepare(): void {
+    //
   }
 
 }

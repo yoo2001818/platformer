@@ -5,6 +5,7 @@ import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
+import {GLTextureGenerated} from '../gl/GLTextureGenerated';
 import {CUBE_PACK} from '../shader/cubepack';
 import {RGBE} from '../shader/hdr';
 
@@ -72,40 +73,42 @@ export function generateCubePackMipMap(
   if (width == null || height == null) {
     throw new Error('The source texture must manually set width / height');
   }
-  const pingPongA = source;
-  const pingPongB = new GLTexture2D({
-    ...source.options,
-    source: null,
-  });
-  const pingPongFBtoA = new GLFrameBuffer({
-    color: pingPongA,
-    width,
-    height,
-  });
-  const pingPongFBtoB = new GLFrameBuffer({
-    color: pingPongB,
-    width,
-    height,
-  });
-  for (let i = 0; i < maxLevel; i += 1) {
-    const toB = i % 2 === 0;
-    renderer.draw({
-      frameBuffer: toB ? pingPongFBtoB : pingPongFBtoA,
-      geometry: GEOM_QUAD,
-      shader: MIP_SHADER,
-      uniforms: {
-        uLevel: i + 1,
-        uTexelSize: [1 / width, 1 / height],
-        uSource: toB ? pingPongA : pingPongB,
-      },
+  return new GLTextureGenerated(source.options, () => {
+    const pingPongA = source;
+    const pingPongB = new GLTexture2D({
+      ...source.options,
+      source: null,
     });
-  }
-  const output = maxLevel % 2 === 0 ? pingPongA : pingPongB;
-  const other = maxLevel % 2 === 0 ? pingPongB : pingPongA;
-  other.dispose();
-  pingPongFBtoA.dispose();
-  pingPongFBtoB.dispose();
-  return output;
+    const pingPongFBtoA = new GLFrameBuffer({
+      color: pingPongA,
+      width,
+      height,
+    });
+    const pingPongFBtoB = new GLFrameBuffer({
+      color: pingPongB,
+      width,
+      height,
+    });
+    for (let i = 0; i < maxLevel; i += 1) {
+      const toB = i % 2 === 0;
+      renderer.draw({
+        frameBuffer: toB ? pingPongFBtoB : pingPongFBtoA,
+        geometry: GEOM_QUAD,
+        shader: MIP_SHADER,
+        uniforms: {
+          uLevel: i + 1,
+          uTexelSize: [1 / width, 1 / height],
+          uSource: toB ? pingPongA : pingPongB,
+        },
+      });
+    }
+    const output = maxLevel % 2 === 0 ? pingPongA : pingPongB;
+    const other = maxLevel % 2 === 0 ? pingPongB : pingPongA;
+    other.dispose();
+    pingPongFBtoA.dispose();
+    pingPongFBtoB.dispose();
+    return output;
+  }, [source]);
 }
 
 const EQUI_SHADER = new GLShader(
@@ -163,26 +166,32 @@ export function generateCubePackEquirectangular(
 ): GLTexture {
   const width = size;
   const height = size * 2;
-  const target = new GLTexture2D({
+  return new GLTextureGenerated({
     ...source.options,
     width,
     height,
-    source: null,
-  });
-  const fb = new GLFrameBuffer({
-    color: target,
-    width,
-    height,
-  });
-  renderer.draw({
-    frameBuffer: fb,
-    geometry: GEOM_QUAD,
-    shader: EQUI_SHADER,
-    uniforms: {
-      uTexelSize: [1 / width, 1 / height],
-      uSource: source,
-    },
-  });
-  fb.dispose();
-  return generateCubePackMipMap(renderer, target, maxLevel);
+  }, () => {
+    const target = new GLTexture2D({
+      ...source.options,
+      width,
+      height,
+      source: null,
+    });
+    const fb = new GLFrameBuffer({
+      color: target,
+      width,
+      height,
+    });
+    renderer.draw({
+      frameBuffer: fb,
+      geometry: GEOM_QUAD,
+      shader: EQUI_SHADER,
+      uniforms: {
+        uTexelSize: [1 / width, 1 / height],
+        uSource: source,
+      },
+    });
+    fb.dispose();
+    return generateCubePackMipMap(renderer, target, maxLevel);
+  }, [source]);
 }

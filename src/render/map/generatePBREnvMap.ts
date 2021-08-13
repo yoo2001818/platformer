@@ -5,7 +5,7 @@ import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
-import {GLTexture2DGenerated} from '../gl/GLTextureGenerated';
+import {GLTextureGenerated} from '../gl/GLTextureGenerated';
 import {CUBE_PACK} from '../shader/cubepack';
 import {RGBE} from '../shader/hdr';
 import {PBR} from '../shader/pbr';
@@ -133,22 +133,28 @@ export function generatePBREnvMap(
   renderer: GLRenderer,
   source: GLTexture,
   maxLevel = 7,
-): GLTexture2D {
+): GLTexture {
   const {width, height} = source.options;
   if (width == null || height == null) {
     throw new Error('The width/height of target buffer must be specified');
   }
-  return new GLTexture2DGenerated({
-    ...source.options,
-    mipmap: false,
-  }, (target) => {
+  return new GLTextureGenerated(source.options, () => {
     const hammersleyMap = generateHammersleyMap(1024);
+    const target = new GLTexture2D({
+      ...source.options,
+      mipmap: false,
+      source: null,
+      width,
+      height,
+    });
     const fb = new GLFrameBuffer({
       color: target,
       width,
       height,
     });
     fb.bind(renderer);
+
+    renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
 
     renderer.draw({
       frameBuffer: fb,
@@ -163,6 +169,7 @@ export function generatePBREnvMap(
     });
     fb.dispose();
     hammersleyMap.dispose();
-    console.log('...');
+
+    return target;
   }, [source]);
 }
