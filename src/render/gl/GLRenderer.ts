@@ -12,7 +12,13 @@ export class GLRenderer {
   vaoExt: OES_vertex_array_object | null;
   instanceExt: ANGLE_instanced_arrays | null;
   uintExt: OES_element_index_uint | null;
-  anisotropic: EXT_texture_filter_anisotropic | null;
+  anisotropicExt: EXT_texture_filter_anisotropic | null;
+  depthTexExt: WEBGL_depth_texture | null;
+  floatTexExt: OES_texture_float | null;
+  floatTexLinearExt: OES_texture_float_linear | null;
+  floatBufferExt: WEBGL_color_buffer_float | null;
+  fboRenderMipmapExt: unknown | null;
+  drawBuffersExt: WEBGL_draw_buffers | null;
   attributeManager: GLAttributeManager;
   textureManager: GLTextureManager;
   boundFrameBuffer: GLFrameBuffer | null = null;
@@ -26,8 +32,15 @@ export class GLRenderer {
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
     this.instanceExt = gl.getExtension('ANGLE_instanced_arrays');
     this.uintExt = gl.getExtension('OES_element_index_uint');
-    this.anisotropic = gl.getExtension('EXT_texture_filter_anisotropic');
+    this.anisotropicExt = gl.getExtension('EXT_texture_filter_anisotropic');
     gl.getExtension('EXT_shader_texture_lod');
+    this.depthTexExt = gl.getExtension('WEBGL_depth_texture');
+    this.floatTexExt = gl.getExtension('OES_texture_float');
+    this.floatTexLinearExt = gl.getExtension('OES_texture_float_linear');
+    this.floatBufferExt = gl.getExtension('WEBGL_color_buffer_float');
+    this.fboRenderMipmapExt = gl.getExtension('OES_fbo_render_mipmap');
+    this.drawBuffersExt = gl.getExtension('WEBGL_draw_buffers');
+
     this.attributeManager = new GLAttributeManager(this);
     this.textureManager = new GLTextureManager(this);
   }
