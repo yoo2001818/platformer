@@ -61,6 +61,10 @@ export class GLTexture {
     renderer.textureManager.bind(this);
   }
 
+  _getInstance(): GLTexture {
+    return this;
+  }
+
   _bind(renderer: GLRenderer, id: number, version: number): void {
     this.boundId = id;
     this.boundVersion = version;
@@ -218,7 +222,7 @@ export class GLTexture {
           'and height');
       }
       this._active();
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
       gl.texImage2D(
         target,
         0,

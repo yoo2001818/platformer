@@ -38,6 +38,13 @@ export class GLTextureCube extends GLTexture {
     this.mipmapGenerated = false;
   }
 
+  _getInstance(): GLTexture {
+    if (!this.isReady()) {
+      return TEXTURE_CUBE_PLACEHOLDER;
+    }
+    return this;
+  }
+
   _init(): void {
     let fulfilled = true;
     this.uploadFulfilled.forEach((value, i) => {
@@ -88,3 +95,18 @@ export class GLTextureCube extends GLTexture {
     });
   }
 }
+
+export const TEXTURE_CUBE_PLACEHOLDER = new GLTextureCube({
+  width: 1,
+  height: 1,
+  format: 'rgb',
+  sources: [
+    new Uint8Array([0, 0, 0]),
+    new Uint8Array([0, 0, 0]),
+    new Uint8Array([0, 0, 0]),
+    new Uint8Array([0, 0, 0]),
+    new Uint8Array([0, 0, 0]),
+    new Uint8Array([0, 0, 0]),
+  ],
+  mipmap: false,
+});
