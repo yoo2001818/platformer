@@ -58,6 +58,7 @@ export const TYPE_LENGTHS: {[key in GLAttributeType]: number;} = {
 };
 
 export const ATTRIBUTE_TYPE_MAP = {
+  halfFloat: 0x8D61,
   byte: 0x1400,
   unsignedByte: 0x1401,
   short: 0x1402,
@@ -68,6 +69,7 @@ export const ATTRIBUTE_TYPE_MAP = {
   unsignedShort4444: 0x8033,
   unsignedShort5551: 0x8034,
   unsignedShort565: 0x8363,
+  unsignedInt248: 0x84FA,
 };
 
 export const TEXTURE_FORMAT_MAP = {
@@ -77,6 +79,7 @@ export const TEXTURE_FORMAT_MAP = {
   luminance: 0x1909,
   alpha: 0x1906,
   depth: 0x1902,
+  depthStencil: 0x84F9,
 };
 
 export const TEXTURE_PARAM_MAP = {

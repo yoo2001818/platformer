@@ -7,7 +7,7 @@ import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {GLTextureGenerated} from '../gl/GLTextureGenerated';
 import {CUBE_PACK} from '../shader/cubepack';
-import {RGBE} from '../shader/hdr';
+import {HDR} from '../shader/hdr';
 
 const GEOM_QUAD = new GLGeometry(quad());
 const MIP_SHADER = new GLShader(
@@ -34,7 +34,7 @@ const MIP_SHADER = new GLShader(
     uniform vec2 uTexelSize;
     uniform sampler2D uSource;
 
-    ${RGBE}
+    ${HDR}
     ${CUBE_PACK}
 
     void main() {
@@ -134,7 +134,7 @@ const EQUI_SHADER = new GLShader(
     uniform vec2 uTexelSize;
     uniform sampler2D uSource;
 
-    ${RGBE}
+    ${HDR}
     ${CUBE_PACK}
 
     const vec2 invAtan = vec2(0.1591, 0.3183);

@@ -7,7 +7,7 @@ import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {GLTextureGenerated} from '../gl/GLTextureGenerated';
 import {CUBE_PACK} from '../shader/cubepack';
-import {RGBE} from '../shader/hdr';
+import {HDR} from '../shader/hdr';
 import {PBR} from '../shader/pbr';
 
 import {generateHammersleyMap} from './generateHammersleyMap';
@@ -40,7 +40,7 @@ const BAKE_SHADER = new GLShader(
     uniform sampler2D uHammersleyMap;
 
     ${PBR}
-    ${RGBE}
+    ${HDR}
     ${CUBE_PACK}
 
     vec3 runSample(vec3 direction, float roughness, float resolution) {

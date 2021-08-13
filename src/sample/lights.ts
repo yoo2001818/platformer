@@ -23,7 +23,7 @@ import {CUBE_PACK} from '../render/shader/cubepack';
 import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
-import { RGBE } from '../render/shader/hdr';
+import { HDR } from '../render/shader/hdr';
 import {GLTexture} from '../render/gl/GLTexture';
 
 const store = new EntityStore();
@@ -184,7 +184,7 @@ function main() {
               #version 100
               precision lowp float;
 
-              ${RGBE}
+              ${HDR}
               ${CUBE_PACK}
 
               varying vec2 vPosition;

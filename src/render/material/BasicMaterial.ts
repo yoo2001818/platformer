@@ -15,7 +15,7 @@ import {POINT_LIGHT} from '../shader/light';
 import {GLTexture} from '../gl/GLTexture';
 import {ShaderBank} from '../ShaderBank';
 import {CUBE_PACK} from '../shader/cubepack';
-import {RGBE} from '../shader/hdr';
+import {HDR} from '../shader/hdr';
 
 export interface BasicMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
@@ -77,7 +77,7 @@ const SHADER_BANK = new ShaderBank(
 
     ${POINT_LIGHT}
     ${PBR}
-    ${RGBE}
+    ${HDR}
     ${CUBE_PACK}
 
     varying vec3 vPosition;

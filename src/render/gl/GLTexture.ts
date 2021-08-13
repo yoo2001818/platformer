@@ -27,12 +27,23 @@ export interface GLTextureFormat {
   width?: number;
   height?: number;
   mipmap?: boolean;
-  format?: 'rgba' | 'rgb' | 'luminanceAlpha' | 'luminance' | 'alpha';
+  format?:
+    | 'rgba'
+    | 'rgb'
+    | 'luminanceAlpha'
+    | 'luminance'
+    | 'alpha'
+    | 'depth'
+    | 'depthStencil';
   type?:
+    | 'halfFloat'
+    | 'float'
     | 'unsignedByte'
     | 'unsignedShort4444'
     | 'unsignedShort5551'
-    | 'unsignedShort565';
+    | 'unsignedShort565'
+    | 'unsignedInt'
+    | 'unsignedInt248';
 }
 
 export interface GLTextureTexImage extends GLTextureFormat {
