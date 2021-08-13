@@ -1,3 +1,4 @@
+import {GLRenderer} from './GLRenderer';
 import {
   GLTexture,
   GLTextureFormat,
@@ -35,7 +36,7 @@ export class GLTextureGenerated extends GLTexture {
     return this.dependencies.every((v) => v.isReady());
   }
 
-  prepare(): void {
+  prepare(renderer: GLRenderer): void {
     this._getInstance();
   }
 }

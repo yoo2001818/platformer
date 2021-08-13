@@ -266,7 +266,7 @@ export class GLTexture {
     return false;
   }
 
-  prepare(): void {
+  prepare(renderer: GLRenderer): void {
     //
   }
 

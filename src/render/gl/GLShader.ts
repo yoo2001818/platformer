@@ -1,12 +1,13 @@
 import type {GLRenderer} from './GLRenderer';
 import {extractUniforms} from './uniform/extractUniforms';
 import {extractAttributes} from './attribute/extractAttributes';
-import {UniformEntry} from './uniform/types';
+import {UniformEntry, UniformSlot} from './uniform/types';
 import {AttributeSlot} from './attribute/types';
 import {setUniforms} from './uniform/setUniforms';
 import {AttributeOptions} from './types';
-import {convertFloatArray} from './uniform/utils';
+import {convertFloatArray, step} from './uniform/utils';
 import {GLArrayBuffer} from './GLArrayBuffer';
+import {GLTexture} from './GLTexture';
 
 function compileShader(
   gl: WebGLRenderingContext,
@@ -65,6 +66,7 @@ export class GLShader {
   fragShader: WebGLShader | null = null;
   program: WebGLProgram | null = null;
   uniforms: UniformEntry | null = null;
+  textures: UniformSlot[] | null = null;
   attributes: {[key: string]: AttributeSlot;} | null = null;
 
   constructor(
@@ -93,7 +95,9 @@ export class GLShader {
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         throw new Error(gl.getProgramInfoLog(program)!);
       }
-      this.uniforms = extractUniforms(gl, program);
+      const result = extractUniforms(gl, program);
+      this.uniforms = result.uniforms;
+      this.textures = result.textures;
       this.attributes = extractAttributes(gl, program);
       this.program = program;
     }
@@ -126,6 +130,19 @@ export class GLShader {
       throw new Error('Uniforms are not initialized');
     }
     return name in this.uniforms;
+  }
+
+  prepareUniformTextures(renderer: GLRenderer, uniforms: unknown): void {
+    if (this.textures == null) {
+      this.bind(renderer);
+    }
+    this.textures!.forEach((slot) => {
+      const value = step(uniforms, slot.path);
+      if (value != null) {
+        const texture = value as GLTexture;
+        texture.prepare(renderer);
+      }
+    });
   }
 
   setUniforms(uniforms: unknown): void {

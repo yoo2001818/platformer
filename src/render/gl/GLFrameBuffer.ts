@@ -83,7 +83,6 @@ export class GLFrameBuffer {
     if (attachment instanceof GLTexture) {
       const inst = attachment._getInstance();
       inst.bind(renderer);
-      console.log('bound', inst, inst._getInstance());
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
         fbTarget,

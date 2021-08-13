@@ -51,6 +51,7 @@ export class GLRenderer {
 
   draw(options: DrawOptions): void {
     const {frameBuffer, geometry, shader, uniforms, primCount} = options;
+    shader.prepareUniformTextures(this, uniforms);
     if (frameBuffer != null) {
       frameBuffer.bind(this);
     } else {

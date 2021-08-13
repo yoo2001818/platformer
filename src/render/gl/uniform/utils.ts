@@ -98,3 +98,12 @@ export function convertIntArray(
   return intBuf[size];
 }
 
+export function step(value: unknown, path: (string | number)[]): unknown {
+  return path.reduce((p, v) => {
+    if (p == null) {
+      return p;
+    }
+    return (p as any)[v];
+  }, value);
+}
+

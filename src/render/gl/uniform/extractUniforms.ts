@@ -61,6 +61,7 @@ export function extractUniforms(
   program: WebGLProgram,
 ): UniformResult {
   const output: {[key: string]: UniformEntry;} = {};
+  const textures: UniformSlot[] = [];
   const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
   for (let i = 0; i < numUniforms; i += 1) {
     const uniform = gl.getActiveUniform(program, i)!;
@@ -70,27 +71,41 @@ export function extractUniforms(
       for (let j = 0; j < uniform.size; j += 1) {
         const newName = `${uniform.name.slice(0, -3)}[${j}]`;
         const path = getUniformPath(newName);
-        addUniform(path, {
+        const entry: UniformSlot = {
           location: gl.getUniformLocation(program, newName)!,
           name: newName,
           path,
           size: 1,
           type: uniform.type,
           uniform: 'uniform',
-        }, output);
+        };
+        addUniform(path, entry, output);
+        if (
+          uniform.type === gl.SAMPLER_2D ||
+          uniform.type === gl.SAMPLER_CUBE
+        ) {
+          textures.push(entry);
+        }
       }
     } else {
       const loc = gl.getUniformLocation(program, uniform.name)!;
       const path = getUniformPath(uniform.name);
-      addUniform(path, {
+      const entry: UniformSlot = {
         location: loc,
         name: uniform.name,
         path,
         size: uniform.size,
         type: uniform.type,
         uniform: 'uniform',
-      }, output);
+      };
+      addUniform(path, entry, output);
+      if (
+        uniform.type === gl.SAMPLER_2D ||
+        uniform.type === gl.SAMPLER_CUBE
+      ) {
+        textures.push(entry);
+      }
     }
   }
-  return { uniforms: output, textures: [] };
+  return {uniforms: output, textures};
 }
