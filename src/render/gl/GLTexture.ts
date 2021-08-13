@@ -46,6 +46,10 @@ export interface GLTextureFormat {
     | 'unsignedInt248';
 }
 
+export interface GLTextureOptions extends
+  GLTextureParameters, GLTextureFormat {
+}
+
 export interface GLTextureTexImage extends GLTextureFormat {
   source?: GLTextureCandidate | null;
 }
@@ -61,9 +65,9 @@ export class GLTexture {
   boundVersion: number | null = null;
   width: number | null = null;
   height: number | null = null;
-  options: GLTextureParameters & GLTextureFormat;
+  options: GLTextureOptions;
 
-  constructor(type: number, options: GLTextureParameters & GLTextureFormat) {
+  constructor(type: number, options: GLTextureOptions) {
     this.type = type;
     this.options = options;
   }

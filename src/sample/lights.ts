@@ -23,8 +23,9 @@ import {CUBE_PACK} from '../render/shader/cubepack';
 import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
-import { HDR } from '../render/shader/hdr';
+import {HDR} from '../render/shader/hdr';
 import {GLTexture} from '../render/gl/GLTexture';
+import {getHDRType} from '../render/hdr/utils';
 
 const store = new EntityStore();
 
@@ -135,9 +136,16 @@ function main() {
     skyboxTexture.bind(glRenderer);
     if (skyboxTexture.isReady() && !pbrBuilt) {
       pbrBuilt = true;
-      const mip =
-        generateCubePackEquirectangular(glRenderer, skyboxTexture, 2048, 8);
-      pbrTexture = generatePBREnvMap(glRenderer, mip);
+      const hdrType = getHDRType(glRenderer);
+      const mip = generateCubePackEquirectangular(
+        glRenderer,
+        skyboxTexture,
+        'rgbe',
+        hdrType,
+        2048,
+        8,
+      );
+      pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
       // mip.dispose();
       // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
       const material = new BasicMaterial({
@@ -182,6 +190,7 @@ function main() {
             `,
             /* glsl */`
               #version 100
+              #define HDR_INPUT_${getHDRType(glRenderer)}
               precision lowp float;
 
               ${HDR}

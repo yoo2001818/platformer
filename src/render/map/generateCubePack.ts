@@ -6,66 +6,74 @@ import {GLShader} from '../gl/GLShader';
 import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {GLTextureGenerated} from '../gl/GLTextureGenerated';
+import {getHDROptions, HDRType} from '../hdr/utils';
 import {CUBE_PACK} from '../shader/cubepack';
 import {HDR} from '../shader/hdr';
+import {ShaderBank} from '../ShaderBank';
 
 const GEOM_QUAD = new GLGeometry(quad());
-const MIP_SHADER = new GLShader(
-  /* glsl */`
-    #version 100
-    precision highp float;
+const MIP_SHADER = new ShaderBank<[string]>(
+  (format) => format,
+  (format) => new GLShader(
+    /* glsl */`
+      #version 100
+      precision highp float;
 
-    attribute vec3 aPosition;
+      attribute vec3 aPosition;
 
-    varying vec2 vPosition;
+      varying vec2 vPosition;
 
-    void main() {
-      vPosition = aPosition.xy * 0.5 + 0.5;
-      gl_Position = vec4(aPosition.xy, 1.0, 1.0);
-    }
-  `,
-  /* glsl */`
-    #version 100
-    precision highp float;
-
-    varying vec2 vPosition;
-
-    uniform float uLevel;
-    uniform vec2 uTexelSize;
-    uniform sampler2D uSource;
-
-    ${HDR}
-    ${CUBE_PACK}
-
-    void main() {
-      vec4 pos = cubePackReverseFace(vPosition);
-      float mipLevel = pos.w;
-      float face = pos.z;
-      vec2 uv = pos.xy;
-      if (mipLevel != uLevel) {
-        gl_FragColor = texture2DLodEXT(uSource, vPosition, 0.0);
-        return;
+      void main() {
+        vPosition = aPosition.xy * 0.5 + 0.5;
+        gl_Position = vec4(aPosition.xy, 1.0, 1.0);
       }
-      float targetMipLevel = mipLevel - 1.0;
-      vec2 mipTexel = uTexelSize / pow(2.0, -targetMipLevel);
-      // Probe 4 neighboring pixels
-      vec3 samples = vec3(0.0);
-      samples += unpackHDR(textureCubePackFaceLodInt(uSource,
-        uv + mipTexel * vec2(-1.0, -1.0), face, targetMipLevel));
-      samples += unpackHDR(textureCubePackFaceLodInt(uSource,
-        uv + mipTexel * vec2(1.0, -1.0), face, targetMipLevel));
-      samples += unpackHDR(textureCubePackFaceLodInt(uSource,
-        uv + mipTexel * vec2(-1.0, 1.0), face, targetMipLevel));
-      samples += unpackHDR(textureCubePackFaceLodInt(uSource,
-        uv + mipTexel * vec2(1.0, 1.0), face, targetMipLevel));
-      gl_FragColor = packHDR(samples / 4.0);
-    }
-  `,
+    `,
+    /* glsl */`
+      #version 100
+      #define HDR_INPUT_${format}
+      #define HDR_OUTPUT_${format}
+      precision highp float;
+
+      varying vec2 vPosition;
+
+      uniform float uLevel;
+      uniform vec2 uTexelSize;
+      uniform sampler2D uSource;
+
+      ${HDR}
+      ${CUBE_PACK}
+
+      void main() {
+        vec4 pos = cubePackReverseFace(vPosition);
+        float mipLevel = pos.w;
+        float face = pos.z;
+        vec2 uv = pos.xy;
+        if (mipLevel != uLevel) {
+          gl_FragColor = texture2DLodEXT(uSource, vPosition, 0.0);
+          return;
+        }
+        float targetMipLevel = mipLevel - 1.0;
+        vec2 mipTexel = uTexelSize / pow(2.0, -targetMipLevel);
+        // Probe 4 neighboring pixels
+        vec3 samples = vec3(0.0);
+        samples += unpackHDR(textureCubePackFaceLodInt(uSource,
+          uv + mipTexel * vec2(-1.0, -1.0), face, targetMipLevel));
+        samples += unpackHDR(textureCubePackFaceLodInt(uSource,
+          uv + mipTexel * vec2(1.0, -1.0), face, targetMipLevel));
+        samples += unpackHDR(textureCubePackFaceLodInt(uSource,
+          uv + mipTexel * vec2(-1.0, 1.0), face, targetMipLevel));
+        samples += unpackHDR(textureCubePackFaceLodInt(uSource,
+          uv + mipTexel * vec2(1.0, 1.0), face, targetMipLevel));
+        gl_FragColor = packHDR(samples / 4.0);
+      }
+    `,
+  ),
 );
 
 export function generateCubePackMipMap(
   renderer: GLRenderer,
   source: GLTexture,
+  hdrFormat: HDRType,
   maxLevel: number,
 ): GLTexture {
   // NOTE This will dispose "the other" texture
@@ -94,7 +102,7 @@ export function generateCubePackMipMap(
       renderer.draw({
         frameBuffer: toB ? pingPongFBtoB : pingPongFBtoA,
         geometry: GEOM_QUAD,
-        shader: MIP_SHADER,
+        shader: MIP_SHADER.get(hdrFormat),
         uniforms: {
           uLevel: i + 1,
           uTexelSize: [1 / width, 1 / height],
@@ -111,68 +119,75 @@ export function generateCubePackMipMap(
   }, [source]);
 }
 
-const EQUI_SHADER = new GLShader(
-  /* glsl */`
-    #version 100
-    precision highp float;
+const EQUI_SHADER = new ShaderBank<[string, string]>(
+  (input, output) => `${input}_${output}`,
+  (input, output) => new GLShader(
+    /* glsl */`
+      #version 100
+      precision highp float;
 
-    attribute vec3 aPosition;
+      attribute vec3 aPosition;
 
-    varying vec2 vPosition;
+      varying vec2 vPosition;
 
-    void main() {
-      vPosition = aPosition.xy * 0.5 + 0.5;
-      gl_Position = vec4(aPosition.xy, 1.0, 1.0);
-    }
-  `,
-  /* glsl */`
-    #version 100
-    precision highp float;
-
-    varying vec2 vPosition;
-
-    uniform vec2 uTexelSize;
-    uniform sampler2D uSource;
-
-    ${HDR}
-    ${CUBE_PACK}
-
-    const vec2 invAtan = vec2(0.1591, 0.3183);
-
-    void main() {
-      vec4 pos = cubePackReverseLookup(vPosition, uTexelSize);
-      float mipLevel = pos.w;
-      vec3 dir = normalize(pos.xyz);
-      if (mipLevel >= 1.0) {
-        gl_FragColor = vec4(0.0);
-        return;
+      void main() {
+        vPosition = aPosition.xy * 0.5 + 0.5;
+        gl_Position = vec4(aPosition.xy, 1.0, 1.0);
       }
+    `,
+    /* glsl */`
+      #version 100
+      #define HDR_INPUT_${input}
+      #define HDR_OUTPUT_${output}
+      precision highp float;
 
-      // Run equirectangular mapping
-      vec2 uv = vec2(atan(dir.z, dir.x), asin(dir.y));
-      uv *= invAtan;
-      uv += 0.5;
+      varying vec2 vPosition;
 
-      gl_FragColor = texture2D(uSource, uv);
-    }
-  `,
+      uniform vec2 uTexelSize;
+      uniform sampler2D uSource;
+
+      ${HDR}
+      ${CUBE_PACK}
+
+      const vec2 invAtan = vec2(0.1591, 0.3183);
+
+      void main() {
+        vec4 pos = cubePackReverseLookup(vPosition, uTexelSize);
+        float mipLevel = pos.w;
+        vec3 dir = normalize(pos.xyz);
+        if (mipLevel >= 1.0) {
+          gl_FragColor = vec4(0.0);
+          return;
+        }
+
+        // Run equirectangular mapping
+        vec2 uv = vec2(atan(dir.z, dir.x), asin(dir.y));
+        uv *= invAtan;
+        uv += 0.5;
+
+        gl_FragColor = packHDR(unpackHDR(texture2D(uSource, uv)));
+      }
+    `,
+  ),
 );
 
 export function generateCubePackEquirectangular(
   renderer: GLRenderer,
   source: GLTexture,
+  inFormat: HDRType,
+  outFormat: HDRType,
   size: number,
   maxLevel: number,
 ): GLTexture {
   const width = size;
   const height = size * 2;
   return new GLTextureGenerated({
-    ...source.options,
+    ...getHDROptions(outFormat),
     width,
     height,
   }, () => {
     const target = new GLTexture2D({
-      ...source.options,
+      ...getHDROptions(outFormat),
       width,
       height,
       source: null,
@@ -185,13 +200,13 @@ export function generateCubePackEquirectangular(
     renderer.draw({
       frameBuffer: fb,
       geometry: GEOM_QUAD,
-      shader: EQUI_SHADER,
+      shader: EQUI_SHADER.get(inFormat, outFormat),
       uniforms: {
         uTexelSize: [1 / width, 1 / height],
         uSource: source,
       },
     });
     fb.dispose();
-    return generateCubePackMipMap(renderer, target, maxLevel);
+    return generateCubePackMipMap(renderer, target, outFormat, maxLevel);
   }, [source]);
 }

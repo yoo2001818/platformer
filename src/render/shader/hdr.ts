@@ -1,7 +1,17 @@
 export const HDR = /* glsl */`
 
-  #define unpackHDR unpackRGBE
-  #define packHDR packRGBE
+  #if defined(HDR_INPUT_rgbe)
+    #define HDR_MANUAL_BILINEAR
+    #define unpackHDR unpackRGBE
+  #elif defined(HDR_INPUT_float)
+    #define unpackHDR unpackFloat
+  #endif
+
+  #if defined(HDR_OUTPUT_rgbe)
+    #define packHDR packRGBE
+  #elif defined(HDR_OUTPUT_float)
+    #define packHDR packFloat
+  #endif
 
   vec3 unpackRGBE(vec4 value) {
     vec3 rgb = value.rgb;

@@ -16,6 +16,7 @@ import {GLTexture} from '../gl/GLTexture';
 import {ShaderBank} from '../ShaderBank';
 import {CUBE_PACK} from '../shader/cubepack';
 import {HDR} from '../shader/hdr';
+import {getHDRType} from '../hdr/utils';
 
 export interface BasicMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
@@ -31,8 +32,9 @@ const ROUGHNESS_BIT = 4;
 const ENVIRONMENT_BIT = 8;
 
 const SHADER_BANK = new ShaderBank(
-  (textureBits: number, numLights: number) => `${textureBits}/${numLights}`,
-  (textureBits, numLights) => new GLShader(/* glsl */`
+  (hdrType: string, textureBits: number, numLights: number) =>
+    `${hdrType}/${textureBits}/${numLights}`,
+  (hdrType, textureBits, numLights) => new GLShader(/* glsl */`
     #version 100
     precision highp float;
 
@@ -61,6 +63,7 @@ const SHADER_BANK = new ShaderBank(
     #version 100
     precision highp float;
 
+    #define HDR_INPUT_${hdrType}
     #define NUM_POINT_LIGHTS ${numLights}
     ${textureBits & ALBEDO_BIT ? '#define USE_ALBEDO_MAP' : ''}
     ${textureBits & METALIC_BIT ? '#define USE_METALIC_MAP' : ''}
@@ -229,7 +232,9 @@ export class BasicMaterial implements Material {
       uniformOptions.uBRDFMap = options.brdf;
     }
 
-    const shader = SHADER_BANK.get(featureBits, this.lights.length);
+    const hdrType = getHDRType(glRenderer);
+
+    const shader = SHADER_BANK.get(hdrType, featureBits, this.lights.length);
 
     // Bind the shaders
     shader.bind(glRenderer);
