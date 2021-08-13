@@ -4,10 +4,11 @@ import {GLTextureOptions} from '../gl/GLTexture';
 export type HDRType = 'float' | 'rgbe';
 
 export function getHDRType(renderer: GLRenderer): HDRType {
+  const {capabilities} = renderer;
   if (
-    renderer.floatTexExt &&
-    renderer.floatTexLinearExt &&
-    renderer.floatBufferExt
+    capabilities.hasFloatTexture() &&
+    capabilities.hasFloatTextureLinear() &&
+    capabilities.hasFloatBuffer()
   ) {
     return 'float';
   }

@@ -1,6 +1,8 @@
-export const CUBE_PACK = /* glsl */`
+export const CUBE_PACK_HEADER = /* glsl */`
   #extension GL_EXT_shader_texture_lod : enable
+`;
 
+export const CUBE_PACK = /* glsl */`
   highp vec2 cubePackLookup(vec3 dir, float lod, highp vec2 texelSize) {
     // Mipmap constraining
     highp float mipExp = exp2(lod);

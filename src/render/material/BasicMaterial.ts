@@ -14,7 +14,7 @@ import {PBR} from '../shader/pbr';
 import {POINT_LIGHT} from '../shader/light';
 import {GLTexture} from '../gl/GLTexture';
 import {ShaderBank} from '../ShaderBank';
-import {CUBE_PACK} from '../shader/cubepack';
+import {CUBE_PACK, CUBE_PACK_HEADER} from '../shader/cubepack';
 import {HDR} from '../shader/hdr';
 import {getHDRType} from '../hdr/utils';
 
@@ -62,6 +62,7 @@ const SHADER_BANK = new ShaderBank(
     } 
   `, /* glsl */`
     #version 100
+    ${CUBE_PACK_HEADER}
     precision highp float;
 
     #define HDR_INPUT_${hdrType}

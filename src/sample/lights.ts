@@ -18,7 +18,7 @@ import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
-import {CUBE_PACK} from '../render/shader/cubepack';
+import {CUBE_PACK, CUBE_PACK_HEADER} from '../render/shader/cubepack';
 // import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
@@ -47,7 +47,7 @@ store.registerComponents({
 
 function main() {
   const canvas = document.createElement('canvas');
-  const gl = canvas.getContext('webgl');
+  const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
 
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -190,6 +190,7 @@ function main() {
             `,
             /* glsl */`
               #version 100
+              ${CUBE_PACK_HEADER}
               #define HDR_INPUT_${getHDRType(glRenderer)}
               precision lowp float;
 

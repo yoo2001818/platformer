@@ -18,7 +18,7 @@ import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
 import {GLTextureEquirectangular} from '../render/gl/GLTextureEquirectangular';
-import {CUBE_PACK} from '../render/shader/cubepack';
+import {CUBE_PACK, CUBE_PACK_HEADER} from '../render/shader/cubepack';
 import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 
@@ -110,6 +110,7 @@ function main() {
         `,
         /* glsl */`
           #version 100
+          ${CUBE_PACK_HEADER}
           precision lowp float;
 
           ${CUBE_PACK}

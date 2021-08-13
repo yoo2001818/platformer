@@ -7,7 +7,7 @@ import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {GLTextureGenerated} from '../gl/GLTextureGenerated';
 import {getHDROptions, HDRType} from '../hdr/utils';
-import {CUBE_PACK} from '../shader/cubepack';
+import {CUBE_PACK, CUBE_PACK_HEADER} from '../shader/cubepack';
 import {HDR} from '../shader/hdr';
 import {PBR} from '../shader/pbr';
 import {ShaderBank} from '../ShaderBank';
@@ -33,6 +33,7 @@ const BAKE_SHADER = new ShaderBank<[string]>(
     `,
     /* glsl */`
       #version 100
+      ${CUBE_PACK_HEADER}
       #define HDR_INPUT_${format}
       #define HDR_OUTPUT_${format}
 

@@ -9,15 +9,16 @@ export class GLVertexArray {
   }
 
   bind(renderer: GLRenderer): void {
-    if (renderer.vaoExt == null) {
+    const {capabilities: {vaoExt}} = renderer;
+    if (vaoExt == null) {
       throw new Error('VAO is not supported');
     }
     if (this.vao == null) {
       this.renderer = renderer;
-      this.vao = renderer.vaoExt.createVertexArrayOES();
+      this.vao = vaoExt.createVertexArrayOES();
     }
     if (renderer.boundVertexArray !== this) {
-      renderer.vaoExt.bindVertexArrayOES(this.vao);
+      vaoExt.bindVertexArrayOES(this.vao);
       renderer.boundVertexArray = this;
     }
   }
@@ -25,7 +26,8 @@ export class GLVertexArray {
   dispose(): void {
     const {renderer, vao} = this;
     if (renderer != null && vao != null) {
-      renderer.vaoExt!.deleteVertexArrayOES(vao);
+      const {capabilities: {vaoExt}} = renderer;
+      vaoExt!.deleteVertexArrayOES(vao);
     }
   }
 

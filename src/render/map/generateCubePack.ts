@@ -7,7 +7,7 @@ import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {GLTextureGenerated} from '../gl/GLTextureGenerated';
 import {getHDROptions, HDRType} from '../hdr/utils';
-import {CUBE_PACK} from '../shader/cubepack';
+import {CUBE_PACK, CUBE_PACK_HEADER} from '../shader/cubepack';
 import {HDR} from '../shader/hdr';
 import {ShaderBank} from '../ShaderBank';
 
@@ -30,6 +30,7 @@ const MIP_SHADER = new ShaderBank<[string]>(
     `,
     /* glsl */`
       #version 100
+      ${CUBE_PACK_HEADER}
       #define HDR_INPUT_${format}
       #define HDR_OUTPUT_${format}
       precision highp float;
@@ -137,6 +138,7 @@ const EQUI_SHADER = new ShaderBank<[string, string]>(
     `,
     /* glsl */`
       #version 100
+      ${CUBE_PACK_HEADER}
       #define HDR_INPUT_${input}
       #define HDR_OUTPUT_${output}
       precision highp float;

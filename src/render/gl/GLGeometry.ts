@@ -157,7 +157,7 @@ export class GLGeometry {
     if (renderer == null) {
       throw new Error('GLGeometry is not bound');
     }
-    const {instanceExt} = renderer;
+    const {capabilities: {instanceExt}} = renderer;
     const {indices, mode, offset, count} = options;
     if (instanceExt == null) {
       throw new Error('instancing extension is required');

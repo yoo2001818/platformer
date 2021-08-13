@@ -1,6 +1,7 @@
 import {GLRenderer} from './GLRenderer';
 import {ArrayBufferView} from './types';
-import {ATTRIBUTE_TYPE_MAP, TEXTURE_FORMAT_MAP, TEXTURE_PARAM_MAP} from './utils';
+import {ATTRIBUTE_TYPE_MAP, TEXTURE_FORMAT_MAP, TEXTURE_PARAM_MAP, WEBGL2_TEXTURE_FORMAT_MAP} from './utils';
+import {getWebGL2InternalFormat} from './utils/getWebGL2InternalFormat';
 
 export type GLTextureCandidate =
   | ArrayBufferView
@@ -151,7 +152,7 @@ export class GLTexture {
       return;
     }
     this._active();
-    const {gl, anisotropicExt} = renderer;
+    const {gl, capabilities: {anisotropicExt}} = renderer;
     gl.texParameteri(
       target,
       gl.TEXTURE_MAG_FILTER,
@@ -204,8 +205,11 @@ export class GLTexture {
     if (fulfilled >= 2) {
       return fulfilled;
     }
-    const {gl} = renderer;
+    const {gl, capabilities} = renderer;
     const {source, format, type} = options;
+    const internalFormat = capabilities.isWebGL2
+      ? getWebGL2InternalFormat(type ?? 'unsignedByte', format ?? 'rgb')
+      : format ?? 'rgb';
     if (source instanceof HTMLImageElement && !source.complete) {
       if (fulfilled === 0) {
         // Perform loading routine
@@ -236,7 +240,7 @@ export class GLTexture {
       gl.texImage2D(
         target,
         0,
-        TEXTURE_FORMAT_MAP[format ?? 'rgb'],
+        WEBGL2_TEXTURE_FORMAT_MAP[internalFormat],
         TEXTURE_FORMAT_MAP[format ?? 'rgb'],
         ATTRIBUTE_TYPE_MAP[type ?? 'unsignedByte'],
         source,
@@ -254,7 +258,7 @@ export class GLTexture {
       gl.texImage2D(
         target,
         0,
-        TEXTURE_FORMAT_MAP[format ?? 'rgb'],
+        WEBGL2_TEXTURE_FORMAT_MAP[internalFormat],
         width!,
         height!,
         0,

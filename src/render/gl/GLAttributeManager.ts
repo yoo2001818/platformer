@@ -35,7 +35,7 @@ export class GLAttributeManager {
 
   set(index: number, options: AttributeOptions): void {
     const {renderer, attributes} = this;
-    const {gl, instanceExt} = renderer;
+    const {gl, capabilities: {instanceExt}} = renderer;
     const {
       buffer,
       size,
