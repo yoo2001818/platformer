@@ -24,7 +24,6 @@ import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {HDR} from '../render/shader/hdr';
-import {GLTexture} from '../render/gl/GLTexture';
 import {getHDRType} from '../render/hdr/utils';
 
 const store = new EntityStore();
@@ -85,16 +84,6 @@ function main() {
     ],
   });
   // */
-  let pbrTexture: GLTexture | null = null;
-  /*
-  const pbrTexture = new GLTexture2D({
-    width: 2048,
-    height: 4096,
-    source: null,
-    magFilter: 'linear',
-    minFilter: 'linear',
-  });
-  */
   const brdfTexture = generateBRDFMap(glRenderer);
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
@@ -113,7 +102,173 @@ function main() {
     }),
   });
 
-  // TODO Initialization should be here
+  const hdrType = getHDRType(glRenderer);
+  const mip = generateCubePackEquirectangular(
+    glRenderer,
+    skyboxTexture,
+    'rgbe',
+    hdrType,
+    2048,
+    8,
+  );
+  const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
+  // mip.dispose();
+  // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
+  const material = new BasicMaterial({
+    albedo: '#ffffff',
+    metalic: 0,
+    roughness: 0.12,
+    environment: pbrTexture,
+    brdf: brdfTexture,
+  });
+  store.create({
+    name: 'envMapDebug',
+    transform: new Transform()
+      .rotateX(-Math.PI / 2)
+      .setScale([2.5, 5, 10])
+      .setPosition([15, 0, 0]),
+    mesh: new Mesh(
+      new BasicMaterial({
+        albedo: pbrTexture,
+        metalic: 0,
+        roughness: 0.2,
+      }),
+      new Geometry(calcNormals(quad())),
+    ),
+  });
+  store.create({
+    name: 'skybox',
+    transform: new Transform(),
+    mesh: new Mesh(
+      new ShaderMaterial(
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          attribute vec3 aPosition;
+
+          varying vec2 vPosition;
+
+          void main() {
+            vPosition = aPosition.xy;
+            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+          }
+        `,
+        /* glsl */`
+          #version 100
+          ${CUBE_PACK_HEADER}
+          #define HDR_INPUT_${getHDRType(glRenderer)}
+          precision highp float;
+
+          ${HDR}
+          ${CUBE_PACK}
+
+          varying vec2 vPosition;
+
+          uniform sampler2D uTexture;
+          uniform mat4 uInverseView;
+          uniform mat4 uInverseProjection;
+
+          const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
+
+          void main() {
+            vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
+            viewPos /= viewPos.w;
+            vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
+            vec3 result = textureCubePackLodHDR(uTexture, dir, 3.0, cubePackTexelSize);
+            result = result / (result + 1.0);
+            gl_FragColor = vec4(result, 1.0);
+          }
+        `,
+        {
+          uTexture: pbrTexture,
+        },
+      ),
+      new Geometry(quad()),
+    ),
+  });
+
+  store.create({
+    name: 'teapotBase',
+    transform: new Transform(),
+    mesh: new Mesh(
+      material,
+      new Geometry(bakeChannelGeom(teapot[0].geometry)),
+    ),
+  });
+
+  store.create({
+    name: 'teapotLid',
+    transform: new Transform(),
+    mesh: new Mesh(
+      material,
+      new Geometry(bakeChannelGeom(teapot[1].geometry)),
+    ),
+  });
+
+  store.create({
+    name: 'floor',
+    transform: new Transform()
+      .rotateX(-Math.PI / 2)
+      .setScale([10, 10, 10]),
+    mesh: new Mesh(
+      new BasicMaterial({
+        albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
+        metalic: 0,
+        roughness: 0.5,
+        environment: pbrTexture,
+        brdf: brdfTexture,
+      }),
+      new Geometry(calcNormals(quad())),
+    ),
+  });
+
+
+  store.create({
+    name: 'brdfMapDebug',
+    transform: new Transform()
+      .rotateX(-Math.PI / 2)
+      .setScale([2.5, 2.5, 2.5])
+      .setPosition([-15, 0, 0]),
+    mesh: new Mesh(
+      new BasicMaterial({
+        albedo: brdfTexture,
+        metalic: 0,
+        roughness: 0.2,
+      }),
+      new Geometry(calcNormals(quad())),
+    ),
+  });
+
+  store.create({
+    name: 'light',
+    transform: new Transform().translate([5, 5, 5]),
+    light: new Light({
+      color: '#ffaaaa',
+      power: 2,
+      attenuation: 0.0001,
+    }),
+  });
+
+  store.create({
+    name: 'light',
+    transform: new Transform().translate([-5, 5, -5]),
+    light: new Light({
+      color: '#aaaaff',
+      power: 2,
+      attenuation: 0.00001,
+    }),
+  });
+
+  store.create({
+    name: 'light',
+    transform: new Transform().translate([15, 5, 0]),
+    light: new Light({
+      color: '#ffffff',
+      power: 2,
+      attenuation: 0.00001,
+    }),
+  });
 
   const orbitController = new OrbitCameraController(
     canvas,
@@ -125,185 +280,12 @@ function main() {
   renderer.setCamera(cameraEntity);
 
   let lastTime = 0;
-  let pbrBuilt = false;
 
   function update(time: number) {
     const delta = time - lastTime;
     lastTime = time;
 
     store.sort();
-
-    skyboxTexture.bind(glRenderer);
-    if (skyboxTexture.isReady() && !pbrBuilt) {
-      pbrBuilt = true;
-      const hdrType = getHDRType(glRenderer);
-      const mip = generateCubePackEquirectangular(
-        glRenderer,
-        skyboxTexture,
-        'rgbe',
-        hdrType,
-        2048,
-        8,
-      );
-      pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
-      // mip.dispose();
-      // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
-      const material = new BasicMaterial({
-        albedo: '#ffffff',
-        metalic: 0,
-        roughness: 0.12,
-        environment: pbrTexture,
-        brdf: brdfTexture,
-      });
-      store.create({
-        name: 'envMapDebug',
-        transform: new Transform()
-          .rotateX(-Math.PI / 2)
-          .setScale([2.5, 5, 10])
-          .setPosition([15, 0, 0]),
-        mesh: new Mesh(
-          new BasicMaterial({
-            albedo: pbrTexture,
-            metalic: 0,
-            roughness: 0.2,
-          }),
-          new Geometry(calcNormals(quad())),
-        ),
-      });
-      store.create({
-        name: 'skybox',
-        transform: new Transform(),
-        mesh: new Mesh(
-          new ShaderMaterial(
-            /* glsl */`
-              #version 100
-              precision highp float;
-
-              attribute vec3 aPosition;
-
-              varying vec2 vPosition;
-
-              void main() {
-                vPosition = aPosition.xy;
-                gl_Position = vec4(aPosition.xy, 1.0, 1.0);
-              }
-            `,
-            /* glsl */`
-              #version 100
-              ${CUBE_PACK_HEADER}
-              #define HDR_INPUT_${getHDRType(glRenderer)}
-              precision highp float;
-
-              ${HDR}
-              ${CUBE_PACK}
-
-              varying vec2 vPosition;
-
-              uniform sampler2D uTexture;
-              uniform mat4 uInverseView;
-              uniform mat4 uInverseProjection;
-
-              const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
-
-              void main() {
-                vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
-                viewPos /= viewPos.w;
-                vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-                vec3 result = textureCubePackLodHDR(uTexture, dir, 3.0, cubePackTexelSize);
-                result = result / (result + 1.0);
-                gl_FragColor = vec4(result, 1.0);
-              }
-            `,
-            {
-              uTexture: pbrTexture,
-            },
-          ),
-          new Geometry(quad()),
-        ),
-      });
-
-      store.create({
-        name: 'teapotBase',
-        transform: new Transform(),
-        mesh: new Mesh(
-          material,
-          new Geometry(bakeChannelGeom(teapot[0].geometry)),
-        ),
-      });
-
-      store.create({
-        name: 'teapotLid',
-        transform: new Transform(),
-        mesh: new Mesh(
-          material,
-          new Geometry(bakeChannelGeom(teapot[1].geometry)),
-        ),
-      });
-
-      store.create({
-        name: 'floor',
-        transform: new Transform()
-          .rotateX(-Math.PI / 2)
-          .setScale([10, 10, 10]),
-        mesh: new Mesh(
-          new BasicMaterial({
-            albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
-            metalic: 0,
-            roughness: 0.5,
-            environment: pbrTexture,
-            brdf: brdfTexture,
-          }),
-          new Geometry(calcNormals(quad())),
-        ),
-      });
-
-
-      store.create({
-        name: 'brdfMapDebug',
-        transform: new Transform()
-          .rotateX(-Math.PI / 2)
-          .setScale([2.5, 2.5, 2.5])
-          .setPosition([-15, 0, 0]),
-        mesh: new Mesh(
-          new BasicMaterial({
-            albedo: brdfTexture,
-            metalic: 0,
-            roughness: 0.2,
-          }),
-          new Geometry(calcNormals(quad())),
-        ),
-      });
-
-      store.create({
-        name: 'light',
-        transform: new Transform().translate([5, 5, 5]),
-        light: new Light({
-          color: '#ffaaaa',
-          power: 2,
-          attenuation: 0.0001,
-        }),
-      });
-
-      store.create({
-        name: 'light',
-        transform: new Transform().translate([-5, 5, -5]),
-        light: new Light({
-          color: '#aaaaff',
-          power: 2,
-          attenuation: 0.00001,
-        }),
-      });
-
-      store.create({
-        name: 'light',
-        transform: new Transform().translate([15, 5, 0]),
-        light: new Light({
-          color: '#ffffff',
-          power: 2,
-          attenuation: 0.00001,
-        }),
-      });
-    }
 
     gl!.clearColor(0, 0, 0, 255);
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
