@@ -100,6 +100,8 @@ export const CUBE_PACK = /* glsl */`
     #else
       #ifdef GL_EXT_shader_texture_lod
         return unpackHDR(texture2DLodEXT(smp, uv, 0.0));
+      #elif defined(WEBGL2)
+        return unpackHDR(texture2DLodEXT(smp, uv, 0.0));
       #else
         return unpackHDR(texture2D(smp, uv));
       #endif

@@ -8,6 +8,7 @@ import {AttributeOptions} from './types';
 import {convertFloatArray, step} from './uniform/utils';
 import {GLArrayBuffer} from './GLArrayBuffer';
 import {GLTexture} from './GLTexture';
+import {convertShaderToWebGL2} from './utils/convertShaderToWebGL2';
 
 function compileShader(
   gl: WebGLRenderingContext,
@@ -80,9 +81,15 @@ export class GLShader {
   bind(renderer: GLRenderer): void {
     if (this.program == null) {
       this.renderer = renderer;
-      const {gl} = renderer;
-      this.vertShader = compileShader(gl, gl.VERTEX_SHADER, this.vertCode);
-      this.fragShader = compileShader(gl, gl.FRAGMENT_SHADER, this.fragCode);
+      const {gl, capabilities} = renderer;
+      const vertCode = capabilities.isWebGL2
+        ? convertShaderToWebGL2(this.vertCode, false)
+        : this.vertCode;
+      const fragCode = capabilities.isWebGL2
+        ? convertShaderToWebGL2(this.fragCode, true)
+        : this.fragCode;
+      this.vertShader = compileShader(gl, gl.VERTEX_SHADER, vertCode);
+      this.fragShader = compileShader(gl, gl.FRAGMENT_SHADER, fragCode);
       const program = gl.createProgram()!;
       // Bind standard attributes
       renderer.attributeManager.standardAttributes.forEach((name, index) => {
