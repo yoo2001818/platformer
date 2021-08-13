@@ -73,7 +73,7 @@ export class GLTextureEquirectangular extends GLTexture {
   uploadWorking = false;
 
   constructor(options: GLTexture2DOptions) {
-    super(TEXTURE_CUBE_MAP);
+    super(TEXTURE_CUBE_MAP, options);
     if (options.width == null || options.height == null) {
       throw new Error('width and height must be provided');
     }

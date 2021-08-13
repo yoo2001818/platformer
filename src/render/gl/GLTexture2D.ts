@@ -11,7 +11,7 @@ export class GLTexture2D extends GLTexture {
   uploadFulfilled: number;
 
   constructor(options: GLTexture2DOptions) {
-    super(TEXTURE_2D);
+    super(TEXTURE_2D, options);
     this.options = options;
     this.uploadFulfilled = 0;
   }
@@ -39,6 +39,6 @@ export class GLTexture2D extends GLTexture {
   }
 
   isReady(): boolean {
-    return this.uploadFulfilled === 2;
+    return this._isReady(this.options, this.uploadFulfilled);
   }
 }

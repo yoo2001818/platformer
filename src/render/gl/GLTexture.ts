@@ -23,8 +23,7 @@ export interface GLTextureParameters {
   wrapT?: 'repeat' | 'clampToEdge' | 'mirroredRepeat';
 }
 
-export interface GLTextureTexImage {
-  source?: GLTextureCandidate | null;
+export interface GLTextureFormat {
   width?: number;
   height?: number;
   mipmap?: boolean;
@@ -34,6 +33,10 @@ export interface GLTextureTexImage {
     | 'unsignedShort4444'
     | 'unsignedShort5551'
     | 'unsignedShort565';
+}
+
+export interface GLTextureTexImage extends GLTextureFormat {
+  source?: GLTextureCandidate | null;
 }
 
 export const TEXTURE_2D = 0x0DE1;
@@ -47,9 +50,11 @@ export class GLTexture {
   boundVersion: number | null = null;
   width: number | null = null;
   height: number | null = null;
+  options: GLTextureParameters & GLTextureFormat;
 
-  constructor(type: number) {
+  constructor(type: number, options: GLTextureParameters & GLTextureFormat) {
     this.type = type;
+    this.options = options;
   }
 
   bind(renderer: GLRenderer): void {
@@ -229,6 +234,17 @@ export class GLTexture {
       this.height = height;
     }
     return 2;
+  }
+
+  _isReady(options: GLTextureTexImage, fulfilled: number): boolean {
+    if (fulfilled >= 2) {
+      return true;
+    }
+    const {source} = options;
+    if (source instanceof HTMLImageElement && !source.complete) {
+      return false;
+    }
+    return true;
   }
 
   invalidate(): void {

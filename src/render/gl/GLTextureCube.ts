@@ -2,7 +2,7 @@ import {
   GLTexture,
   GLTextureCandidate,
   GLTextureParameters,
-  GLTextureTexImage,
+  GLTextureFormat,
 } from './GLTexture';
 
 export const TEXTURE_CUBE_MAP = 0x8513;
@@ -22,7 +22,7 @@ export const TEXTURE_CUBE_MAP_DIRS = [
 ];
 
 export interface GLTextureCubeOptions
-  extends GLTextureParameters, Omit<GLTextureTexImage, 'source'> {
+  extends GLTextureParameters, GLTextureFormat {
   sources?: GLTextureCandidate[];
 }
 
@@ -32,7 +32,7 @@ export class GLTextureCube extends GLTexture {
   mipmapGenerated: boolean;
 
   constructor(options: GLTextureCubeOptions) {
-    super(TEXTURE_CUBE_MAP);
+    super(TEXTURE_CUBE_MAP, options);
     this.options = options;
     this.uploadFulfilled = [0, 0, 0, 0, 0, 0];
     this.mipmapGenerated = false;
@@ -77,6 +77,14 @@ export class GLTextureCube extends GLTexture {
   }
 
   isReady(): boolean {
-    return this.mipmapGenerated;
+    return this.uploadFulfilled.every((value, i) => {
+      return this._isReady(
+        {
+          ...this.options,
+          source: this.options.sources?.[i],
+        },
+        value,
+      );
+    });
   }
 }

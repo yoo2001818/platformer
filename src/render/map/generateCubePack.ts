@@ -3,6 +3,7 @@ import {GLFrameBuffer} from '../gl/GLFrameBuffer';
 import {GLGeometry} from '../gl/GLGeometry';
 import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
+import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {CUBE_PACK} from '../shader/cubepack';
 import {RGBE} from '../shader/hdr';
@@ -63,9 +64,9 @@ const MIP_SHADER = new GLShader(
 
 export function generateCubePackMipMap(
   renderer: GLRenderer,
-  source: GLTexture2D,
+  source: GLTexture,
   maxLevel: number,
-): GLTexture2D {
+): GLTexture {
   // NOTE This will dispose "the other" texture
   const {width, height} = source.options;
   if (width == null || height == null) {
@@ -156,10 +157,10 @@ const EQUI_SHADER = new GLShader(
 
 export function generateCubePackEquirectangular(
   renderer: GLRenderer,
-  source: GLTexture2D,
+  source: GLTexture,
   size: number,
   maxLevel: number,
-): GLTexture2D {
+): GLTexture {
   const width = size;
   const height = size * 2;
   const target = new GLTexture2D({

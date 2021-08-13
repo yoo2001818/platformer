@@ -3,6 +3,7 @@ import {GLFrameBuffer} from '../gl/GLFrameBuffer';
 import {GLGeometry} from '../gl/GLGeometry';
 import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
+import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {CUBE_PACK} from '../shader/cubepack';
 import {RGBE} from '../shader/hdr';
@@ -129,9 +130,9 @@ const BAKE_SHADER = new GLShader(
 // contains number of cubepack map samples on 2D texture.
 export function generatePBREnvMap(
   renderer: GLRenderer,
-  source: GLTexture2D,
+  source: GLTexture,
   maxLevel = 7,
-): GLTexture2D {
+): GLTexture {
   const {width, height} = source.options;
   if (width == null || height == null) {
     throw new Error('The width/height of target buffer must be specified');
