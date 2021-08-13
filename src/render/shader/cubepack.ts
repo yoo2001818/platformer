@@ -3,17 +3,17 @@ export const CUBE_PACK_HEADER = /* glsl */`
 `;
 
 export const CUBE_PACK = /* glsl */`
-  highp vec2 cubePackLookup(vec3 dir, float lod, highp vec2 texelSize) {
+  vec2 cubePackLookup(vec3 dir, float lod, vec2 texelSize) {
     // Mipmap constraining
-    highp float mipExp = exp2(lod);
-    highp float mipBounds = 1.0 / mipExp;
-    highp float mipStart = 1.0 - mipBounds;
+    float mipExp = exp2(lod);
+    float mipBounds = 1.0 / mipExp;
+    float mipStart = 1.0 - mipBounds;
     // Get texel size corresponding with the mip size
-    highp vec2 packSize = texelSize * mipExp;
-    highp vec2 boxSize = vec2(0.5, 0.25) - 2.0 * packSize;
+    vec2 packSize = texelSize * mipExp;
+    vec2 boxSize = vec2(0.5, 0.25) - 2.0 * packSize;
     // Get texture bounds
-    highp vec2 uv;
-    highp vec3 absDir = abs(dir);
+    vec2 uv;
+    vec3 absDir = abs(dir);
     // Y
     // ^ Z- /
     // | Z+ /
@@ -58,9 +58,19 @@ export const CUBE_PACK = /* glsl */`
     return uv;
   }
 
+  vec4 textureCubePackRaw(sampler2D smp, vec2 uv) {
+    #ifdef GL_EXT_shader_texture_lod
+      return texture2DLodEXT(smp, uv, 0.0);
+    #elif defined(WEBGL2)
+      return texture2DLodEXT(smp, uv, 0.0);
+    #else
+      return texture2D(smp, uv);
+    #endif
+  }
+
   vec4 textureCubePackLodInt(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
     vec2 uv = cubePackLookup(dir, lod, texelSize);
-    return texture2D(smp, uv);
+    return textureCubePackRaw(smp, uv);
   }
 
   vec4 textureCubePackLod(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
@@ -76,35 +86,29 @@ export const CUBE_PACK = /* glsl */`
     }
   }
 
-  vec3 textureCubePackLodIntHDR(sampler2D smp, vec3 dir, float lod, highp vec2 texelSize) {
-    highp vec2 uv = cubePackLookup(dir, lod, texelSize);
+  vec3 textureCubePackLodIntHDR(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
+    vec2 uv = cubePackLookup(dir, lod, texelSize);
 
     #if defined(HDR_MANUAL_BILINEAR)
       // We can't use GPU's internal bilinear filtering in this case...
       // Instead, we snap to nearest texel and retrieve it.
-      highp vec2 lowUV = (floor(uv * (1.0 / texelSize) - 0.5)) * texelSize;
-      highp vec2 highUV = lowUV + texelSize;
-      // highp vec2 factor = fract(uv * (1.0 / texelSize) - 0.5);
-      highp vec2 factor = mod(uv - (texelSize * 0.5), texelSize) / texelSize;
+      vec2 lowUV = (floor(uv * (1.0 / texelSize) - 0.5)) * texelSize;
+      vec2 highUV = lowUV + texelSize;
+      // vec2 factor = fract(uv * (1.0 / texelSize) - 0.5);
+      vec2 factor = mod(uv - (texelSize * 0.5), texelSize) / texelSize;
       // fract(uv * (1.0 / texelSize) - 0.5);
 
-      vec3 llPixel = unpackHDR(texture2D(smp, lowUV));
-      vec3 hhPixel = unpackHDR(texture2D(smp, highUV));
-      vec3 hlPixel = unpackHDR(texture2D(smp, vec2(highUV.x, lowUV.y)));
-      vec3 lhPixel = unpackHDR(texture2D(smp, vec2(lowUV.x, highUV.y)));
+      vec3 llPixel = unpackHDR(textureCubePackRaw(smp, lowUV));
+      vec3 hhPixel = unpackHDR(textureCubePackRaw(smp, highUV));
+      vec3 hlPixel = unpackHDR(textureCubePackRaw(smp, vec2(highUV.x, lowUV.y)));
+      vec3 lhPixel = unpackHDR(textureCubePackRaw(smp, vec2(lowUV.x, highUV.y)));
 
       vec3 xlPixel = mix(llPixel, hlPixel, factor.x);
       vec3 xhPixel = mix(lhPixel, hhPixel, factor.x);
       vec3 pixel = mix(xlPixel, xhPixel, factor.y);
       return pixel;
     #else
-      #ifdef GL_EXT_shader_texture_lod
-        return unpackHDR(texture2DLodEXT(smp, uv, 0.0));
-      #elif defined(WEBGL2)
-        return unpackHDR(texture2DLodEXT(smp, uv, 0.0));
-      #else
-        return unpackHDR(texture2D(smp, uv));
-      #endif
+      return unpackHDR(textureCubePackRaw(smp, uv));
     #endif
 
   }

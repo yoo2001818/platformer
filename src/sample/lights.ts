@@ -177,7 +177,7 @@ function main() {
           new ShaderMaterial(
             /* glsl */`
               #version 100
-              precision lowp float;
+              precision highp float;
 
               attribute vec3 aPosition;
 
@@ -192,7 +192,7 @@ function main() {
               #version 100
               ${CUBE_PACK_HEADER}
               #define HDR_INPUT_${getHDRType(glRenderer)}
-              precision lowp float;
+              precision highp float;
 
               ${HDR}
               ${CUBE_PACK}
