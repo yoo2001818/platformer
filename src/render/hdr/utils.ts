@@ -32,6 +32,8 @@ export function getHDROptions(type: HDRType): GLTextureOptions {
         mipmap: false,
         format: 'rgba',
         type: 'unsignedByte',
+        wrapS: 'clampToEdge',
+        wrapT: 'clampToEdge',
       };
     default:
       throw new Error(`Unknown HDR type ${type}`);

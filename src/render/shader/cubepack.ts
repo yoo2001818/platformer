@@ -1,16 +1,15 @@
 export const CUBE_PACK = /* glsl */`
-  #extension GL_EXT_shader_texture_lod : enable
-
-  vec2 cubePackLookup(vec3 dir, float lod, vec2 texelSize) {
+  highp vec2 cubePackLookup(vec3 dir, float lod, highp vec2 texelSize) {
     // Mipmap constraining
-    float mipBounds = pow(2.0, -lod);
-    float mipStart = 1.0 - mipBounds;
+    highp float mipExp = exp2(lod);
+    highp float mipBounds = 1.0 / mipExp;
+    highp float mipStart = 1.0 - mipBounds;
     // Get texel size corresponding with the mip size
-    vec2 packSize = texelSize / mipBounds;
-    vec2 boxSize = vec2(0.5, 0.25) - 2.0 * packSize;
+    highp vec2 packSize = texelSize * mipExp;
+    highp vec2 boxSize = vec2(0.5, 0.25) - 2.0 * packSize;
     // Get texture bounds
-    vec2 uv;
-    vec3 absDir = abs(dir);
+    highp vec2 uv;
+    highp vec3 absDir = abs(dir);
     // Y
     // ^ Z- /
     // | Z+ /
@@ -57,38 +56,45 @@ export const CUBE_PACK = /* glsl */`
 
   vec4 textureCubePackLodInt(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
     vec2 uv = cubePackLookup(dir, lod, texelSize);
-    return texture2DLodEXT(smp, uv, 0.0);
+    return texture2D(smp, uv);
   }
 
   vec4 textureCubePackLod(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
     float lodMin = floor(lod);
     float lodMax = lodMin + 1.0;
+    float lodVal = fract(lod);
     vec4 resMin = textureCubePackLodInt(smp, dir, lodMin, texelSize);
-    vec4 resMax = textureCubePackLodInt(smp, dir, lodMax, texelSize);
-    return mix(resMin, resMax, fract(lod));
+    if (lodVal == 0.0) {
+      return resMin;
+    } else {
+      vec4 resMax = textureCubePackLodInt(smp, dir, lodMax, texelSize);
+      return mix(resMin, resMax, fract(lod));
+    }
   }
 
-  vec3 textureCubePackLodIntHDR(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
-    vec2 uv = cubePackLookup(dir, lod, texelSize);
+  vec3 textureCubePackLodIntHDR(sampler2D smp, vec3 dir, float lod, highp vec2 texelSize) {
+    highp vec2 uv = cubePackLookup(dir, lod, texelSize);
 
     #if defined(HDR_MANUAL_BILINEAR)
       // We can't use GPU's internal bilinear filtering in this case...
       // Instead, we snap to nearest texel and retrieve it.
-      vec2 lowUV = (floor(uv * (1.0 / texelSize) - 0.5)) * texelSize;
-      vec2 highUV = lowUV + texelSize;
-      vec2 factor = fract(uv * (1.0 / texelSize) - 0.5);
+      highp vec2 lowUV = (floor(uv * (1.0 / texelSize) - 0.5)) * texelSize;
+      highp vec2 highUV = lowUV + texelSize;
+      // highp vec2 factor = fract(uv * (1.0 / texelSize) - 0.5);
+      highp vec2 factor = mod(uv - (texelSize * 0.5), texelSize) / texelSize;
+      // fract(uv * (1.0 / texelSize) - 0.5);
 
-      vec3 llPixel = unpackHDR(texture2DLodEXT(smp, lowUV, 0.0));
-      vec3 hhPixel = unpackHDR(texture2DLodEXT(smp, highUV, 0.0));
-      vec3 hlPixel = unpackHDR(texture2DLodEXT(smp, vec2(highUV.x, lowUV.y), 0.0));
-      vec3 lhPixel = unpackHDR(texture2DLodEXT(smp, vec2(lowUV.x, highUV.y), 0.0));
+      vec3 llPixel = unpackHDR(texture2D(smp, lowUV));
+      vec3 hhPixel = unpackHDR(texture2D(smp, highUV));
+      vec3 hlPixel = unpackHDR(texture2D(smp, vec2(highUV.x, lowUV.y)));
+      vec3 lhPixel = unpackHDR(texture2D(smp, vec2(lowUV.x, highUV.y)));
 
       vec3 xlPixel = mix(llPixel, hlPixel, factor.x);
       vec3 xhPixel = mix(lhPixel, hhPixel, factor.x);
       vec3 pixel = mix(xlPixel, xhPixel, factor.y);
       return pixel;
     #else
-      return unpackHDR(texture2DLodEXT(smp, uv, 0.0));
+      return unpackHDR(texture2D(smp, uv));
     #endif
 
   }
@@ -96,9 +102,14 @@ export const CUBE_PACK = /* glsl */`
   vec3 textureCubePackLodHDR(sampler2D smp, vec3 dir, float lod, vec2 texelSize) {
     float lodMin = floor(lod);
     float lodMax = lodMin + 1.0;
+    float lodVal = fract(lod);
     vec3 resMin = textureCubePackLodIntHDR(smp, dir, lodMin, texelSize);
-    vec3 resMax = textureCubePackLodIntHDR(smp, dir, lodMax, texelSize);
-    return mix(resMin, resMax, fract(lod));
+    if (lodVal == 0.0) {
+      return resMin;
+    } else {
+      vec3 resMax = textureCubePackLodIntHDR(smp, dir, lodMax, texelSize);
+      return mix(resMin, resMax, fract(lod));
+    }
   }
 
   vec4 textureCubePackFaceLodInt(sampler2D smp, vec2 uv, float face, float lod) {
@@ -108,7 +119,7 @@ export const CUBE_PACK = /* glsl */`
     vec2 boxSize = vec2(0.5, 0.25);
     vec2 lookupUV = boxSize * (uv + vec2(mod(face, 2.0), floor(face / 2.0)));
     lookupUV = lookupUV * mipBounds + mipStart;
-    return texture2DLodEXT(smp, lookupUV, 0.0);
+    return texture2D(smp, lookupUV);
   }
 
   vec4 cubePackReverseFace(vec2 uv) {

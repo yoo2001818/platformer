@@ -21,6 +21,7 @@ export interface GLTextureParameters {
     | 'linearMipmapLinear';
   wrapS?: 'repeat' | 'clampToEdge' | 'mirroredRepeat';
   wrapT?: 'repeat' | 'clampToEdge' | 'mirroredRepeat';
+  anistropic?: number | 'max';
 }
 
 export interface GLTextureFormat {
@@ -174,10 +175,18 @@ export class GLTexture {
     if (anisotropicExt) {
       const max =
         gl.getParameter(anisotropicExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+      let anistropicValue = 0;
+      if (params.anistropic === 'max') {
+        anistropicValue = max;
+      } else if (params.minFilter === 'nearest') {
+        anistropicValue = 0;
+      } else {
+        anistropicValue = max;
+      }
       gl.texParameterf(
         target,
         anisotropicExt.TEXTURE_MAX_ANISOTROPY_EXT,
-        max,
+        anistropicValue,
       );
     }
   }

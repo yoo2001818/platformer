@@ -24,6 +24,7 @@ export interface BasicMaterialOptions {
   roughness: number | GLTexture;
   environment?: GLTexture | null;
   brdf?: GLTexture;
+  hdrType?: string;
 }
 
 const ALBEDO_BIT = 1;

@@ -49,7 +49,7 @@ const MIP_SHADER = new ShaderBank<[string]>(
         float face = pos.z;
         vec2 uv = pos.xy;
         if (mipLevel != uLevel) {
-          gl_FragColor = texture2DLodEXT(uSource, vPosition, 0.0);
+          gl_FragColor = texture2D(uSource, vPosition);
           return;
         }
         float targetMipLevel = mipLevel - 1.0;

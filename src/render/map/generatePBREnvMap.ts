@@ -54,7 +54,7 @@ const BAKE_SHADER = new ShaderBank<[string]>(
         vec3 R = N;
         vec3 V = R;
 
-        const int SAMPLE_COUNT = 1024;
+        const int SAMPLE_COUNT = 128;
         float totalWeight = 0.0;   
         vec3 prefilteredColor = vec3(0.0);     
         for (int i = 0; i < SAMPLE_COUNT; ++i) {
