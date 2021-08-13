@@ -94,6 +94,8 @@ export class GLTexture {
     if (this.texture != null && this.renderer != null) {
       this.renderer.gl.deleteTexture(this.texture);
       this.texture = null;
+      this.boundId = null;
+      this.boundVersion = null;
       this._invalidate();
     }
   }

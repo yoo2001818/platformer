@@ -137,7 +137,7 @@ function main() {
       const mip =
         generateCubePackEquirectangular(glRenderer, skyboxTexture, 2048, 8);
       pbrTexture = generatePBREnvMap(glRenderer, mip);
-      mip.dispose();
+      // mip.dispose();
       // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
       const material = new BasicMaterial({
         albedo: '#ffffff',
@@ -263,7 +263,6 @@ function main() {
         ),
       });
 
-      /*
       store.create({
         name: 'light',
         transform: new Transform().translate([5, 5, 5]),
@@ -293,7 +292,6 @@ function main() {
           attenuation: 0.00001,
         }),
       });
-      */
     }
 
     gl!.clearColor(0, 0, 0, 255);

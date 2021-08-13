@@ -11,7 +11,7 @@ export class GLTextureManager {
     this.renderer = renderer;
     this.boundTextures = [];
     this.boundVersion = 0;
-    this.activeId = 0;
+    this.activeId = -1;
     this.init();
   }
 
@@ -56,6 +56,7 @@ export class GLTextureManager {
     const prevTexture = this.boundTextures[slotId];
     if (prevTexture != null) {
       prevTexture._unbind();
+      this.activeId = -1;
     }
     // Bind the texture...
     this.boundTextures[slotId] = texture;

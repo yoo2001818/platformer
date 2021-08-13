@@ -1,4 +1,3 @@
-import {GLRenderer} from './GLRenderer';
 import {GLTexture, GLTextureParameters, GLTextureTexImage} from './GLTexture';
 
 export const TEXTURE_2D = 0x0DE1;
@@ -25,10 +24,10 @@ export class GLTexture2D extends GLTexture {
   }
 
   _init(): void {
-    if (this.uploadFulfilled === 0) {
-      this._setParameters(TEXTURE_2D, this.options);
-    }
     if (this.uploadFulfilled < 2) {
+      if (this.uploadFulfilled === 0) {
+        this._setParameters(TEXTURE_2D, this.options);
+      }
       this.uploadFulfilled =
         this._texImage2D(TEXTURE_2D, this.options, this.uploadFulfilled);
       if (this.uploadFulfilled === 2 && this.options.mipmap !== false) {
@@ -55,6 +54,6 @@ export const TEXTURE_2D_PLACEHOLDER = new GLTexture2D({
   width: 1,
   height: 1,
   format: 'rgb',
-  source: new Uint8Array([0, 0, 0]),
+  source: new Uint8Array([1, 0, 1]),
   mipmap: false,
 });

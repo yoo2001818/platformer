@@ -5,6 +5,7 @@ import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
+import {GLTexture2DGenerated} from '../gl/GLTextureGenerated';
 import {CUBE_PACK} from '../shader/cubepack';
 import {RGBE} from '../shader/hdr';
 import {PBR} from '../shader/pbr';
@@ -132,36 +133,36 @@ export function generatePBREnvMap(
   renderer: GLRenderer,
   source: GLTexture,
   maxLevel = 7,
-): GLTexture {
+): GLTexture2D {
   const {width, height} = source.options;
   if (width == null || height == null) {
     throw new Error('The width/height of target buffer must be specified');
   }
-  const hammersleyMap = generateHammersleyMap(1024);
-  const target = new GLTexture2D({
+  return new GLTexture2DGenerated({
     ...source.options,
-    source: null,
-  });
-  const fb = new GLFrameBuffer({
-    color: target,
-    width,
-    height,
-  });
-  fb.bind(renderer);
+    mipmap: false,
+  }, (target) => {
+    const hammersleyMap = generateHammersleyMap(1024);
+    const fb = new GLFrameBuffer({
+      color: target,
+      width,
+      height,
+    });
+    fb.bind(renderer);
 
-  renderer.draw({
-    frameBuffer: fb,
-    shader: BAKE_SHADER,
-    geometry: BAKE_QUAD,
-    uniforms: {
-      uTexelSize: [1 / width, 1 / height],
-      uSource: source,
-      uHammersleyMap: hammersleyMap,
-      uMaxLevel: maxLevel,
-    },
-  });
-  fb.dispose();
-  hammersleyMap.dispose();
-
-  return target;
+    renderer.draw({
+      frameBuffer: fb,
+      shader: BAKE_SHADER,
+      geometry: BAKE_QUAD,
+      uniforms: {
+        uTexelSize: [1 / width, 1 / height],
+        uSource: source,
+        uHammersleyMap: hammersleyMap,
+        uMaxLevel: maxLevel,
+      },
+    });
+    fb.dispose();
+    hammersleyMap.dispose();
+    console.log('...');
+  }, [source]);
 }
