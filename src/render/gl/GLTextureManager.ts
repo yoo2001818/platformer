@@ -26,7 +26,7 @@ export class GLTextureManager {
   }
 
   bind(original: GLTexture): number {
-    const texture = original._getInstance();
+    const texture = original._getInstance(this.renderer);
     // Check if the texture is already bound....
     if (
       texture.boundId != null &&

@@ -76,10 +76,9 @@ function main() {
     'rgbe',
     hdrType,
     2048,
-    8,
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
-  const brdfTexture = generateBRDFMap(glRenderer);
+  const brdfTexture = generateBRDFMap();
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
 

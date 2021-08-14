@@ -65,8 +65,6 @@ export class GLTexture {
   texture: WebGLTexture | null = null;
   boundId: number | null = null;
   boundVersion: number | null = null;
-  width: number | null = null;
-  height: number | null = null;
   options: GLTextureOptions;
 
   constructor(type: number, options: GLTextureOptions) {
@@ -78,7 +76,7 @@ export class GLTexture {
     renderer.textureManager.bind(this);
   }
 
-  _getInstance(): GLTexture {
+  _getInstance(renderer: GLRenderer): GLTexture {
     return this;
   }
 
@@ -245,8 +243,6 @@ export class GLTexture {
         ATTRIBUTE_TYPE_MAP[type ?? 'unsignedByte'],
         source,
       );
-      this.width = source.width;
-      this.height = source.height;
     } else {
       const {width, height} = options;
       if (width == null || height == null) {
@@ -266,8 +262,6 @@ export class GLTexture {
         ATTRIBUTE_TYPE_MAP[type ?? 'unsignedByte'],
         source ?? null,
       );
-      this.width = width;
-      this.height = height;
     }
     return 2;
   }
@@ -297,6 +291,14 @@ export class GLTexture {
 
   prepare(renderer: GLRenderer): void {
     //
+  }
+
+  getWidth(): number {
+    return this.options.width!;
+  }
+
+  getHeight(): number {
+    return this.options.height!;
   }
 
 }

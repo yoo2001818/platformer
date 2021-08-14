@@ -17,6 +17,7 @@ import {ShaderBank} from '../ShaderBank';
 import {CUBE_PACK, CUBE_PACK_HEADER} from '../shader/cubepack';
 import {HDR} from '../shader/hdr';
 import {getHDRType} from '../hdr/utils';
+import {generateBRDFMap} from '../map/generateBRDFMap';
 
 export interface BasicMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
@@ -26,6 +27,8 @@ export interface BasicMaterialOptions {
   brdf?: GLTexture;
   hdrType?: string;
 }
+
+const BRDF_MAP = generateBRDFMap();
 
 const ALBEDO_BIT = 1;
 const METALIC_BIT = 2;
@@ -99,11 +102,10 @@ const SHADER_BANK = new ShaderBank(
     uniform sampler2D uAlbedoMap;
     #endif
     #ifdef USE_ENVIRONMENT_MAP
+    uniform vec2 uEnvironmentMapSize;
     uniform sampler2D uEnvironmentMap;
     uniform sampler2D uBRDFMap;
     #endif
-
-    const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
 
     void main() {
       vec3 V = normalize(-vPosition);
@@ -144,19 +146,20 @@ const SHADER_BANK = new ShaderBank(
         vec3 WV = (uInverseView * vec4(V, 0.0)).xyz;
         vec3 WN = (uInverseView * vec4(N, 0.0)).xyz;
         vec3 WR = reflect(-WV, WN);
+        float lodMax = floor(log2(0.5 / uEnvironmentMapSize.x) - 3.0);
         // This tries to take advantage of mipmap when zooming out
         #ifdef GL_OES_standard_derivatives
         vec3 lodDiff = max(abs(dFdx(WR)), abs(dFdy(WR)));
-        float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (cubePackTexelSize.x * 0.5) + 1.0);
-        float lod = max(roughness * 6.0, lodTarget);
+        float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (uEnvironmentMapSize.x * 0.5) + 1.0);
+        float lod = max(roughness * (lodMax - 1.0), lodTarget);
         #elif defined(WEBGL2)
         vec3 lodDiff = max(abs(dFdx(WR)), abs(dFdy(WR)));
-        float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (cubePackTexelSize.x * 0.5) + 1.0);
-        float lod = max(roughness * 6.0, lodTarget);
+        float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (uEnvironmentMapSize.x * 0.5) + 1.0);
+        float lod = max(roughness * (lodMax - 1.0), lodTarget);
         #else
-        float lod = roughness * 6.0;
+        float lod = roughness * (lodMax - 1.0);
         #endif
-        vec3 envColor = textureCubePackLodHDR(uEnvironmentMap, WR, lod, cubePackTexelSize);
+        vec3 envColor = textureCubePackLodHDR(uEnvironmentMap, WR, lod, uEnvironmentMapSize);
         vec3 F = fresnelSchlickRoughness(dotNV, reflection, roughness * roughness);
         vec2 envBRDF = texture2D(uBRDFMap, vec2(dotNV, roughness)).rg;
 
@@ -165,7 +168,7 @@ const SHADER_BANK = new ShaderBank(
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
 
-        vec3 irradiance = textureCubePackLodHDR(uEnvironmentMap, WN, 7.0, cubePackTexelSize);
+        vec3 irradiance = textureCubePackLodHDR(uEnvironmentMap, WN, lodMax, uEnvironmentMapSize);
 
         result += kD * albedo * irradiance + spec;
         // result += vec3(lodTarget / 8.0, 0.0, 0.0);
@@ -245,7 +248,11 @@ export class BasicMaterial implements Material {
     if (options.environment instanceof GLTexture) {
       featureBits |= ENVIRONMENT_BIT;
       uniformOptions.uEnvironmentMap = options.environment;
-      uniformOptions.uBRDFMap = options.brdf;
+      uniformOptions.uEnvironmentMapSize = [
+        1 / options.environment.getWidth(),
+        1 / options.environment.getHeight(),
+      ];
+      uniformOptions.uBRDFMap = BRDF_MAP;
     }
 
     const hdrType = getHDRType(glRenderer);
@@ -253,6 +260,7 @@ export class BasicMaterial implements Material {
     const shader = SHADER_BANK.get(hdrType, featureBits, this.lights.length);
 
     // Bind the shaders
+    shader.prepareUniformTextures(glRenderer, uniformOptions);
     shader.bind(glRenderer);
     geometry.bind(glRenderer, shader);
 

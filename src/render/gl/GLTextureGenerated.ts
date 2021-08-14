@@ -8,13 +8,13 @@ import {
 import {TEXTURE_2D_PLACEHOLDER} from './GLTexture2D';
 
 export class GLTextureGenerated extends GLTexture {
-  generate: () => GLTexture;
+  generate: (renderer: GLRenderer) => GLTexture;
   dependencies: GLTexture[];
   result: GLTexture | null = null;
 
   constructor(
     options: GLTextureParameters & GLTextureFormat,
-    generate: () => GLTexture,
+    generate: (renderer: GLRenderer) => GLTexture,
     dependencies: GLTexture[] = [],
   ) {
     super(TEXTURE_2D, {...options, mipmap: false});
@@ -22,14 +22,14 @@ export class GLTextureGenerated extends GLTexture {
     this.dependencies = dependencies;
   }
 
-  _getInstance(): GLTexture {
+  _getInstance(renderer: GLRenderer): GLTexture {
     if (!this.isReady()) {
       return TEXTURE_2D_PLACEHOLDER;
     }
     if (this.result == null) {
-      this.result = this.generate();
+      this.result = this.generate(renderer);
     }
-    return this.result._getInstance();
+    return this.result._getInstance(renderer);
   }
 
   isReady(): boolean {
@@ -37,6 +37,6 @@ export class GLTextureGenerated extends GLTexture {
   }
 
   prepare(renderer: GLRenderer): void {
-    this._getInstance();
+    this._getInstance(renderer);
   }
 }

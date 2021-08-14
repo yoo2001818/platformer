@@ -20,7 +20,6 @@ import {OrbitCameraController} from '../input/OrbitCameraController';
 import {ShaderMaterial} from '../render/material/ShaderMaterial';
 import {CUBE_PACK, CUBE_PACK_HEADER} from '../render/shader/cubepack';
 // import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
-import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {HDR} from '../render/shader/hdr';
@@ -71,7 +70,6 @@ function main() {
     minFilter: 'nearest',
     mipmap: false,
   });
-  const brdfTexture = generateBRDFMap(glRenderer);
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
 
@@ -95,8 +93,7 @@ function main() {
     skyboxTexture,
     'rgbe',
     hdrType,
-    2048,
-    8,
+    1024,
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
   // mip.dispose();
@@ -106,7 +103,6 @@ function main() {
     metalic: 0,
     roughness: 0.12,
     environment: pbrTexture,
-    brdf: brdfTexture,
   });
   store.create({
     name: 'envMapDebug',
@@ -118,7 +114,8 @@ function main() {
       new BasicMaterial({
         albedo: pbrTexture,
         metalic: 0,
-        roughness: 0.2,
+        roughness: 1,
+        environment: pbrTexture,
       }),
       new Geometry(calcNormals(quad())),
     ),
@@ -156,7 +153,7 @@ function main() {
           uniform mat4 uInverseView;
           uniform mat4 uInverseProjection;
 
-          const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
+          const vec2 cubePackTexelSize = vec2(1.0 / 1024.0, 1.0 / 2048.0);
 
           void main() {
             vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
@@ -202,31 +199,14 @@ function main() {
       new BasicMaterial({
         albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
         metalic: 0,
-        roughness: 0.5,
+        roughness: 0.3,
         environment: pbrTexture,
-        brdf: brdfTexture,
       }),
       new Geometry(calcNormals(quad())),
     ),
   });
 
-
-  store.create({
-    name: 'brdfMapDebug',
-    transform: new Transform()
-      .rotateX(-Math.PI / 2)
-      .setScale([2.5, 2.5, 2.5])
-      .setPosition([-15, 0, 0]),
-    mesh: new Mesh(
-      new BasicMaterial({
-        albedo: brdfTexture,
-        metalic: 0,
-        roughness: 0.2,
-      }),
-      new Geometry(calcNormals(quad())),
-    ),
-  });
-
+  /*
   store.create({
     name: 'light',
     transform: new Transform().translate([5, 5, 5]),
@@ -256,6 +236,7 @@ function main() {
       attenuation: 0.00001,
     }),
   });
+  */
 
   const orbitController = new OrbitCameraController(
     canvas,

@@ -1,9 +1,10 @@
 import {quad} from '../../geom/quad';
 import {GLFrameBuffer} from '../gl/GLFrameBuffer';
 import {GLGeometry} from '../gl/GLGeometry';
-import {GLRenderer} from '../gl/GLRenderer';
 import {GLShader} from '../gl/GLShader';
+import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
+import {GLTextureGenerated} from '../gl/GLTextureGenerated';
 import {PBR} from '../shader/pbr';
 
 import {generateHammersleyMap} from './generateHammersleyMap';
@@ -79,10 +80,8 @@ const BRDF_SHADER = new GLShader(
   `,
 );
 
-export function generateBRDFMap(renderer: GLRenderer): GLTexture2D {
-  const hammersleyMap = generateHammersleyMap(1024);
-
-  const texture = new GLTexture2D({
+export function generateBRDFMap(): GLTexture {
+  return new GLTextureGenerated({
     width: 512,
     height: 512,
     wrapS: 'clampToEdge',
@@ -90,25 +89,37 @@ export function generateBRDFMap(renderer: GLRenderer): GLTexture2D {
     minFilter: 'linear',
     magFilter: 'linear',
     mipmap: false,
-    source: null,
-  });
-  texture.bind(renderer);
+  }, (renderer) => {
+    const hammersleyMap = generateHammersleyMap(1024);
 
-  const fb = new GLFrameBuffer({
-    color: texture,
-    width: 512,
-    height: 512,
-  });
-  renderer.draw({
-    frameBuffer: fb,
-    shader: BRDF_SHADER,
-    geometry: BRDF_QUAD,
-    uniforms: {
-      uHammersleyMap: hammersleyMap,
-    },
-  });
-  fb.dispose();
-  hammersleyMap.dispose();
+    const texture = new GLTexture2D({
+      width: 512,
+      height: 512,
+      wrapS: 'clampToEdge',
+      wrapT: 'clampToEdge',
+      minFilter: 'linear',
+      magFilter: 'linear',
+      mipmap: false,
+      source: null,
+    });
+    texture.bind(renderer);
 
-  return texture;
+    const fb = new GLFrameBuffer({
+      color: texture,
+      width: 512,
+      height: 512,
+    });
+    renderer.draw({
+      frameBuffer: fb,
+      shader: BRDF_SHADER,
+      geometry: BRDF_QUAD,
+      uniforms: {
+        uHammersleyMap: hammersleyMap,
+      },
+    });
+    fb.dispose();
+    hammersleyMap.dispose();
+
+    return texture;
+  });
 }

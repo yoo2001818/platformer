@@ -81,7 +81,7 @@ const BAKE_SHADER = new ShaderBank<[string]>(
 
           float dotNL = max(dot(N, L), 0.0);
           if (dotNL > 0.0) {
-            prefilteredColor += textureCubePackLodHDR(uSource, L, min(mipLevel, 8.0), uTexelSize) * dotNL;
+            prefilteredColor += textureCubePackLodHDR(uSource, L, min(mipLevel, uMaxLevel + 1.0), uTexelSize) * dotNL;
             totalWeight += dotNL;
           }
         }
@@ -108,7 +108,7 @@ const BAKE_SHADER = new ShaderBank<[string]>(
             // tangent space to world
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
-            irradiance += textureCubePackLodHDR(uSource, sampleVec, 6.0, uTexelSize) * cos(theta) * sin(theta);
+            irradiance += textureCubePackLodHDR(uSource, sampleVec, uMaxLevel - 1.0, uTexelSize) * cos(theta) * sin(theta);
             nrSamples += 1.0;
           }
         }
@@ -125,9 +125,11 @@ const BAKE_SHADER = new ShaderBank<[string]>(
         if (mipLevel < uMaxLevel) {
           // radiance calculation
           result = runSample(coord, pow(min(mipLevel / (uMaxLevel - 1.0), 1.0), 2.0), resolution);
-        } else {
+        } else if (mipLevel == uMaxLevel) {
           // irradiance calculation
           result = runIrradianceSample(coord);
+        } else {
+          result = vec3(0.0);
         }
         gl_FragColor = packHDR(result);
       }
@@ -141,13 +143,13 @@ export function generatePBREnvMap(
   renderer: GLRenderer,
   source: GLTexture,
   hdrFormat: HDRType,
-  maxLevel = 7,
 ): GLTexture {
   const {width, height} = source.options;
   if (width == null || height == null) {
     throw new Error('The width/height of target buffer must be specified');
   }
   return new GLTextureGenerated(source.options, () => {
+    const maxLevel = Math.floor(Math.log2(0.5 * width) - 3);
     const hammersleyMap = generateHammersleyMap(1024);
     const target = new GLTexture2D({
       ...getHDROptions(hdrFormat),

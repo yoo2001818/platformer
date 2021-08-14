@@ -81,7 +81,7 @@ export class GLFrameBuffer {
     }
     const {gl} = renderer;
     if (attachment instanceof GLTexture) {
-      const inst = attachment._getInstance();
+      const inst = attachment._getInstance(renderer);
       inst.bind(renderer);
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
@@ -92,7 +92,7 @@ export class GLFrameBuffer {
       );
     } else if ('texture' in attachment) {
       const {target, texture} = attachment;
-      const inst = texture._getInstance();
+      const inst = texture._getInstance(renderer);
       inst.bind(renderer);
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,

@@ -75,7 +75,6 @@ export function generateCubePackMipMap(
   renderer: GLRenderer,
   source: GLTexture,
   hdrFormat: HDRType,
-  maxLevel: number,
 ): GLTexture {
   // NOTE This will dispose "the other" texture
   const {width, height} = source.options;
@@ -83,6 +82,7 @@ export function generateCubePackMipMap(
     throw new Error('The source texture must manually set width / height');
   }
   return new GLTextureGenerated(source.options, () => {
+    const maxLevel = Math.floor(Math.log2(0.5 * width) - 2);
     const pingPongA = source;
     const pingPongB = new GLTexture2D({
       ...source.options,
@@ -179,7 +179,6 @@ export function generateCubePackEquirectangular(
   inFormat: HDRType,
   outFormat: HDRType,
   size: number,
-  maxLevel: number,
 ): GLTexture {
   const width = size;
   const height = size * 2;
@@ -209,6 +208,6 @@ export function generateCubePackEquirectangular(
       },
     });
     fb.dispose();
-    return generateCubePackMipMap(renderer, target, outFormat, maxLevel);
+    return generateCubePackMipMap(renderer, target, outFormat);
   }, [source]);
 }
