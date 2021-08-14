@@ -16,13 +16,11 @@ import {Light} from '../render/Light';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
-import {ShaderMaterial} from '../render/material/ShaderMaterial';
-import {CUBE_PACK, CUBE_PACK_HEADER} from '../render/shader/cubepack';
 import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {getHDRType} from '../render/hdr/utils';
-import {HDR} from '../render/shader/hdr';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
+import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
 
 const store = new EntityStore();
 
@@ -100,50 +98,10 @@ function main() {
     name: 'skybox',
     transform: new Transform(),
     mesh: new Mesh(
-      new ShaderMaterial(
-        /* glsl */`
-          #version 100
-          precision highp float;
-
-          attribute vec3 aPosition;
-
-          varying vec2 vPosition;
-
-          void main() {
-            vPosition = aPosition.xy;
-            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
-          }
-        `,
-        /* glsl */`
-          #version 100
-          ${CUBE_PACK_HEADER}
-          #define HDR_INPUT_${getHDRType(glRenderer)}
-          precision highp float;
-
-          ${HDR}
-          ${CUBE_PACK}
-
-          varying vec2 vPosition;
-
-          uniform sampler2D uTexture;
-          uniform mat4 uInverseView;
-          uniform mat4 uInverseProjection;
-
-          const vec2 cubePackTexelSize = vec2(1.0 / 2048.0, 1.0 / 4096.0);
-
-          void main() {
-            vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
-            viewPos /= viewPos.w;
-            vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-            vec3 result = textureCubePackLodHDR(uTexture, dir, 3.0, cubePackTexelSize);
-            result = result / (result + 1.0);
-            gl_FragColor = vec4(result, 1.0);
-          }
-        `,
-        {
-          uTexture: pbrTexture,
-        },
-      ),
+      new SkyboxMaterial({
+        texture: pbrTexture,
+        lod: 3,
+      }),
       new Geometry(quad()),
     ),
   });
