@@ -87,6 +87,10 @@ export type GLCullFaceMode =
   | 'back'
   | 'frontAndBack';
 
+export type GLFrontFace =
+  | 'cw'
+  | 'ccw';
+
 export type GLStateStencilOpArgs = [
   GLStateStencilOp,
   GLStateStencilOp,
@@ -96,10 +100,10 @@ export type GLStateStencilOpArgs = [
 export interface GLStateBlendOptions {
   color?: number[];
   equation: GLStateBlendEquation | [GLStateBlendEquation, GLStateBlendEquation];
-  func: [GLStateBlendEquation, GLStateBlendEquation] |
+  func: [GLStateBlendFunc, GLStateBlendFunc] |
     [
-      [GLStateBlendEquation, GLStateBlendEquation],
-      [GLStateBlendEquation, GLStateBlendEquation],
+      [GLStateBlendFunc, GLStateBlendFunc],
+      [GLStateBlendFunc, GLStateBlendFunc],
     ];
 }
 
@@ -109,6 +113,7 @@ export interface GLStateOptions {
   depthMask?: boolean;
   stencilMask?: number | [number, number];
   cull?: false | GLCullFaceMode;
+  frontFace?: GLFrontFace;
   depth?: false
   | GLStateTestFunc
   | {func: GLStateTestFunc; range: [number, number];};

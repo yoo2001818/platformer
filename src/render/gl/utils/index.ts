@@ -207,4 +207,9 @@ export const CULL_FACE_MODE = {
   frontAndBack: 0x0408,
 };
 
+export const FRONT_FACE = {
+  cw: 0x0900,
+  ccw: 0x0901,
+};
+
 export * from './parseIndices';
