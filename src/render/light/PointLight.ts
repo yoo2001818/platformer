@@ -51,7 +51,7 @@ export class PointLight implements Light {
         position: transform.getPosition(),
         color: light.options.color,
         intensity: [
-          light.options.power,
+          light.options.power / Math.PI,
           light.options.radius,
           light.options.range,
         ],

@@ -18,6 +18,7 @@ const ROUGHNESS_BIT = 4;
 
 export class BasicMaterial implements Material {
   id: number;
+  mode: 'deferred' = 'deferred';
   options: BasicMaterialOptions;
   constructor(options: BasicMaterialOptions) {
     this.id = createId();
@@ -95,7 +96,7 @@ export class BasicMaterial implements Material {
             mInfo.albedo = uMaterial.albedo;
           #endif
           // Tone mapping
-          mInfo.albedo = pow(mInfo.albedo, vec3(1.0 / 2.2));
+          mInfo.albedo = pow(mInfo.albedo, vec3(2.2));
 
           mInfo.normal = normalize(vNormal);
           mInfo.position = vPosition;

@@ -173,8 +173,8 @@ function main() {
     name: 'light',
     transform: new Transform().translate([5, 5, 5]),
     light: new PointLight({
-      color: '#ffffff',
-      power: 60,
+      color: '#0000ff',
+      power: 200,
       radius: 1,
       range: 8,
     }),
@@ -184,8 +184,8 @@ function main() {
     name: 'light',
     transform: new Transform().translate([-5, 5, -5]),
     light: new PointLight({
-      color: '#ffffff',
-      power: 60,
+      color: '#ff0000',
+      power: 200,
       radius: 1,
       range: 8,
     }),

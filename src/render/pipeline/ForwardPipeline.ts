@@ -8,6 +8,7 @@ import {MeshComponent} from '../MeshComponent';
 import {Renderer} from '../Renderer';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
+import {FILMIC} from '../shader/tonemap';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -86,6 +87,7 @@ export class ForwardPipeline implements Pipeline {
 
           ${PBR}
           ${MATERIAL_INFO}
+          ${FILMIC}
 
           ${this.lights.map((light) => light.shaderBlock.header).join('\n')}
 
@@ -100,9 +102,8 @@ export class ForwardPipeline implements Pipeline {
 
             ${this.lights.map((light) => light.shaderBlock.body).join('\n')}
             
-            // tone mapping
-            result = result / (result + 1.0);
-            gl_FragColor = vec4(pow(result, vec3(2.2)), 1.0);
+            result = tonemap(result);
+            gl_FragColor = vec4(result, 1.0);
           }
         `,
       );

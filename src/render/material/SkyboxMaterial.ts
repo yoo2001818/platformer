@@ -11,6 +11,7 @@ import {ShaderBank} from '../ShaderBank';
 import {CUBE_PACK, CUBE_PACK_HEADER} from '../shader/cubepack';
 import {HDR} from '../shader/hdr';
 import {getHDRType} from '../hdr/utils';
+import {FILMIC} from '../shader/tonemap';
 
 export interface SkyboxMaterialOptions {
   texture: GLTexture;
@@ -39,6 +40,7 @@ const SHADER_BANK = new ShaderBank(
 
     ${HDR}
     ${CUBE_PACK}
+    ${FILMIC}
 
     varying vec2 vPosition;
 
@@ -53,8 +55,8 @@ const SHADER_BANK = new ShaderBank(
       viewPos /= viewPos.w;
       vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
       vec3 result = textureCubePackLodHDR(uTexture, dir, uLod, uTextureSize);
-      result = result / (result + 1.0);
-      gl_FragColor = vec4(pow(result, vec3(2.2)), 1.0);
+      result = tonemap(result);
+      gl_FragColor = vec4(result, 1.0);
     }
   `),
 );
@@ -62,6 +64,7 @@ const SHADER_BANK = new ShaderBank(
 export class SkyboxMaterial implements Material {
   id: number;
   options: SkyboxMaterialOptions;
+  mode: 'forward' = 'forward';
   constructor(options: SkyboxMaterialOptions) {
     this.id = createId();
     this.options = options;

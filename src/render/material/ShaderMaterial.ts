@@ -15,6 +15,7 @@ export class ShaderMaterial implements Material {
   id: number;
   glShader: GLShader;
   uniforms: ShaderMaterialUniformSetter;
+  mode: 'forward' = 'forward';
 
   constructor(
     vert: string,

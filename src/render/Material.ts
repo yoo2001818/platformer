@@ -5,6 +5,7 @@ import {Renderer} from './Renderer';
 
 export interface Material {
   id: number;
+  mode: 'forward' | 'deferred';
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void;
   dispose(): void;
 }
