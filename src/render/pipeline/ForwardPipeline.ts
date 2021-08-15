@@ -54,11 +54,11 @@ export class ForwardPipeline implements Pipeline {
 
     for (const [type, entities] of lightMap.entries()) {
       const light = entities[0].get<Light>('light')!;
-      const uniforms = light.getUniforms(entities);
+      const uniforms = light.getUniforms(entities, this.renderer);
       this.lights.push({
         type,
         size: entities.length,
-        shaderBlock: light.getShaderBlock(entities.length),
+        shaderBlock: light.getShaderBlock(entities.length, this.renderer),
         uniforms,
       });
       Object.assign(this.lightUniforms, uniforms);
@@ -102,7 +102,7 @@ export class ForwardPipeline implements Pipeline {
             
             // tone mapping
             result = result / (result + 1.0);
-            gl_FragColor = vec4(pow(result, vec3(1.0 / 2.2)), 1.0);
+            gl_FragColor = vec4(pow(result, vec3(2.2)), 1.0);
           }
         `,
       );

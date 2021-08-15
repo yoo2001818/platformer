@@ -2,7 +2,6 @@ import {Entity} from '../core/Entity';
 import {EntityStore} from '../core/EntityStore';
 
 import {GLRenderer} from './gl/GLRenderer';
-import {MeshComponent} from './MeshComponent';
 import {ForwardPipeline} from './pipeline/ForwardPipeline';
 import {Pipeline} from './pipeline/Pipeline';
 

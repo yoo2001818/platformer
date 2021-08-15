@@ -16,7 +16,6 @@ import {Light} from '../render/light/Light';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
-import {generateBRDFMap} from '../render/map/generateBRDFMap';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {getHDRType} from '../render/hdr/utils';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
@@ -76,7 +75,7 @@ function main() {
     2048,
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
-  const brdfTexture = generateBRDFMap();
+  // const brdfTexture = generateBRDFMap();
   // const texture = new GLTexture2D({source: createImage(logo)});
   const teapot = parseObj(require('./teapot.obj').default);
 
@@ -120,8 +119,6 @@ function main() {
             albedo: '#ffffff',
             metalic,
             roughness,
-            environment: pbrTexture,
-            brdf: brdfTexture,
           }),
           new Geometry(bakeChannelGeom(teapot[0].geometry)),
         ),
@@ -136,8 +133,6 @@ function main() {
             albedo: '#ffffff',
             metalic,
             roughness,
-            environment: pbrTexture,
-            brdf: brdfTexture,
           }),
           new Geometry(bakeChannelGeom(teapot[1].geometry)),
         ),

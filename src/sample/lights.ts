@@ -22,6 +22,8 @@ import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {getHDRType} from '../render/hdr/utils';
 import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
+import {PointLight} from '../render/light/PointLight';
+import {EnvironmentLight} from '../render/light/EnvironmentLight';
 
 const store = new EntityStore();
 
@@ -162,32 +164,28 @@ function main() {
   });
 
   store.create({
+    name: 'envLight',
+    transform: new Transform(),
+    light: new EnvironmentLight({texture: pbrTexture, power: 1}),
+  });
+
+  store.create({
     name: 'light',
-    transform: new Transform().translate([5, 5, 5]),
-    light: new Light({
-      color: '#ffaaaa',
-      power: 2,
-      attenuation: 0.0001,
+    transform: new Transform().translate([5, 1, 5]),
+    light: new PointLight({
+      color: '#ff0000',
+      power: 20,
+      attenuation: 0.1,
     }),
   });
 
   store.create({
     name: 'light',
-    transform: new Transform().translate([-5, 5, -5]),
-    light: new Light({
-      color: '#aaaaff',
-      power: 2,
-      attenuation: 0.00001,
-    }),
-  });
-
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([15, 5, 0]),
-    light: new Light({
-      color: '#ffffff',
-      power: 2,
-      attenuation: 0.00001,
+    transform: new Transform().translate([-5, 1, -5]),
+    light: new PointLight({
+      color: '#0000ff',
+      power: 20,
+      attenuation: 0.1,
     }),
   });
 

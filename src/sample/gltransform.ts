@@ -14,6 +14,7 @@ import {Camera} from '../3d/Camera';
 import {MeshComponent} from '../render/MeshComponent';
 import {Mesh} from '../render/Mesh';
 import {Light} from '../render/light/Light';
+import {PointLight} from '../render/light/PointLight';
 import {createImage} from '../render/utils/createImage';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {OrbitCameraController} from '../input/OrbitCameraController';
@@ -69,7 +70,7 @@ function main() {
 
   const lightEntity = store.create({
     transform: new Transform().translate([20, 0, 0]),
-    light: new Light({
+    light: new PointLight({
       color: '#ffffff',
       power: 1,
       attenuation: 0.0001,

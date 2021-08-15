@@ -54,7 +54,7 @@ const SHADER_BANK = new ShaderBank(
       vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
       vec3 result = textureCubePackLodHDR(uTexture, dir, uLod, uTextureSize);
       result = result / (result + 1.0);
-      gl_FragColor = vec4(result, 1.0);
+      gl_FragColor = vec4(pow(result, vec3(2.2)), 1.0);
     }
   `),
 );

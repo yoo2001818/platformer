@@ -94,6 +94,8 @@ export class BasicMaterial implements Material {
           #else
             mInfo.albedo = uMaterial.albedo;
           #endif
+          // Tone mapping
+          mInfo.albedo = pow(mInfo.albedo, vec3(1.0 / 2.2));
 
           mInfo.normal = normalize(vNormal);
           mInfo.position = vPosition;

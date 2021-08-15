@@ -35,10 +35,10 @@ export const HDR = /* glsl */`
   }
 
   vec3 unpackSRGB(vec4 value) {
-    return pow(value.rgb, vec3(2.2));
+    return pow(value.rgb, vec3(1.0 / 2.2));
   }
 
   vec4 packSRGB(vec3 value) {
-    return vec4(pow(value, vec3(1.0 / 2.2)), 1.0);
+    return vec4(pow(value, vec3(2.2)), 1.0);
   }
 `;
