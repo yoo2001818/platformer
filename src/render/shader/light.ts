@@ -2,7 +2,7 @@ export const POINT_LIGHT = /* glsl */`
   struct PointLight {
     vec3 position;
     vec3 color;
-    vec2 intensity;
+    vec3 intensity;
   };
 
   vec3 calcPoint(vec3 viewPos, MaterialInfo mInfo, PointLight light) {
@@ -13,12 +13,13 @@ export const POINT_LIGHT = /* glsl */`
     float lightDist = length(L);
     L = L / lightDist;
 
-    float attenuation = 1.0 /
-      (1.0 + light.intensity.y * (lightDist * lightDist));
+    float attenuation = light.intensity.x /
+      (0.001 + (lightDist * lightDist));
+    float window = pow(max(1.0 - pow(lightDist / light.intensity.z, 4.0), 0.0), 2.0);
     
     float dotNL = max(dot(N, L), 0.0);
 
-    vec3 radiance = light.intensity.x * attenuation * dotNL * light.color;
+    vec3 radiance = window * attenuation * dotNL * light.color;
 
     return radiance * calcBRDF(L, V, N, mInfo);
   }

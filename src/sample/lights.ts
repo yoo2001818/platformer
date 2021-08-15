@@ -171,21 +171,23 @@ function main() {
 
   store.create({
     name: 'light',
-    transform: new Transform().translate([5, 1, 5]),
+    transform: new Transform().translate([5, 5, 5]),
     light: new PointLight({
-      color: '#ff0000',
-      power: 20,
-      attenuation: 0.1,
+      color: '#ffffff',
+      power: 60,
+      radius: 1,
+      range: 8,
     }),
   });
 
   store.create({
     name: 'light',
-    transform: new Transform().translate([-5, 1, -5]),
+    transform: new Transform().translate([-5, 5, -5]),
     light: new PointLight({
-      color: '#0000ff',
-      power: 20,
-      attenuation: 0.1,
+      color: '#ffffff',
+      power: 60,
+      radius: 1,
+      range: 8,
     }),
   });
 

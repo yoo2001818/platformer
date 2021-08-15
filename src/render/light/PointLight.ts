@@ -8,7 +8,8 @@ import {Light, LightShaderBlock} from './Light';
 export interface PointLightOptions {
   color: string;
   power: number;
-  attenuation: number;
+  radius: number;
+  range: number;
 }
 
 export class PointLight implements Light {
@@ -51,7 +52,8 @@ export class PointLight implements Light {
         color: light.options.color,
         intensity: [
           light.options.power,
-          light.options.attenuation,
+          light.options.radius,
+          light.options.range,
         ],
       });
     });

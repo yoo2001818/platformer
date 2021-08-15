@@ -73,7 +73,8 @@ function main() {
     light: new PointLight({
       color: '#ffffff',
       power: 1,
-      attenuation: 0.0001,
+      radius: 0.0001,
+      range: 1,
     }),
   });
   const lightBox = store.create({
