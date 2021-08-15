@@ -8,7 +8,7 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {Material} from '../Material';
 import {Renderer} from '../Renderer';
-import {Light} from '../Light';
+import {Light} from '../light/Light';
 import {createId} from '../utils/createId';
 import {PBR} from '../shader/pbr';
 import {POINT_LIGHT} from '../shader/light';

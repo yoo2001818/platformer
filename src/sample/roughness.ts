@@ -12,7 +12,7 @@ import {Transform} from '../3d/Transform';
 import {Camera} from '../3d/Camera';
 import {MeshComponent} from '../render/MeshComponent';
 import {Mesh} from '../render/Mesh';
-import {Light} from '../render/Light';
+import {Light} from '../render/light/Light';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';

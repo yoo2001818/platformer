@@ -8,7 +8,7 @@ export class Renderer {
   glRenderer: GLRenderer;
   entityStore: EntityStore;
   camera: Entity | null;
-  resources: Map<number, unknown>;
+  resources: Map<string | number, unknown>;
   frameId: number;
 
   constructor(
@@ -26,7 +26,7 @@ export class Renderer {
     return this.glRenderer.getAspectRatio();
   }
 
-  getResource<T>(id: number, onCreate: () => T): T {
+  getResource<T>(id: string | number, onCreate: () => T): T {
     // TODO GC
     const item = this.resources.get(id);
     if (item != null) {
