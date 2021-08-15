@@ -5,13 +5,15 @@ import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLVertexArray} from './GLVertexArray';
 import {GLShader} from './GLShader';
 import {GLFrameBuffer} from './GLFrameBuffer';
-import {DrawOptions} from './types';
+import {DrawOptions, GLStateOptions} from './types';
 import {GLCapabilities} from './GLCapabilities';
+import {GLStateManager} from './GLStateManager';
 
 export class GLRenderer {
   gl: WebGL2RenderingContext | WebGLRenderingContext;
   attributeManager: GLAttributeManager;
   textureManager: GLTextureManager;
+  stateManager: GLStateManager;
   capabilities: GLCapabilities;
   boundFrameBuffer: GLFrameBuffer | null = null;
   boundArrayBuffer: GLArrayBuffer | null = null;
@@ -24,6 +26,7 @@ export class GLRenderer {
     this.capabilities = new GLCapabilities(this);
     this.attributeManager = new GLAttributeManager(this);
     this.textureManager = new GLTextureManager(this);
+    this.stateManager = new GLStateManager(this);
   }
 
   unbindFrameBuffer(): void {
@@ -43,14 +46,29 @@ export class GLRenderer {
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
 
+  clear(frameBuffer?: GLFrameBuffer | null): void {
+    const {gl} = this;
+    if (frameBuffer != null) {
+      frameBuffer.bind(this);
+    } else {
+      this.unbindFrameBuffer();
+    }
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+  }
+
+  setState(state?: GLStateOptions | null): void {
+    this.stateManager.setState(state ?? {});
+  }
+
   draw(options: DrawOptions): void {
-    const {frameBuffer, geometry, shader, uniforms, primCount} = options;
+    const {frameBuffer, geometry, shader, uniforms, primCount, state} = options;
     shader.prepareUniformTextures(this, uniforms);
     if (frameBuffer != null) {
       frameBuffer.bind(this);
     } else {
       this.unbindFrameBuffer();
     }
+    this.setState(state);
     shader.bind(this);
     geometry.bind(this, shader);
     shader.setUniforms(uniforms);
