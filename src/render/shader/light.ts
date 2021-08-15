@@ -37,14 +37,18 @@ export const ENVIRONMENT_MAP = /* glsl */`
     float dotNV = max(dot(N, V), 0.0);
     float lodMax = floor(log2(0.5 / mapSize.x) - 3.0);
     // This tries to take advantage of mipmap when zooming out
-    #ifdef GL_OES_standard_derivatives
-    vec3 lodDiff = max(abs(dFdx(R)), abs(dFdy(R)));
-    float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (mapSize.x * 0.5) + 1.0);
-    float lod = max(roughness * (lodMax - 1.0), lodTarget);
-    #elif defined(WEBGL2)
-    vec3 lodDiff = max(abs(dFdx(R)), abs(dFdy(R)));
-    float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (mapSize.x * 0.5) + 1.0);
-    float lod = max(roughness * (lodMax - 1.0), lodTarget);
+    #ifdef FORWARD
+      #ifdef GL_OES_standard_derivatives
+      vec3 lodDiff = max(abs(dFdx(R)), abs(dFdy(R)));
+      float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (mapSize.x * 0.5) + 1.0);
+      float lod = max(roughness * (lodMax - 1.0), lodTarget);
+      #elif defined(WEBGL2)
+      vec3 lodDiff = max(abs(dFdx(R)), abs(dFdy(R)));
+      float lodTarget = log2(max(lodDiff.x, max(lodDiff.y, lodDiff.z)) / 90.0 / (mapSize.x * 0.5) + 1.0);
+      float lod = max(roughness * (lodMax - 1.0), lodTarget);
+      #else
+      float lod = roughness * (lodMax - 1.0);
+      #endif
     #else
     float lod = roughness * (lodMax - 1.0);
     #endif

@@ -45,7 +45,7 @@ store.registerComponents({
 
 function main() {
   const canvas = document.createElement('canvas');
-  const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+  const gl = canvas.getContext('webgl2', {antialias: false}) || canvas.getContext('webgl');
 
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;

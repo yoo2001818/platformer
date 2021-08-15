@@ -13,6 +13,7 @@ import {Renderer} from '../Renderer';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
+import {FXAA} from '../shader/fxaa';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -220,13 +221,16 @@ export class DeferredPipeline implements Pipeline {
           #version 100
           precision highp float;
 
+          ${FXAA}
+
           varying vec2 vPosition;
 
           uniform sampler2D uBuffer;
+          uniform vec2 uResolution;
           
           void main() {
             vec2 uv = vPosition * 0.5 + 0.5;
-            gl_FragColor = texture2D(uBuffer, uv);
+            gl_FragColor = fxaa(uBuffer, uv, uResolution);
           }
         `,
       );
@@ -405,11 +409,14 @@ export class DeferredPipeline implements Pipeline {
     });
 
     // Spit everything to screen
+    const width = glRenderer.getWidth();
+    const height = glRenderer.getHeight();
     glRenderer.draw({
       geometry: LIGHT_QUAD,
       shader: this.getDisplayShader(),
       uniforms: {
         uBuffer: this.outBuffer,
+        uResolution: [width, height],
       },
     });
 
