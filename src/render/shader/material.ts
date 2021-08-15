@@ -34,7 +34,7 @@ export const MATERIAL_INFO = /* glsl */`
     out MaterialInfo mOut
   ) {
     // TODO: This is not a well-written code
-    vec4 viewPos = inverseProjection * vec4(ndc.xy, depth, 1.0);
+    vec4 viewPos = inverseProjection * vec4(ndc.xy, depth * 2.0 - 1.0, 1.0);
     viewPos /= viewPos.w;
     mOut.position = (inverseView * viewPos).xyz;
 

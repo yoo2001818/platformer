@@ -11,6 +11,7 @@ export class GLCapabilities {
   floatTexExt: OES_texture_float | null = null;
   floatTexLinearExt: OES_texture_float_linear | null = null;
   floatBufferExt: unknown | null = null;
+  floatBlendExt: unknown | null = null;
   fboRenderMipmapExt: unknown | null = null;
   drawBuffersExt: WEBGL_draw_buffers | null = null;
 
@@ -34,6 +35,7 @@ export class GLCapabilities {
     this.floatBufferExt =
       gl.getExtension('WEBGL_color_buffer_float') ||
       gl.getExtension('EXT_color_buffer_float');
+    this.floatBlendExt = gl.getExtension('EXT_float_blend');
     this.fboRenderMipmapExt = gl.getExtension('OES_fbo_render_mipmap');
     this.drawBuffersExt = gl.getExtension('WEBGL_draw_buffers');
   }
@@ -48,5 +50,9 @@ export class GLCapabilities {
 
   hasFloatBuffer(): boolean {
     return this.floatBufferExt != null;
+  }
+
+  hasFloatBlend(): boolean {
+    return this.floatBlendExt != null;
   }
 }

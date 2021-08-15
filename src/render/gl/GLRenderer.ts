@@ -56,14 +56,16 @@ export class GLRenderer {
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
 
-  clear(frameBuffer?: GLFrameBuffer | null): void {
+  clear(frameBuffer?: GLFrameBuffer | null, bits?: number): void {
     const {gl} = this;
     if (frameBuffer != null) {
       frameBuffer.bind(this);
     } else {
       this.unbindFrameBuffer();
     }
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+    gl.clear(
+      bits ?? gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT,
+    );
   }
 
   setState(state?: GLStateOptions | null): void {

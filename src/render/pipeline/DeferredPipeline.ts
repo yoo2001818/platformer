@@ -1,7 +1,9 @@
 import {Camera} from '../../3d/Camera';
 import {Transform} from '../../3d/Transform';
 import {Entity} from '../../core/Entity';
+import {quad} from '../../geom/quad';
 import {GLFrameBuffer} from '../gl/GLFrameBuffer';
+import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
@@ -21,11 +23,16 @@ interface LightConfig {
   uniforms: unknown;
 }
 
+const LIGHT_QUAD = new GLGeometry(quad());
+
 export class DeferredPipeline implements Pipeline {
   renderer: Renderer;
   depthBuffer: GLTexture2D | null = null;
-  gbuffers: GLTexture2D[] | null = null;
+  gBuffers: GLTexture2D[] | null = null;
+  outBuffer: GLTexture2D | null = null;
   frameBuffer: GLFrameBuffer | null = null;
+  outPreFrameBuffer: GLFrameBuffer | null = null;
+  outFrameBuffer: GLFrameBuffer | null = null;
   lights: LightConfig[] = [];
   lightUniforms: {[key: string]: unknown;} = {};
   cameraUniforms: {[key: string]: unknown;} = {};
@@ -75,12 +82,13 @@ export class DeferredPipeline implements Pipeline {
 
   getDeferredShader(id: string, onCreate: () => PipelineShaderBlock): GLShader {
     const {renderer} = this;
-    return renderer.getResource(`${id}~${this.lightId}`, () => {
+    return renderer.getResource(`deferred~${id}`, () => {
       const block = onCreate();
       return new GLShader(
         block.vert,
         /* glsl */`
           #version 100
+          #extension GL_EXT_draw_buffers : require
           precision highp float;
 
           uniform mat4 uView;
@@ -92,9 +100,6 @@ export class DeferredPipeline implements Pipeline {
 
           ${PBR}
           ${MATERIAL_INFO}
-          ${FILMIC}
-
-          ${this.lights.map((light) => light.shaderBlock.header).join('\n')}
 
           ${block.frag}
 
@@ -109,9 +114,6 @@ export class DeferredPipeline implements Pipeline {
             MaterialInfo mInfo;
             material(mInfo);
 
-            ${this.lights.map((light) => light.shaderBlock.body).join('\n')}
-            
-            result = tonemap(result);
             vec4 vecOut[2];
             packMaterialInfo(mInfo, vecOut);
 
@@ -122,6 +124,109 @@ export class DeferredPipeline implements Pipeline {
               gl_FragData[0] = vecOut[0];
               gl_FragData[1] = vecOut[1];
             #endif
+          }
+        `,
+      );
+    });
+  }
+
+  getLightShader(): GLShader {
+    const {renderer} = this;
+    return renderer.getResource(`light~${this.lightId}`, () => {
+      return new GLShader(
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          attribute vec3 aPosition;
+
+          varying vec2 vPosition;
+
+          void main() {
+            vPosition = aPosition.xy;
+            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+          }
+        `,
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          ${PBR}
+          ${MATERIAL_INFO}
+          ${FILMIC}
+
+          varying vec2 vPosition;
+
+          uniform mat4 uView;
+          uniform mat4 uProjection;
+          uniform mat4 uModel;
+          uniform mat4 uInverseView;
+          uniform mat4 uInverseProjection;
+          uniform vec3 uViewPos;
+          uniform sampler2D uDepthBuffer;
+          uniform sampler2D uGBuffer0;
+          uniform sampler2D uGBuffer1;
+          
+          ${this.lights.map((light) => light.shaderBlock.header).join('\n')}
+
+          #line 5000
+          void main() {
+            vec2 uv = vPosition * 0.5 + 0.5;
+            float depth = texture2D(uDepthBuffer, uv).x;
+            vec4 values[GBUFFER_SIZE];
+            values[0] = texture2D(uGBuffer0, uv);
+            values[1] = texture2D(uGBuffer1, uv);
+
+            MaterialInfo mInfo;
+            unpackMaterialInfo(
+              depth, values, vPosition,
+              uInverseProjection, uInverseView,
+              mInfo
+            );
+
+            vec3 viewPos = uViewPos;
+
+            vec3 result = vec3(0.0);
+
+            ${this.lights.map((light) => light.shaderBlock.body).join('\n')}
+            
+            result = tonemap(result);
+
+            gl_FragColor = vec4(result, 1.0);
+          }
+        `,
+      );
+    });
+  }
+
+  getDisplayShader(): GLShader {
+    const {renderer} = this;
+    return renderer.getResource(`display~deferred`, () => {
+      return new GLShader(
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          attribute vec3 aPosition;
+
+          varying vec2 vPosition;
+
+          void main() {
+            vPosition = aPosition.xy;
+            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+          }
+        `,
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          varying vec2 vPosition;
+
+          uniform sampler2D uBuffer;
+          
+          void main() {
+            vec2 uv = vPosition * 0.5 + 0.5;
+            gl_FragColor = texture2D(uBuffer, uv);
           }
         `,
       );
@@ -141,6 +246,18 @@ export class DeferredPipeline implements Pipeline {
     });
   }
 
+  drawForward(options: DrawOptions): void {
+    const {renderer: {glRenderer}} = this;
+    glRenderer.draw({
+      frameBuffer: this.outFrameBuffer!,
+      ...options,
+      uniforms: {
+        ...this.cameraUniforms,
+        ...options.uniforms,
+      },
+    });
+  }
+
   prepare(): void {
     const {glRenderer} = this.renderer;
     const width = glRenderer.getWidth();
@@ -153,28 +270,61 @@ export class DeferredPipeline implements Pipeline {
         type: 'unsignedInt248',
         magFilter: 'nearest',
         minFilter: 'nearest',
+        wrapS: 'clampToEdge',
+        wrapT: 'clampToEdge',
         mipmap: false,
         source: null,
       });
     }
-    if (this.gbuffers == null) {
-      this.gbuffers = Array.from({length: 2}, () => new GLTexture2D({
+    if (this.gBuffers == null) {
+      this.gBuffers = Array.from({length: 2}, () => new GLTexture2D({
         width,
         height,
         format: 'rgba',
         type: 'float',
         magFilter: 'nearest',
         minFilter: 'nearest',
+        wrapS: 'clampToEdge',
+        wrapT: 'clampToEdge',
         mipmap: false,
         source: null,
       }));
+    }
+    if (this.outBuffer == null) {
+      this.outBuffer = new GLTexture2D({
+        width,
+        height,
+        format: 'rgba',
+        type: 'float',
+        magFilter: 'nearest',
+        minFilter: 'nearest',
+        wrapS: 'clampToEdge',
+        wrapT: 'clampToEdge',
+        mipmap: false,
+        source: null,
+      });
     }
     if (this.frameBuffer == null) {
       this.frameBuffer = new GLFrameBuffer({
         width,
         height,
         depthStencil: this.depthBuffer!,
-        color: this.gbuffers!,
+        color: this.gBuffers!,
+      });
+    }
+    if (this.outPreFrameBuffer == null) {
+      this.outPreFrameBuffer = new GLFrameBuffer({
+        width,
+        height,
+        color: this.outBuffer!,
+      });
+    }
+    if (this.outFrameBuffer == null) {
+      this.outFrameBuffer = new GLFrameBuffer({
+        width,
+        height,
+        depthStencil: this.depthBuffer!,
+        color: this.outBuffer!,
       });
     }
   }
@@ -201,6 +351,7 @@ export class DeferredPipeline implements Pipeline {
     this.prepare();
     glRenderer.clear(this.frameBuffer);
 
+    // Render to G-buffer
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     entityStore.forEachChunkWith([meshComp], (chunk) => {
       const mesh = meshComp.getChunk(chunk, 0);
@@ -219,6 +370,23 @@ export class DeferredPipeline implements Pipeline {
       }
     });
 
+    glRenderer.clear(this.outPreFrameBuffer);
+
+    // Render lights
+    glRenderer.draw({
+      frameBuffer: this.outPreFrameBuffer,
+      geometry: LIGHT_QUAD,
+      shader: this.getLightShader(),
+      uniforms: {
+        ...this.cameraUniforms,
+        ...this.lightUniforms,
+        uDepthBuffer: this.depthBuffer,
+        uGBuffer0: this.gBuffers![0],
+        uGBuffer1: this.gBuffers![1],
+      },
+    });
+
+    // Render forward
     entityStore.forEachChunkWith([meshComp], (chunk) => {
       const mesh = meshComp.getChunk(chunk, 0);
       if (mesh != null) {
@@ -234,6 +402,15 @@ export class DeferredPipeline implements Pipeline {
           }
         });
       }
+    });
+
+    // Spit everything to screen
+    glRenderer.draw({
+      geometry: LIGHT_QUAD,
+      shader: this.getDisplayShader(),
+      uniforms: {
+        uBuffer: this.outBuffer,
+      },
     });
 
   }

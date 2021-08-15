@@ -72,12 +72,9 @@ export class SkyboxMaterial implements Material {
 
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void {
     const {options} = this;
-    const {glRenderer, entityStore, camera} = renderer;
+    const {glRenderer, pipeline} = renderer;
 
     // Prepare shader uniforms
-    const transformComp =
-      entityStore.getComponent<TransformComponent>('transform')!;
-    const cameraData = camera!.get<Camera>('camera')!;
     const uniformOptions: {[key: string]: any;} = {
       uTexture: options.texture,
       uTextureSize: [
@@ -85,9 +82,6 @@ export class SkyboxMaterial implements Material {
         1 / options.texture.getHeight(),
       ],
       uLod: options.lod,
-      uInverseView: cameraData.getInverseView(camera!),
-      uInverseProjection:
-        cameraData.getInverseProjection(renderer.getAspectRatio()),
     };
 
     const hdrType = getHDRType(glRenderer);
@@ -95,11 +89,7 @@ export class SkyboxMaterial implements Material {
     const shader = SHADER_BANK.get(hdrType);
 
     chunk.forEach((entity) => {
-      const transform = entity.get(transformComp);
-      if (transform == null) {
-        return;
-      }
-      glRenderer.draw({
+      pipeline.drawForward({
         shader,
         geometry,
         uniforms: uniformOptions,

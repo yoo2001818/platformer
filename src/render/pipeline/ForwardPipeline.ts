@@ -122,6 +122,17 @@ export class ForwardPipeline implements Pipeline {
     });
   }
 
+  drawForward(options: DrawOptions): void {
+    const {renderer: {glRenderer}} = this;
+    glRenderer.draw({
+      ...options,
+      uniforms: {
+        ...this.cameraUniforms,
+        ...options.uniforms,
+      },
+    });
+  }
+
   render(): void {
     const {entityStore, camera} = this.renderer;
 
