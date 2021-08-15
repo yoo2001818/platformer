@@ -50,7 +50,6 @@ export class BasicMaterial implements Material {
         attribute vec3 aPosition;
         attribute vec3 aNormal;
         attribute vec2 aTexCoord;
-        attribute vec3 aInstanced;
 
         uniform mat4 uView;
         uniform mat4 uProjection;
@@ -61,7 +60,7 @@ export class BasicMaterial implements Material {
         varying vec2 vTexCoord;
 
         void main() {
-          vec4 pos = uModel * vec4(aPosition + aInstanced, 1.0);
+          vec4 pos = uModel * vec4(aPosition, 1.0);
           gl_Position = uProjection * uView * pos;
           vPosition = pos.xyz;
           // TODO Normal 3x3 matrix
