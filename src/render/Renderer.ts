@@ -2,7 +2,7 @@ import {Entity} from '../core/Entity';
 import {EntityStore} from '../core/EntityStore';
 
 import {GLRenderer} from './gl/GLRenderer';
-import {ForwardPipeline} from './pipeline/ForwardPipeline';
+import {DeferredPipeline} from './pipeline/DeferredPipeline';
 import {Pipeline} from './pipeline/Pipeline';
 
 export class Renderer {
@@ -19,7 +19,7 @@ export class Renderer {
   ) {
     this.glRenderer = glRenderer;
     this.entityStore = entityStore;
-    this.pipeline = new ForwardPipeline(this);
+    this.pipeline = new DeferredPipeline(this);
     this.camera = null;
     this.resources = new Map();
     this.frameId = 0;

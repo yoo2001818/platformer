@@ -153,4 +153,58 @@ export const TEXTURE_PARAM_MAP = {
   mirroredRepeat: 0x8370,
 };
 
+export const BLEND_EQUATION = {
+  add: 0x8006,
+  subtract: 0x800A,
+  reverseSubtract: 0x800B,
+  min: 0x8007,
+  max: 0x8008,
+};
+
+export const BLEND_FUNC = {
+  zero: 0,
+  one: 1,
+  srcColor: 0x0300,
+  oneMinusSrcColor: 0x0301,
+  dstColor: 0x0302,
+  oneMinusDstColor: 0x0303,
+  srcAlpha: 0x0304,
+  oneMinusSrcAlpha: 0x0305,
+  dstAlpha: 0x0306,
+  oneMinusDstAlpha: 0x0307,
+  constantColor: 0x8001,
+  oneMinusConstantColor: 0x8002,
+  constantAlpha: 0x8003,
+  oneMinusConstantAlpha: 0x8004,
+  srcAlphaSaturate: 0x0308,
+};
+
+export const STENCIL_OP = {
+  keep: 0x1E00,
+  zero: 0x1E01,
+  replace: 0x1E02,
+  incr: 0x1E03,
+  incrWrap: 0x8507,
+  decr: 0x1E03,
+  decrWrap: 0x8508,
+  invert: 0x150A,
+};
+
+export const TEST_FUNC = {
+  never: 0x0200,
+  less: 0x0201,
+  equal: 0x0202,
+  lequal: 0x0203,
+  greater: 0x0204,
+  notequal: 0x0205,
+  gequal: 0x0206,
+  always: 0x0207,
+};
+
+export const CULL_FACE_MODE = {
+  front: 0x0404,
+  back: 0x0405,
+  frontAndBack: 0x0408,
+};
+
 export * from './parseIndices';
