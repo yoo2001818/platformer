@@ -2,7 +2,9 @@ import {GLShader} from '../gl/GLShader';
 import {DrawOptions} from '../gl/types';
 
 export interface PipelineShaderBlock {
-  vert?: string;
+  // void main()
+  vert: string;
+  // material(MaterialInfo mInfo)
   frag: string;
 }
 

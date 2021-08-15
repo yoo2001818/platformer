@@ -100,7 +100,6 @@ function main() {
     albedo: '#ffffff',
     metalic: 0,
     roughness: 0.12,
-    environment: pbrTexture,
   });
   store.create({
     name: 'envMapDebug',
@@ -113,7 +112,6 @@ function main() {
         albedo: pbrTexture,
         metalic: 0,
         roughness: 1,
-        environment: pbrTexture,
       }),
       new Geometry(calcNormals(quad())),
     ),
@@ -158,13 +156,11 @@ function main() {
         albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
         metalic: 0,
         roughness: 0.3,
-        environment: pbrTexture,
       }),
       new Geometry(calcNormals(quad())),
     ),
   });
 
-  /*
   store.create({
     name: 'light',
     transform: new Transform().translate([5, 5, 5]),
@@ -194,7 +190,6 @@ function main() {
       attenuation: 0.00001,
     }),
   });
-  */
 
   const orbitController = new OrbitCameraController(
     canvas,

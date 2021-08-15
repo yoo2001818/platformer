@@ -15,35 +15,33 @@ export const MATERIAL_INFO = /* glsl */`
     vec3 position;
     float roughness;
     float metalic;
-  }
+  };
 
   #define GBUFFER_SIZE 2
 
-  void packMaterialInfo(MaterialInfo info, vec4 output[GBUFFER_SIZE]) {
+  void packMaterialInfo(MaterialInfo info, out vec4 vecOut[GBUFFER_SIZE]) {
     // albedo.rgb, roughness
-    output[0] = vec4(info.albedo, info.roughness);
-    output[1] = vec4(info.normal, info.metalic);
+    vecOut[0] = vec4(info.albedo, info.roughness);
+    vecOut[1] = vec4(info.normal, info.metalic);
   }
 
   void unpackMaterialInfo(
     float depth,
-    vec4 input[GBUFFER_SIZE],
+    vec4 vecIn[GBUFFER_SIZE],
     vec2 ndc,
     mat4 inverseProjection,
     mat4 inverseView,
-    MaterialInfo output,
+    out MaterialInfo mOut
   ) {
     // TODO: This is not a well-written code
-    vec4 viewPos = uInverseProjection * vec4(vPosition.xy, depth, 1.0);
+    vec4 viewPos = inverseProjection * vec4(ndc.xy, depth, 1.0);
     viewPos /= viewPos.w;
-    output.position = (uInverseView * viewPos).xyz;
+    mOut.position = (inverseView * viewPos).xyz;
 
-    output.albedo = input[0].rgb;
-    output.roughness = input[0].a;
-    output.normal = input[1].rgb;
-    output.metalic = input[1].a;
-
-    return output;
+    mOut.albedo = vecIn[0].rgb;
+    mOut.roughness = vecIn[0].a;
+    mOut.normal = vecIn[1].rgb;
+    mOut.metalic = vecIn[1].a;
   }
 
   vec3 calcBRDF(vec3 L, vec3 V, vec3 N, MaterialInfo mInfo) {

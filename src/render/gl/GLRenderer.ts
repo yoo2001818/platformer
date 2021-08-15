@@ -27,8 +27,8 @@ export class GLRenderer {
   }
 
   unbindFrameBuffer(): void {
-    if (renderer.boundFrameBuffer != null) {
-      renderer.boundFrameBuffer.unbind();
+    if (this.boundFrameBuffer != null) {
+      this.boundFrameBuffer.unbind();
     }
   }
 

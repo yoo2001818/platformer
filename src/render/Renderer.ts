@@ -3,10 +3,13 @@ import {EntityStore} from '../core/EntityStore';
 
 import {GLRenderer} from './gl/GLRenderer';
 import {MeshComponent} from './MeshComponent';
+import {ForwardPipeline} from './pipeline/ForwardPipeline';
+import {Pipeline} from './pipeline/Pipeline';
 
 export class Renderer {
   glRenderer: GLRenderer;
   entityStore: EntityStore;
+  pipeline: Pipeline;
   camera: Entity | null;
   resources: Map<string | number, unknown>;
   frameId: number;
@@ -17,6 +20,7 @@ export class Renderer {
   ) {
     this.glRenderer = glRenderer;
     this.entityStore = entityStore;
+    this.pipeline = new ForwardPipeline(this);
     this.camera = null;
     this.resources = new Map();
     this.frameId = 0;
@@ -42,25 +46,11 @@ export class Renderer {
   }
 
   render(): void {
-    const {entityStore, camera} = this;
+    const {camera, pipeline} = this;
     if (camera == null) {
       return;
     }
     this.frameId += 1;
-    const meshComp = entityStore.getComponent<MeshComponent>('mesh');
-    entityStore.forEachChunkWith([meshComp], (chunk) => {
-      const mesh = meshComp.getChunk(chunk, 0);
-      if (mesh != null) {
-        mesh.geometries.forEach((geometry, index) => {
-          const materialIndex = Math.min(mesh.materials.length - 1, index);
-          const material = mesh.materials[materialIndex];
-          if (material == null) {
-            throw new Error('Geometry is null');
-          }
-          const glGeometry = geometry.getGLGeometry(this);
-          material.render(chunk, glGeometry, this);
-        });
-      }
-    });
+    pipeline.render();
   }
 }

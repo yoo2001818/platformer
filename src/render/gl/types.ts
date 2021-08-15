@@ -42,6 +42,6 @@ export interface DrawOptions {
   frameBuffer?: GLFrameBuffer | null;
   geometry: GLGeometry;
   shader: GLShader;
-  uniforms: unknown;
+  uniforms: {[key: string]: unknown;};
   primCount?: number;
 }
