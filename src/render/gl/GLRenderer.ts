@@ -40,6 +40,16 @@ export class GLRenderer {
     return canvas.width / canvas.height;
   }
 
+  getWidth(): number {
+    const canvas = this.gl.canvas;
+    return canvas.width;
+  }
+
+  getHeight(): number {
+    const canvas = this.gl.canvas;
+    return canvas.height;
+  }
+
   setViewport(): void {
     const {gl} = this;
     const {canvas} = gl;

@@ -20,7 +20,7 @@ export function convertShaderToWebGL2(
       out = out.replace(/textureCube\s*\(/g, 'texture(');
       out = out.replace(/gl_FragColor/g, 'glFragColor');
       if (/void\s+main\s*\(/.exec(out)) {
-        out = `out vec4 glFragColor;\n${out}`;
+        out = `layout(location = 0) out vec4 glFragColor;\n${out}`;
       }
     }
     return out;

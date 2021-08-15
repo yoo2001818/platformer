@@ -73,6 +73,7 @@ export const ATTRIBUTE_TYPE_MAP = {
   unsignedInt2101010: 0x8368,
   unsignedInt10F11F11F: 0x8C3B,
   unsignedInt5999: 0x8C3E,
+  float32unsignedInt248rev: 0x8DAD,
 };
 
 export const TEXTURE_FORMAT_MAP = {
@@ -90,6 +91,11 @@ export const TEXTURE_FORMAT_MAP = {
 
 export const WEBGL2_TEXTURE_FORMAT_MAP = {
   ...TEXTURE_FORMAT_MAP,
+  depthComponent16: 0x81A5,
+  depthComponent24: 0x81A6,
+  depthComponent32f: 0x8CAC,
+  depth24stencil8: 0x88F0,
+  depth32fstencil8: 0x8CAD,
   r8: 0x8229,
   r8snorm: 0x8F94,
   rg8: 0x822B,

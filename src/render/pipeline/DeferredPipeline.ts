@@ -1,7 +1,9 @@
 import {Camera} from '../../3d/Camera';
 import {Transform} from '../../3d/Transform';
 import {Entity} from '../../core/Entity';
+import {GLFrameBuffer} from '../gl/GLFrameBuffer';
 import {GLShader} from '../gl/GLShader';
+import {GLTexture2D} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
 import {Light, LightShaderBlock} from '../light/Light';
 import {MeshComponent} from '../MeshComponent';
@@ -21,6 +23,9 @@ interface LightConfig {
 
 export class DeferredPipeline implements Pipeline {
   renderer: Renderer;
+  depthBuffer: GLTexture2D | null = null;
+  gbuffers: GLTexture2D[] | null = null;
+  frameBuffer: GLFrameBuffer | null = null;
   lights: LightConfig[] = [];
   lightUniforms: {[key: string]: unknown;} = {};
   cameraUniforms: {[key: string]: unknown;} = {};
@@ -93,6 +98,10 @@ export class DeferredPipeline implements Pipeline {
 
           ${block.frag}
 
+          #ifdef WEBGL2
+          layout(location = 1) out vec4 glFragData1;
+          #endif
+
           void main() {
             vec3 result = vec3(0.0);
             vec3 viewPos = uViewPos;
@@ -103,7 +112,16 @@ export class DeferredPipeline implements Pipeline {
             ${this.lights.map((light) => light.shaderBlock.body).join('\n')}
             
             result = tonemap(result);
-            gl_FragColor = vec4(mInfo.normal, 1.0);
+            vec4 vecOut[2];
+            packMaterialInfo(mInfo, vecOut);
+
+            #ifdef WEBGL2
+              gl_FragColor = vecOut[0];
+              glFragData1 = vecOut[1];
+            #else
+              gl_FragData[0] = vecOut[0];
+              gl_FragData[1] = vecOut[1];
+            #endif
           }
         `,
       );
@@ -113,6 +131,7 @@ export class DeferredPipeline implements Pipeline {
   drawDeferred(options: DrawOptions): void {
     const {renderer: {glRenderer}} = this;
     glRenderer.draw({
+      frameBuffer: this.frameBuffer!,
       ...options,
       uniforms: {
         ...this.lightUniforms,
@@ -122,8 +141,46 @@ export class DeferredPipeline implements Pipeline {
     });
   }
 
+  prepare(): void {
+    const {glRenderer} = this.renderer;
+    const width = glRenderer.getWidth();
+    const height = glRenderer.getHeight();
+    if (this.depthBuffer == null) {
+      this.depthBuffer = new GLTexture2D({
+        width,
+        height,
+        format: 'depthStencil',
+        type: 'unsignedInt248',
+        magFilter: 'nearest',
+        minFilter: 'nearest',
+        mipmap: false,
+        source: null,
+      });
+    }
+    if (this.gbuffers == null) {
+      this.gbuffers = Array.from({length: 2}, () => new GLTexture2D({
+        width,
+        height,
+        format: 'rgba',
+        type: 'float',
+        magFilter: 'nearest',
+        minFilter: 'nearest',
+        mipmap: false,
+        source: null,
+      }));
+    }
+    if (this.frameBuffer == null) {
+      this.frameBuffer = new GLFrameBuffer({
+        width,
+        height,
+        depthStencil: this.depthBuffer!,
+        color: this.gbuffers!,
+      });
+    }
+  }
+
   render(): void {
-    const {entityStore, camera} = this.renderer;
+    const {entityStore, camera, glRenderer} = this.renderer;
 
     if (camera == null) {
       throw new Error('Camera is not specified');
@@ -140,6 +197,9 @@ export class DeferredPipeline implements Pipeline {
       uProjection: cameraData.getProjection(aspect),
       uViewPos: camera!.get<Transform>('transform')!.getPosition(),
     };
+
+    this.prepare();
+    glRenderer.clear(this.frameBuffer);
 
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     entityStore.forEachChunkWith([meshComp], (chunk) => {

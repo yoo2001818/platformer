@@ -68,9 +68,27 @@ export function getWebGL2InternalFormat(
     case 'alpha':
       return 'alpha';
     case 'depth':
-      return 'depth';
+      switch (type) {
+        case 'unsignedShort':
+          return 'depthComponent16';
+        case 'unsignedInt':
+          return 'depthComponent24';
+        case 'float':
+          return 'depthComponent32f';
+        default:
+          break;
+      }
+      break;
     case 'depthStencil':
-      return 'depthStencil';
+      switch (type) {
+        case 'unsignedInt248':
+          return 'depth24stencil8';
+        case 'float32unsignedInt248rev':
+          return 'depth32fstencil8';
+        default:
+          break;
+      }
+      break;
     default:
       break;
   }

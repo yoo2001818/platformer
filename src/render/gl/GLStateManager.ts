@@ -182,6 +182,7 @@ export class GLStateManager {
     if (cull) {
       if (!state.cull.enabled) {
         gl.enable(gl.CULL_FACE);
+        state.cull.enabled = true;
       }
       if (cull !== state.cull.mode) {
         gl.cullFace(CULL_FACE_MODE[cull]);
@@ -222,11 +223,7 @@ export class GLStateManager {
       gl.disable(gl.DEPTH_TEST);
       state.depth.enabled = false;
     }
-    if (options.dither) {
-      gl.enable(gl.DITHER);
-    } else {
-      gl.disable(gl.DITHER);
-    }
+    // TODO dither
     // TODO stencil
     // TODO viewport
     // TODO scissor

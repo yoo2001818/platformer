@@ -94,19 +94,16 @@ export class SkyboxMaterial implements Material {
 
     const shader = SHADER_BANK.get(hdrType);
 
-    // Bind the shaders
-    shader.prepareUniformTextures(glRenderer, uniformOptions);
-    shader.bind(glRenderer);
-    geometry.bind(glRenderer, shader);
-
-    // Set uniforms and issue draw call
-    shader.setUniforms(uniformOptions);
     chunk.forEach((entity) => {
       const transform = entity.get(transformComp);
       if (transform == null) {
         return;
       }
-      geometry.draw();
+      glRenderer.draw({
+        shader,
+        geometry,
+        uniforms: uniformOptions,
+      });
     });
   }
 

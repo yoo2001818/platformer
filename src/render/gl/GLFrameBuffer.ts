@@ -116,6 +116,16 @@ export class GLFrameBuffer {
       options.color.forEach((item, index) => {
         this._setItem(COLOR_ATTACHMENT + index, item);
       });
+      if (renderer.capabilities.isWebGL2) {
+        const gl2 = gl as WebGL2RenderingContext;
+        gl2.drawBuffers(
+          options.color.map((_, index) => COLOR_ATTACHMENT + index),
+        );
+      } else if (renderer.capabilities.drawBuffersExt) {
+        renderer.capabilities.drawBuffersExt.drawBuffersWEBGL(
+          options.color.map((_, index) => COLOR_ATTACHMENT + index),
+        );
+      }
     } else if (options.color != null) {
       this._setItem(COLOR_ATTACHMENT, options.color);
     }
