@@ -1,7 +1,7 @@
 import {GLRenderer} from '../gl/GLRenderer';
 import {GLTextureOptions} from '../gl/GLTexture';
 
-export type HDRType = 'float' | 'halfFloat' | 'rgbe';
+export type HDRType = 'float' | 'halfFloat' | 'halfFloatManual' | 'rgbe';
 
 export function getHDRType(renderer: GLRenderer): HDRType {
   const {capabilities} = renderer;
@@ -10,12 +10,17 @@ export function getHDRType(renderer: GLRenderer): HDRType {
     capabilities.hasHalfFloatTextureLinear() &&
     capabilities.hasHalfFloatBuffer()
   ) {
-    return 'halfFloat';
+    if (capabilities.hasLOD()) {
+      return 'halfFloat';
+    } else {
+      return 'halfFloatManual';
+    }
   }
   if (
     capabilities.hasFloatTexture() &&
     capabilities.hasFloatTextureLinear() &&
-    capabilities.hasFloatBuffer()
+    capabilities.hasFloatBuffer() &&
+    capabilities.hasLOD()
   ) {
     return 'float';
   }
@@ -23,41 +28,47 @@ export function getHDRType(renderer: GLRenderer): HDRType {
 }
 
 export function getHDROptions(type: HDRType): GLTextureOptions {
+  const defaultOptions: GLTextureOptions = {
+    mipmap: false,
+    wrapS: 'clampToEdge',
+    wrapT: 'clampToEdge',
+    anistropic: 0,
+  };
   switch (type) {
     case 'halfFloat':
       return {
+        ...defaultOptions,
         magFilter: 'linear',
         minFilter: 'linear',
-        mipmap: false,
         // NOTE: WebGL can't render to RGB16F. However it can render to this:
         format: 'rgba',
         type: 'halfFloat',
-        wrapS: 'clampToEdge',
-        wrapT: 'clampToEdge',
-        anistropic: 0,
+      };
+    case 'halfFloatManual':
+      return {
+        ...defaultOptions,
+        magFilter: 'nearest',
+        minFilter: 'nearest',
+        // NOTE: WebGL can't render to RGB16F. However it can render to this:
+        format: 'rgba',
+        type: 'halfFloat',
       };
     case 'float':
       return {
+        ...defaultOptions,
         magFilter: 'linear',
         minFilter: 'linear',
-        mipmap: false,
         // NOTE: WebGL can't render to RGB32F. However it can render to this:
         format: 'rgba',
         type: 'float',
-        wrapS: 'clampToEdge',
-        wrapT: 'clampToEdge',
-        anistropic: 0,
       };
     case 'rgbe':
       return {
+        ...defaultOptions,
         magFilter: 'nearest',
         minFilter: 'nearest',
-        mipmap: false,
         format: 'rgba',
         type: 'unsignedByte',
-        wrapS: 'clampToEdge',
-        wrapT: 'clampToEdge',
-        anistropic: 0,
       };
     default:
       throw new Error(`Unknown HDR type ${type}`);

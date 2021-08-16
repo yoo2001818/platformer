@@ -7,6 +7,9 @@ export const HDR = /* glsl */`
     #define unpackHDR unpackFloat
   #elif defined(HDR_INPUT_halfFloat)
     #define unpackHDR unpackFloat
+  #elif defined(HDR_INPUT_halfFloatManual)
+    #define HDR_MANUAL_BILINEAR
+    #define unpackHDR unpackFloat
   #endif
 
   #if defined(HDR_OUTPUT_rgbe)
@@ -14,6 +17,8 @@ export const HDR = /* glsl */`
   #elif defined(HDR_OUTPUT_float)
     #define packHDR packFloat
   #elif defined(HDR_OUTPUT_halfFloat)
+    #define packHDR packFloat
+  #elif defined(HDR_OUTPUT_halfFloatManual)
     #define packHDR packFloat
   #endif
 

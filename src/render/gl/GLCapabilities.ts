@@ -6,6 +6,7 @@ export class GLCapabilities {
   vaoExt: OES_vertex_array_object | null = null;
   instanceExt: ANGLE_instanced_arrays | null = null;
   uintExt: OES_element_index_uint | null = null;
+  lodExt: EXT_shader_texture_lod | null = null;
   anisotropicExt: EXT_texture_filter_anisotropic | null = null;
   depthTexExt: WEBGL_depth_texture | null = null;
   floatTexExt: OES_texture_float | null = null;
@@ -30,6 +31,7 @@ export class GLCapabilities {
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
     this.instanceExt = gl.getExtension('ANGLE_instanced_arrays');
     this.uintExt = gl.getExtension('OES_element_index_uint');
+    this.lodExt = gl.getExtension('EXT_shader_texture_lod');
     this.anisotropicExt = gl.getExtension('EXT_texture_filter_anisotropic');
     gl.getExtension('EXT_shader_texture_lod');
     this.depthTexExt = gl.getExtension('WEBGL_depth_texture');
@@ -46,6 +48,10 @@ export class GLCapabilities {
       gl.getExtension('EXT_color_buffer_half_float');
     this.fboRenderMipmapExt = gl.getExtension('OES_fbo_render_mipmap');
     this.drawBuffersExt = gl.getExtension('WEBGL_draw_buffers');
+  }
+
+  hasLOD(): boolean {
+    return this.isWebGL2 || this.lodExt != null;
   }
 
   hasFloatTexture(): boolean {
