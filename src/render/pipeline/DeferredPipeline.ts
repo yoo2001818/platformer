@@ -191,8 +191,6 @@ export class DeferredPipeline implements Pipeline {
 
             ${this.lights.map((light) => light.shaderBlock.body).join('\n')}
             
-            result = tonemap(result);
-
             gl_FragColor = vec4(result, 1.0);
           }
         `,
@@ -222,6 +220,7 @@ export class DeferredPipeline implements Pipeline {
           precision highp float;
 
           ${FXAA}
+          ${FILMIC}
 
           varying vec2 vPosition;
 
@@ -230,7 +229,7 @@ export class DeferredPipeline implements Pipeline {
           
           void main() {
             vec2 uv = vPosition * 0.5 + 0.5;
-            gl_FragColor = fxaa(uBuffer, uv, uResolution);
+            gl_FragColor = vec4(tonemap(fxaa(uBuffer, uv, uResolution).xyz), 1.0);
           }
         `,
       );
