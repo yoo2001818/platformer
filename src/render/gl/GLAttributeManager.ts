@@ -35,7 +35,7 @@ export class GLAttributeManager {
 
   set(index: number, options: AttributeOptions): void {
     const {renderer, attributes} = this;
-    const {gl, capabilities: {instanceExt}} = renderer;
+    const {gl, capabilities} = renderer;
     const {
       buffer,
       size,
@@ -72,9 +72,13 @@ export class GLAttributeManager {
       offset,
     );
     if (attribute.divisor !== divisor) {
-      if (instanceExt != null) {
+      const {instanceExt} = capabilities;
+      if (capabilities.isWebGL2) {
+        (gl as WebGL2RenderingContext).vertexAttribDivisor(index, divisor);
+      } else if (instanceExt != null) {
         instanceExt.vertexAttribDivisorANGLE(index, divisor);
       }
+      attribute.divisor = divisor;
     }
   }
 

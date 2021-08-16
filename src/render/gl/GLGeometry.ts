@@ -157,26 +157,46 @@ export class GLGeometry {
     if (renderer == null) {
       throw new Error('GLGeometry is not bound');
     }
-    const {capabilities: {instanceExt}} = renderer;
+    const {capabilities} = renderer;
+    const {instanceExt} = capabilities;
     const {indices, mode, offset, count} = options;
-    if (instanceExt == null) {
-      throw new Error('instancing extension is required');
-    }
-    if (indices != null) {
-      instanceExt.drawElementsInstancedANGLE(
-        mode,
-        count,
-        ATTRIBUTE_TYPE_MAP[indices.dataType!],
-        offset,
-        primCount,
-      );
+    if (capabilities.isWebGL2) {
+      const gl2 = renderer.gl as WebGL2RenderingContext;
+      if (indices != null) {
+        gl2.drawElementsInstanced(
+          mode,
+          count,
+          ATTRIBUTE_TYPE_MAP[indices.dataType!],
+          offset,
+          primCount,
+        );
+      } else {
+        gl2.drawArraysInstanced(
+          mode,
+          offset,
+          count,
+          primCount,
+        );
+      }
+    } else if (instanceExt != null) {
+      if (indices != null) {
+        instanceExt.drawElementsInstancedANGLE(
+          mode,
+          count,
+          ATTRIBUTE_TYPE_MAP[indices.dataType!],
+          offset,
+          primCount,
+        );
+      } else {
+        instanceExt.drawArraysInstancedANGLE(
+          mode,
+          offset,
+          count,
+          primCount,
+        );
+      }
     } else {
-      instanceExt.drawArraysInstancedANGLE(
-        mode,
-        offset,
-        count,
-        primCount,
-      );
+      throw new Error('instancing extension is required');
     }
   }
 }
