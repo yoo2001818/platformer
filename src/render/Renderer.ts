@@ -3,7 +3,6 @@ import {EntityStore} from '../core/EntityStore';
 
 import {GLRenderer} from './gl/GLRenderer';
 import {DeferredPipeline} from './pipeline/DeferredPipeline';
-import {ForwardPipeline} from './pipeline/ForwardPipeline';
 import {Pipeline} from './pipeline/Pipeline';
 
 export class Renderer {

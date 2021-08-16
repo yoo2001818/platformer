@@ -72,7 +72,7 @@ export class SSAO {
 
   constructor(pipeline: DeferredPipeline) {
     this.pipeline = pipeline;
-    this.hemisphereBuffer = createHemisphere(64);
+    this.hemisphereBuffer = createHemisphere(24);
     this.noiseBuffer = createNoise(4);
   }
 
