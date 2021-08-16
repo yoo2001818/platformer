@@ -1,10 +1,17 @@
 import {GLRenderer} from '../gl/GLRenderer';
 import {GLTextureOptions} from '../gl/GLTexture';
 
-export type HDRType = 'float' | 'rgbe';
+export type HDRType = 'float' | 'halfFloat' | 'rgbe';
 
 export function getHDRType(renderer: GLRenderer): HDRType {
   const {capabilities} = renderer;
+  if (
+    capabilities.hasHalfFloatTexture() &&
+    capabilities.hasHalfFloatTextureLinear() &&
+    capabilities.hasHalfFloatBuffer()
+  ) {
+    return 'halfFloat';
+  }
   if (
     capabilities.hasFloatTexture() &&
     capabilities.hasFloatTextureLinear() &&
@@ -17,6 +24,18 @@ export function getHDRType(renderer: GLRenderer): HDRType {
 
 export function getHDROptions(type: HDRType): GLTextureOptions {
   switch (type) {
+    case 'halfFloat':
+      return {
+        magFilter: 'linear',
+        minFilter: 'linear',
+        mipmap: false,
+        // NOTE: WebGL can't render to RGB16F. However it can render to this:
+        format: 'rgba',
+        type: 'halfFloat',
+        wrapS: 'clampToEdge',
+        wrapT: 'clampToEdge',
+        anistropic: 0,
+      };
     case 'float':
       return {
         magFilter: 'linear',

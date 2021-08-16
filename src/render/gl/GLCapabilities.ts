@@ -12,6 +12,9 @@ export class GLCapabilities {
   floatTexLinearExt: OES_texture_float_linear | null = null;
   floatBufferExt: unknown | null = null;
   floatBlendExt: unknown | null = null;
+  halfFloatTexExt: OES_texture_half_float | null = null;
+  halfFloatTexLinearExt: OES_texture_half_float_linear | null = null;
+  halfFloatBufferExt: unknown | null = null;
   fboRenderMipmapExt: unknown | null = null;
   drawBuffersExt: WEBGL_draw_buffers | null = null;
 
@@ -36,6 +39,11 @@ export class GLCapabilities {
       gl.getExtension('WEBGL_color_buffer_float') ||
       gl.getExtension('EXT_color_buffer_float');
     this.floatBlendExt = gl.getExtension('EXT_float_blend');
+    this.halfFloatTexExt = gl.getExtension('OES_texture_half_float');
+    this.halfFloatTexLinearExt =
+      gl.getExtension('OES_texture_half_float_linear');
+    this.halfFloatBufferExt =
+      gl.getExtension('EXT_color_buffer_half_float');
     this.fboRenderMipmapExt = gl.getExtension('OES_fbo_render_mipmap');
     this.drawBuffersExt = gl.getExtension('WEBGL_draw_buffers');
   }
@@ -54,5 +62,21 @@ export class GLCapabilities {
 
   hasFloatBlend(): boolean {
     return this.floatBlendExt != null;
+  }
+
+  hasHalfFloatTexture(): boolean {
+    return this.isWebGL2 || this.floatTexExt != null;
+  }
+
+  hasHalfFloatTextureLinear(): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    return (this.isWebGL2 && this.floatTexLinearExt != null) ||
+      this.halfFloatTexLinearExt != null;
+  }
+
+  hasHalfFloatBuffer(): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    return (this.isWebGL2 && this.floatBufferExt != null) ||
+      this.halfFloatBufferExt != null;
   }
 }
