@@ -11,7 +11,7 @@ import {
 import {
   BLEND_EQUATION,
   BLEND_FUNC,
-  CULL_FACE_MODE, FRONT_FACE, TEST_FUNC,
+  CULL_FACE_MODE, FRONT_FACE, STENCIL_OP, TEST_FUNC,
 } from './utils';
 
 function arrayEqual(a: unknown[], b: unknown[]): boolean {
@@ -225,7 +225,64 @@ export class GLStateManager {
       state.depth.enabled = false;
     }
     // TODO dither
-    // TODO stencil
+    if (options.stencil) {
+      const stencil = options.stencil;
+      if (!state.stencil.enabled) {
+        gl.enable(gl.STENCIL_TEST);
+        state.stencil.enabled = true;
+      }
+      let func: [
+        [GLStateTestFunc, number, number],
+        [GLStateTestFunc, number, number],
+      ];
+      if (typeof stencil.func[0] === 'string') {
+        const optionsFunc = stencil.func as [GLStateTestFunc, number, number];
+        func = [optionsFunc, optionsFunc];
+      } else {
+        func = stencil.func as typeof func;
+      }
+      if (!arrayEqual(func, state.stencil.func)) {
+        gl.stencilFuncSeparate(
+          gl.FRONT,
+          TEST_FUNC[func[0][0]],
+          func[0][1],
+          func[0][2],
+        );
+        gl.stencilFuncSeparate(
+          gl.BACK,
+          TEST_FUNC[func[1][0]],
+          func[1][1],
+          func[1][2],
+        );
+        state.stencil.func = func;
+      }
+
+      let op: [GLStateStencilOpArgs, GLStateStencilOpArgs];
+      if (typeof stencil.op[0] === 'string') {
+        const optionsOp = stencil.op as GLStateStencilOpArgs;
+        op = [optionsOp, optionsOp];
+      } else {
+        op = stencil.op as typeof op;
+      }
+      if (!arrayEqual(op, state.stencil.op)) {
+        gl.stencilOpSeparate(
+          gl.FRONT,
+          STENCIL_OP[op[0][0]],
+          STENCIL_OP[op[0][1]],
+          STENCIL_OP[op[0][2]],
+        );
+        gl.stencilOpSeparate(
+          gl.BACK,
+          STENCIL_OP[op[1][0]],
+          STENCIL_OP[op[1][1]],
+          STENCIL_OP[op[1][2]],
+        );
+        state.stencil.op = op;
+      }
+    } else if (state.stencil.enabled) {
+      gl.disable(gl.STENCIL_TEST);
+      state.stencil.enabled = false;
+    }
     // TODO viewport
     // TODO scissor
     // TODO polygonOffset
