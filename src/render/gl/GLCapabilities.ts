@@ -83,4 +83,8 @@ export class GLCapabilities {
     return (this.isWebGL2 && this.floatBufferExt != null) ||
       this.halfFloatBufferExt != null;
   }
+
+  hasDrawBuffers(): boolean {
+    return this.isWebGL2 || this.drawBuffersExt != null;
+  }
 }

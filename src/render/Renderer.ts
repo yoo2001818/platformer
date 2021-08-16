@@ -3,6 +3,7 @@ import {EntityStore} from '../core/EntityStore';
 
 import {GLRenderer} from './gl/GLRenderer';
 import {DeferredPipeline} from './pipeline/DeferredPipeline';
+import {ForwardPipeline} from './pipeline/ForwardPipeline';
 import {Pipeline} from './pipeline/Pipeline';
 
 export class Renderer {
@@ -19,7 +20,12 @@ export class Renderer {
   ) {
     this.glRenderer = glRenderer;
     this.entityStore = entityStore;
-    this.pipeline = new DeferredPipeline(this);
+    const {capabilities} = glRenderer;
+    if (capabilities.hasDrawBuffers() && capabilities.hasHalfFloatBuffer()) {
+      this.pipeline = new DeferredPipeline(this);
+    } else {
+      this.pipeline = new ForwardPipeline(this);
+    }
     this.camera = null;
     this.resources = new Map();
     this.frameId = 0;
