@@ -50,6 +50,7 @@ export interface GLTextureFormat {
     | 'unsignedShort565'
     | 'unsignedInt'
     | 'unsignedInt248'
+    | 'unsignedInt2101010'
     // WebGL 2
     | 'byte'
     | 'unsignedShort'

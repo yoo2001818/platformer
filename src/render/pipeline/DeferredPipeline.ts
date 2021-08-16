@@ -5,7 +5,7 @@ import {quad} from '../../geom/quad';
 import {GLFrameBuffer} from '../gl/GLFrameBuffer';
 import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
-import {GLTexture2D} from '../gl/GLTexture2D';
+import {GLTexture2D, GLTexture2DOptions} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
 import {Light, LightShaderBlock} from '../light/Light';
 import {MeshComponent} from '../MeshComponent';
@@ -264,48 +264,45 @@ export class DeferredPipeline implements Pipeline {
 
   prepare(): void {
     const {glRenderer} = this.renderer;
+    const {capabilities} = glRenderer;
     const width = glRenderer.getWidth();
     const height = glRenderer.getHeight();
+    const defaultOpts: GLTexture2DOptions = {
+      width,
+      height,
+      magFilter: 'nearest',
+      minFilter: 'nearest',
+      wrapS: 'clampToEdge',
+      wrapT: 'clampToEdge',
+      mipmap: false,
+      source: null,
+    };
     if (this.depthBuffer == null) {
       this.depthBuffer = new GLTexture2D({
-        width,
-        height,
+        ...defaultOpts,
         format: 'depthStencil',
         type: 'unsignedInt248',
-        magFilter: 'nearest',
-        minFilter: 'nearest',
-        wrapS: 'clampToEdge',
-        wrapT: 'clampToEdge',
-        mipmap: false,
-        source: null,
       });
     }
     if (this.gBuffers == null) {
-      this.gBuffers = Array.from({length: 2}, (_, i) => new GLTexture2D({
-        width,
-        height,
-        format: 'rgba',
-        type: 'unsignedByte',
-        magFilter: 'nearest',
-        minFilter: 'nearest',
-        wrapS: 'clampToEdge',
-        wrapT: 'clampToEdge',
-        mipmap: false,
-        source: null,
-      }));
+      this.gBuffers = [
+        new GLTexture2D({
+          ...defaultOpts,
+          format: 'rgba',
+          type: 'unsignedByte',
+        }),
+        new GLTexture2D({
+          ...defaultOpts,
+          format: 'rgba',
+          type: capabilities.isWebGL2 ? 'unsignedInt2101010' : 'unsignedByte',
+        }),
+      ];
     }
     if (this.outBuffer == null) {
       this.outBuffer = new GLTexture2D({
-        width,
-        height,
+        ...defaultOpts,
         format: 'rgba',
         type: 'float',
-        magFilter: 'nearest',
-        minFilter: 'nearest',
-        wrapS: 'clampToEdge',
-        wrapT: 'clampToEdge',
-        mipmap: false,
-        source: null,
       });
     }
     if (this.frameBuffer == null) {
