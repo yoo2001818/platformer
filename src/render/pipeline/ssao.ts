@@ -160,7 +160,7 @@ export class SSAO {
         uniform float uPower;
         uniform sampler2D uHemisphereMap;
         uniform sampler2D uNoiseMap;
-        uniform sampler2D uDepthBuffer;
+        uniform highp sampler2D uDepthBuffer;
         // uniform sampler2D uGBuffer0;
         uniform sampler2D uGBuffer1;
         
@@ -204,7 +204,7 @@ export class SSAO {
             
           }
           occulsion = 1.0 - (occulsion / float(NUM_SAMPLES));
-          occulsion = pow(occulsion, uPower);
+          occulsion = pow(max(occulsion, 0.0), uPower);
           gl_FragColor = vec4(occulsion, 0.0, 0.0, 0.0);
         }
       `,

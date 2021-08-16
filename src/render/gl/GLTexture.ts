@@ -56,7 +56,8 @@ export interface GLTextureFormat {
     | 'unsignedShort'
     | 'short'
     | 'unsignedInt'
-    | 'int';
+    | 'int'
+    | 'float32unsignedInt248rev';
 }
 
 export interface GLTextureOptions extends
