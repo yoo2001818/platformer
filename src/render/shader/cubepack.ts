@@ -14,13 +14,22 @@ export const CUBE_PACK = /* glsl */`
     // Get texture bounds
     vec2 uv;
     vec3 absDir = abs(dir);
+    float magnitude = absDir.x;
+    int axis = 0;
+    if (magnitude < absDir.y) {
+      magnitude = absDir.y;
+      axis = 1;
+    }
+    if (magnitude < absDir.z) {
+      axis = 2;
+    }
     // Y
     // ^ Z- /
     // | Z+ /
     // | X- Y-
     // | X+ Y+
     // +------> X
-    if (absDir.x > absDir.z && absDir.x > absDir.y) {
+    if (axis == 0) {
       // X+ or X- is selected
       if (dir.x > 0.0) {
         uv = vec2(dir.z, dir.y) / absDir.x;
@@ -30,7 +39,7 @@ export const CUBE_PACK = /* glsl */`
         uv = (uv * 0.5 + 0.5) * boxSize;
         uv += vec2(0.0, 0.25);
       }
-    } else if (absDir.y > absDir.x && absDir.y > absDir.z) {
+    } else if (axis == 1) {
       // Y+ or Y- is selected
       if (dir.y > 0.0) {
         uv = vec2(dir.x, dir.z) / absDir.y;

@@ -1,6 +1,6 @@
 import {GLRenderer} from './GLRenderer';
 import {ArrayBufferView} from './types';
-import {ATTRIBUTE_TYPE_MAP, TEXTURE_FORMAT_MAP, TEXTURE_PARAM_MAP, WEBGL2_TEXTURE_FORMAT_MAP} from './utils';
+import {ATTRIBUTE_TYPE_MAP, TEXTURE_FORMAT_MAP, TEXTURE_PARAM_MAP, WEBGL1_ATTRIBUTE_TYPE_MAP, WEBGL2_TEXTURE_FORMAT_MAP} from './utils';
 import {getWebGL2InternalFormat} from './utils/getWebGL2InternalFormat';
 
 export type GLTextureCandidate =
@@ -36,7 +36,11 @@ export interface GLTextureFormat {
     | 'luminance'
     | 'alpha'
     | 'depth'
-    | 'depthStencil';
+    | 'depthStencil'
+    | 'rgbaInteger'
+    | 'rgInteger'
+    | 'red'
+    | 'redInteger';
   type?:
     | 'halfFloat'
     | 'float'
@@ -45,7 +49,13 @@ export interface GLTextureFormat {
     | 'unsignedShort5551'
     | 'unsignedShort565'
     | 'unsignedInt'
-    | 'unsignedInt248';
+    | 'unsignedInt248'
+    // WebGL 2
+    | 'byte'
+    | 'unsignedShort'
+    | 'short'
+    | 'unsignedInt'
+    | 'int';
 }
 
 export interface GLTextureOptions extends
@@ -208,6 +218,9 @@ export class GLTexture {
     const internalFormat = capabilities.isWebGL2
       ? getWebGL2InternalFormat(type ?? 'unsignedByte', format ?? 'rgb')
       : format ?? 'rgb';
+    const attributeMap = capabilities.isWebGL2
+      ? ATTRIBUTE_TYPE_MAP
+      : WEBGL1_ATTRIBUTE_TYPE_MAP;
     if (source instanceof HTMLImageElement && !source.complete) {
       if (fulfilled === 0) {
         // Perform loading routine
@@ -240,7 +253,7 @@ export class GLTexture {
         0,
         WEBGL2_TEXTURE_FORMAT_MAP[internalFormat],
         TEXTURE_FORMAT_MAP[format ?? 'rgb'],
-        ATTRIBUTE_TYPE_MAP[type ?? 'unsignedByte'],
+        attributeMap[type ?? 'unsignedByte'],
         source,
       );
     } else {
@@ -259,7 +272,7 @@ export class GLTexture {
         height!,
         0,
         TEXTURE_FORMAT_MAP[format ?? 'rgb'],
-        ATTRIBUTE_TYPE_MAP[type ?? 'unsignedByte'],
+        attributeMap[type ?? 'unsignedByte'],
         source ?? null,
       );
     }

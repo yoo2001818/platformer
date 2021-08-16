@@ -58,7 +58,8 @@ export const TYPE_LENGTHS: {[key in GLAttributeType]: number;} = {
 };
 
 export const ATTRIBUTE_TYPE_MAP = {
-  halfFloat: 0x8D61,
+  // halfFloat: 0x8D61,
+  halfFloat: 0x140B,
   byte: 0x1400,
   unsignedByte: 0x1401,
   short: 0x1402,
@@ -76,6 +77,11 @@ export const ATTRIBUTE_TYPE_MAP = {
   float32unsignedInt248rev: 0x8DAD,
 };
 
+export const WEBGL1_ATTRIBUTE_TYPE_MAP = {
+  ...ATTRIBUTE_TYPE_MAP,
+  halfFloat: 0x8D61,
+};
+
 export const TEXTURE_FORMAT_MAP = {
   rgba: 0x1908,
   rgb: 0x1907,
@@ -87,6 +93,10 @@ export const TEXTURE_FORMAT_MAP = {
   // WebGL 2
   red: 0x1903,
   rg: 0x8227,
+  rgbaInteger: 0x8D99,
+  rgbInteger: 0x8D98,
+  rgInteger: 0x8228,
+  redInteger: 0x8D94,
 };
 
 export const WEBGL2_TEXTURE_FORMAT_MAP = {

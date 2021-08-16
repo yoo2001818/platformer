@@ -22,7 +22,7 @@ export const MATERIAL_INFO = /* glsl */`
   void packMaterialInfo(MaterialInfo info, out vec4 vecOut[GBUFFER_SIZE]) {
     // albedo.rgb, roughness
     vecOut[0] = vec4(info.albedo, info.roughness);
-    vecOut[1] = vec4(info.normal, info.metalic);
+    vecOut[1] = vec4(info.normal * 0.5 + 0.5, info.metalic);
   }
 
   void unpackMaterialInfo(
@@ -40,7 +40,7 @@ export const MATERIAL_INFO = /* glsl */`
 
     mOut.albedo = vecIn[0].rgb;
     mOut.roughness = vecIn[0].a;
-    mOut.normal = vecIn[1].rgb;
+    mOut.normal = normalize(vecIn[1].rgb * 2.0 - 1.0);
     mOut.metalic = vecIn[1].a;
   }
 

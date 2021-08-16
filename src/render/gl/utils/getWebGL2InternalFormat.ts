@@ -7,6 +7,7 @@ export function getWebGL2InternalFormat(
   // https://www.khronos.org/registry/webgl/specs/latest/2.0/
   switch (format) {
     case 'rgb':
+    case 'rgbInteger':
       switch (type) {
         case 'unsignedByte':
         case 'unsignedShort565':
@@ -17,11 +18,22 @@ export function getWebGL2InternalFormat(
           return 'rgb16f';
         case 'float':
           return 'rgb32f';
+        case 'byte':
+          return 'rgb8i';
+        case 'unsignedShort':
+          return 'rgb16ui';
+        case 'short':
+          return 'rgb16i';
+        case 'unsignedInt':
+          return 'rgb32ui';
+        case 'int':
+          return 'rgb32i';
         default:
           break;
       }
       break;
     case 'rgba':
+    case 'rgbaInteger':
       switch (type) {
         case 'unsignedByte':
         case 'unsignedShort4444':
@@ -33,11 +45,22 @@ export function getWebGL2InternalFormat(
           return 'rgba16f';
         case 'float':
           return 'rgba32f';
+        case 'byte':
+          return 'rgba8i';
+        case 'unsignedShort':
+          return 'rgba16ui';
+        case 'short':
+          return 'rgba16i';
+        case 'unsignedInt':
+          return 'rgba32ui';
+        case 'int':
+          return 'rgba32i';
         default:
           break;
       }
       break;
     case 'red':
+    case 'redInteger':
       switch (type) {
         case 'unsignedByte':
           return 'r8';
@@ -50,6 +73,7 @@ export function getWebGL2InternalFormat(
       }
       break;
     case 'rg':
+    case 'rgInteger':
       switch (type) {
         case 'unsignedByte':
           return 'rg8';

@@ -281,11 +281,11 @@ export class DeferredPipeline implements Pipeline {
       });
     }
     if (this.gBuffers == null) {
-      this.gBuffers = Array.from({length: 2}, () => new GLTexture2D({
+      this.gBuffers = Array.from({length: 2}, (_, i) => new GLTexture2D({
         width,
         height,
         format: 'rgba',
-        type: 'float',
+        type: 'unsignedByte',
         magFilter: 'nearest',
         minFilter: 'nearest',
         wrapS: 'clampToEdge',
