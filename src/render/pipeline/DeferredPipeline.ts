@@ -471,7 +471,7 @@ export class DeferredPipeline implements Pipeline {
         state: {
           depthMask: false,
           cull: false,
-          depth: false,
+          depth: 'greater',
         },
       });
     }

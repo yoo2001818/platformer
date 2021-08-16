@@ -169,7 +169,7 @@ function main() {
     light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
 
-  for (let i = 0; i < 500; i += 1) {
+  for (let i = 0; i < 100; i += 1) {
     store.create({
       name: 'light',
       transform: new Transform()
@@ -181,7 +181,7 @@ function main() {
       light: new PointLight({
         color: [Math.random(), Math.random(), Math.random()],
         power: 100,
-        radius: 3,
+        radius: 1,
         range: 2,
       }),
     });
