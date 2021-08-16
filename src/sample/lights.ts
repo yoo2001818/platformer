@@ -4,7 +4,7 @@ import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
 import {parseObj} from '../geom/loader/obj';
 import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
-import {BasicMaterial} from '../render/material/BasicMaterial';
+import {StandardMaterial} from '../render/material/BasicMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
 import {calcNormals} from '../geom/calcNormals';
 import {quad} from '../geom/quad';
@@ -98,7 +98,7 @@ function main() {
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
   // mip.dispose();
   // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
-  const material = new BasicMaterial({
+  const material = new StandardMaterial({
     albedo: '#ffffff',
     metalic: 0,
     roughness: 0.12,
@@ -110,7 +110,7 @@ function main() {
       .setScale([2.5, 5, 10])
       .setPosition([15, 0, 0]),
     mesh: new Mesh(
-      new BasicMaterial({
+      new StandardMaterial({
         albedo: pbrTexture,
         metalic: 0,
         roughness: 1,
@@ -154,7 +154,7 @@ function main() {
       .rotateX(-Math.PI / 2)
       .setScale([10, 10, 10]),
     mesh: new Mesh(
-      new BasicMaterial({
+      new StandardMaterial({
         albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
         metalic: 0,
         roughness: 0.3,

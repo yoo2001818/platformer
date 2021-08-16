@@ -6,7 +6,7 @@ import {Renderer} from '../Renderer';
 import {createId} from '../utils/createId';
 import {GLTexture} from '../gl/GLTexture';
 
-export interface BasicMaterialOptions {
+export interface StandardMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
   metalic: number | GLTexture;
   roughness: number | GLTexture;
@@ -16,11 +16,11 @@ const ALBEDO_BIT = 1;
 const METALIC_BIT = 2;
 const ROUGHNESS_BIT = 4;
 
-export class BasicMaterial implements Material {
+export class StandardMaterial implements Material {
   id: number;
   mode: 'deferred' = 'deferred';
-  options: BasicMaterialOptions;
-  constructor(options: BasicMaterialOptions) {
+  options: StandardMaterialOptions;
+  constructor(options: StandardMaterialOptions) {
     this.id = createId();
     this.options = options;
   }

@@ -6,7 +6,7 @@ import {box} from '../geom/box';
 // import {parseObj} from '../geom/loader/obj';
 import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
-import {BasicMaterial} from '../render/material/BasicMaterial';
+import {StandardMaterial} from '../render/material/BasicMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
 import {TransformComponent} from '../3d/TransformComponent';
 import {Transform} from '../3d/Transform';
@@ -58,7 +58,7 @@ function main() {
 
   const texture = new GLTexture2D({source: createImage(logo)});
   const geometry = new Geometry(calcNormals(box()));
-  const material = new BasicMaterial({
+  const material = new StandardMaterial({
     albedo: texture,
     metalic: 0,
     roughness: 0.02,
