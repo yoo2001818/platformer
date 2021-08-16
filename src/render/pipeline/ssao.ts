@@ -67,6 +67,8 @@ export class SSAO {
   noiseBuffer: GLTexture2D;
   aoBuffer: GLTexture2D | null = null;
   aoFrameBuffer: GLFrameBuffer | null = null;
+  aoOutBuffer: GLTexture2D | null = null;
+  aoOutFrameBuffer: GLFrameBuffer | null = null;
 
   constructor(pipeline: DeferredPipeline) {
     this.pipeline = pipeline;
@@ -100,6 +102,28 @@ export class SSAO {
         color: this.aoBuffer!,
       });
     }
+    if (this.aoOutBuffer == null) {
+      this.aoOutBuffer = new GLTexture2D({
+        width,
+        height,
+        format: 'rgba',
+        // TODO: Steal g buffer from the pipeline
+        type: 'halfFloat',
+        magFilter: 'nearest',
+        minFilter: 'nearest',
+        wrapS: 'clampToEdge',
+        wrapT: 'clampToEdge',
+        mipmap: false,
+        source: null,
+      });
+    }
+    if (this.aoOutFrameBuffer == null) {
+      this.aoOutFrameBuffer = new GLFrameBuffer({
+        width,
+        height,
+        color: this.aoOutBuffer!,
+      });
+    }
   }
 
   getSSAOShader(): GLShader {
@@ -119,7 +143,7 @@ export class SSAO {
       `,
       /* glsl */`
         precision highp float;
-        #define NUM_SAMPLES 64
+        #define NUM_SAMPLES 24
 
         ${PBR}
         ${MATERIAL_INFO}
@@ -187,6 +211,48 @@ export class SSAO {
     ));
   }
 
+  getBlurShader(): GLShader {
+    return this.pipeline.renderer.getResource('ssao~blur', () => new GLShader(
+      /* glsl */`
+        #version 100
+        precision highp float;
+
+        attribute vec3 aPosition;
+
+        varying vec2 vPosition;
+
+        void main() {
+          vPosition = aPosition.xy * 0.5 + 0.5;
+          gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+        }
+      `,
+      /* glsl */`
+        precision highp float;
+        #define KERNEL_SIZE 4
+
+        varying vec2 vPosition;
+
+        uniform vec2 uResolution;
+        uniform sampler2D uAOBuffer;
+        
+        void main() {
+          vec2 texelSize = 1.0 / uResolution;
+          float result = 0.0;
+          vec2 hlim = vec2(float(-KERNEL_SIZE) * 0.5 + 0.5);
+          for (int i = 0; i < KERNEL_SIZE; ++i) {
+            for (int j = 0; j < KERNEL_SIZE; ++j) {
+              vec2 offset = (hlim + vec2(float(i), float(j))) * texelSize;
+              result += texture(uAOBuffer, vPosition + offset).r;
+            }
+          }
+        
+          result = result / float(KERNEL_SIZE * KERNEL_SIZE);
+          gl_FragColor = vec4(result, 0.0, 0.0, 0.0);
+        }
+      `,
+    ));
+  }
+
   render(): void {
     const {renderer, cameraUniforms, depthBuffer, gBuffers} = this.pipeline;
     const {glRenderer} = renderer;
@@ -202,7 +268,7 @@ export class SSAO {
           width / 4,
           height / 4,
         ],
-        uRadius: 1,
+        uRadius: 2,
         uBias: 0,
         uPower: 2,
         uHemisphereMap: this.hemisphereBuffer,
@@ -210,6 +276,18 @@ export class SSAO {
         uDepthBuffer: depthBuffer,
         uGBuffer0: gBuffers![0],
         uGBuffer1: gBuffers![1],
+      },
+    });
+    glRenderer.draw({
+      frameBuffer: this.aoOutFrameBuffer!,
+      geometry: LIGHT_QUAD,
+      shader: this.getBlurShader(),
+      uniforms: {
+        uResolution: [
+          width,
+          height,
+        ],
+        uAOBuffer: this.aoBuffer,
       },
     });
   }

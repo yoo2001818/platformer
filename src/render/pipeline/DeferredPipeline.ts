@@ -16,7 +16,7 @@ import {FILMIC} from '../shader/tonemap';
 import {FXAA} from '../shader/fxaa';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
-import { SSAO } from './ssao';
+import {SSAO} from './ssao';
 
 interface LightConfig {
   type: string;
@@ -394,7 +394,7 @@ export class DeferredPipeline implements Pipeline {
         uDepthBuffer: this.depthBuffer,
         uGBuffer0: this.gBuffers![0],
         uGBuffer1: this.gBuffers![1],
-        uAOBuffer: this.ssao.aoBuffer!,
+        uAOBuffer: this.ssao.aoOutBuffer!,
       },
     });
 
@@ -427,7 +427,6 @@ export class DeferredPipeline implements Pipeline {
         uResolution: [width, height],
       },
     });
-
   }
 
 }
