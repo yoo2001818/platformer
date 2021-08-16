@@ -7,7 +7,7 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D, GLTexture2DOptions} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
-import {Light, LightShaderBlock} from '../light/Light';
+import {Light, LightPipelineShaderBlock, LightShaderBlock} from '../light/Light';
 import {MeshComponent} from '../MeshComponent';
 import {Renderer} from '../Renderer';
 import {MATERIAL_INFO} from '../shader/material';
@@ -18,11 +18,17 @@ import {FXAA} from '../shader/fxaa';
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 import {SSAO} from './ssao';
 
-interface LightConfig {
+interface FallbackLightConfig {
   type: string;
   size: number;
   shaderBlock: LightShaderBlock;
   uniforms: unknown;
+}
+
+interface LightGroup {
+  type: string;
+  light: Light;
+  entities: Entity[];
 }
 
 const LIGHT_QUAD = new GLGeometry(quad());
@@ -35,11 +41,12 @@ export class DeferredPipeline implements Pipeline {
   frameBuffer: GLFrameBuffer | null = null;
   outPreFrameBuffer: GLFrameBuffer | null = null;
   outFrameBuffer: GLFrameBuffer | null = null;
-  lights: LightConfig[] = [];
-  lightUniforms: {[key: string]: unknown;} = {};
+  fallbackLights: FallbackLightConfig[] = [];
+  fallbackLightUniforms: {[key: string]: unknown;} = {};
+  lights: LightGroup[] = [];
   cameraUniforms: {[key: string]: unknown;} = {};
   ssao: SSAO;
-  lightId = '';
+  fallbackLightId = '';
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
@@ -52,8 +59,8 @@ export class DeferredPipeline implements Pipeline {
 
   _collectLights(): void {
     const {entityStore} = this.renderer;
-    this.lights = [];
-    this.lightUniforms = {};
+    this.fallbackLights = [];
+    this.fallbackLightUniforms = {};
 
     const lightMap: Map<string, Entity[]> = new Map();
 
@@ -71,17 +78,26 @@ export class DeferredPipeline implements Pipeline {
 
     for (const [type, entities] of lightMap.entries()) {
       const light = entities[0].get<Light>('light')!;
-      const uniforms = light.getUniforms(entities, this.renderer);
-      this.lights.push({
-        type,
-        size: entities.length,
-        shaderBlock: light.getShaderBlock(entities.length, this.renderer),
-        uniforms,
-      });
-      Object.assign(this.lightUniforms, uniforms);
+      if (light.renderDeferred == null) {
+        const uniforms = light.getUniforms(entities, this.renderer);
+        this.fallbackLights.push({
+          type,
+          size: entities.length,
+          shaderBlock: light.getShaderBlock(entities.length, this.renderer),
+          uniforms,
+        });
+        Object.assign(this.fallbackLightUniforms, uniforms);
+      } else {
+        this.lights.push({
+          type,
+          light,
+          entities,
+        });
+      }
     }
 
-    this.lightId = this.lights.map((v) => `${v.type}/${v.size}`).join(',');
+    this.fallbackLightId = this.fallbackLights
+      .map((v) => `${v.type}/${v.size}`).join(',');
   }
 
   getDeferredShader(id: string, onCreate: () => PipelineShaderBlock): GLShader {
@@ -152,30 +168,21 @@ export class DeferredPipeline implements Pipeline {
     });
   }
 
-  getLightShader(): GLShader {
+  getLightShader(
+    id: string,
+    onCreate: () => LightPipelineShaderBlock,
+  ): GLShader {
     const {renderer} = this;
-    return renderer.getResource(`light~${this.lightId}`, () => {
+    return renderer.getResource(`light~${id}`, () => {
+      const block = onCreate();
       return new GLShader(
-        /* glsl */`
-          #version 100
-          precision highp float;
-
-          attribute vec3 aPosition;
-
-          varying vec2 vPosition;
-
-          void main() {
-            vPosition = aPosition.xy;
-            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
-          }
-        `,
+        block.vert,
         /* glsl */`
           #version 100
           precision highp float;
 
           ${PBR}
           ${MATERIAL_INFO}
-          ${FILMIC}
 
           varying vec2 vPosition;
 
@@ -190,9 +197,8 @@ export class DeferredPipeline implements Pipeline {
           uniform sampler2D uGBuffer1;
           uniform sampler2D uAOBuffer;
           
-          ${this.lights.map((light) => light.shaderBlock.header).join('\n')}
+          ${block.header}
 
-          #line 5000
           void main() {
             vec2 uv = vPosition * 0.5 + 0.5;
             float depth = texture2D(uDepthBuffer, uv).x;
@@ -212,7 +218,7 @@ export class DeferredPipeline implements Pipeline {
 
             vec3 result = vec3(0.0);
 
-            ${this.lights.map((light) => light.shaderBlock.body).join('\n')}
+            ${block.body}
 
             result *= ao;
             
@@ -221,6 +227,28 @@ export class DeferredPipeline implements Pipeline {
         `,
       );
     });
+  }
+
+  getFallbackLightShader(): GLShader {
+    return this.getLightShader(this.fallbackLightId, () => ({
+      vert: /* glsl */`
+        #version 100
+        precision highp float;
+
+        attribute vec3 aPosition;
+
+        varying vec2 vPosition;
+
+        void main() {
+          vPosition = aPosition.xy;
+          gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+        }
+      `,
+      header: this.fallbackLights
+        .map((light) => light.shaderBlock.header).join('\n'),
+      body: this.fallbackLights
+        .map((light) => light.shaderBlock.body).join('\n'),
+    }));
   }
 
   getDisplayShader(): GLShader {
@@ -267,7 +295,6 @@ export class DeferredPipeline implements Pipeline {
       frameBuffer: this.frameBuffer!,
       ...options,
       uniforms: {
-        ...this.lightUniforms,
         ...this.cameraUniforms,
         ...options.uniforms,
       },
@@ -282,6 +309,26 @@ export class DeferredPipeline implements Pipeline {
       uniforms: {
         ...this.cameraUniforms,
         ...options.uniforms,
+      },
+    });
+  }
+
+  drawLight(options: DrawOptions): void {
+    const {renderer: {glRenderer}} = this;
+    glRenderer.draw({
+      frameBuffer: this.outFrameBuffer!,
+      ...options,
+      uniforms: {
+        ...this.cameraUniforms,
+        ...options.uniforms,
+      },
+      state: {
+        blend: {
+          equation: 'add',
+          func: ['one', 'one'],
+        },
+        depthMask: false,
+        depth: 'lequal',
       },
     });
   }
@@ -402,19 +449,21 @@ export class DeferredPipeline implements Pipeline {
     glRenderer.clear(this.outPreFrameBuffer);
 
     // Render lights
-    glRenderer.draw({
-      frameBuffer: this.outPreFrameBuffer,
-      geometry: LIGHT_QUAD,
-      shader: this.getLightShader(),
-      uniforms: {
-        ...this.cameraUniforms,
-        ...this.lightUniforms,
-        uDepthBuffer: this.depthBuffer,
-        uGBuffer0: this.gBuffers![0],
-        uGBuffer1: this.gBuffers![1],
-        uAOBuffer: this.ssao.aoOutBuffer!,
-      },
-    });
+    if (this.fallbackLights.length > 0) {
+      glRenderer.draw({
+        frameBuffer: this.outPreFrameBuffer,
+        geometry: LIGHT_QUAD,
+        shader: this.getFallbackLightShader(),
+        uniforms: {
+          ...this.cameraUniforms,
+          ...this.fallbackLightUniforms,
+          uDepthBuffer: this.depthBuffer,
+          uGBuffer0: this.gBuffers![0],
+          uGBuffer1: this.gBuffers![1],
+          uAOBuffer: this.ssao.aoOutBuffer!,
+        },
+      });
+    }
 
     // Render forward
     entityStore.forEachChunkWith([meshComp], (chunk) => {
