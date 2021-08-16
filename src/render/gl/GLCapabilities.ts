@@ -69,9 +69,7 @@ export class GLCapabilities {
   }
 
   hasHalfFloatTextureLinear(): boolean {
-    // eslint-disable-next-line @typescript-eslint/no-extra-parens
-    return (this.isWebGL2 && this.floatTexLinearExt != null) ||
-      this.halfFloatTexLinearExt != null;
+    return this.isWebGL2 || this.halfFloatTexLinearExt != null;
   }
 
   hasHalfFloatBuffer(): boolean {
