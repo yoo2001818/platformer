@@ -11,7 +11,7 @@ import {POINT_LIGHT} from '../shader/light';
 import {Light, LightShaderBlock} from './Light';
 
 export interface PointLightOptions {
-  color: string;
+  color: string | number[];
   power: number;
   radius: number;
   range: number;

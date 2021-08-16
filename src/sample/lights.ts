@@ -169,17 +169,25 @@ function main() {
     light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
 
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([5, 1, 5]),
-    light: new PointLight({
-      color: '#0000ff',
-      power: 200,
-      radius: 1,
-      range: 2,
-    }),
-  });
+  for (let i = 0; i < 500; i += 1) {
+    store.create({
+      name: 'light',
+      transform: new Transform()
+        .translate([
+          Math.random() * 20 - 10,
+          Math.random() * 2,
+          Math.random() * 20 - 10,
+        ]),
+      light: new PointLight({
+        color: [Math.random(), Math.random(), Math.random()],
+        power: 100,
+        radius: 3,
+        range: 2,
+      }),
+    });
+  }
 
+  /*
   store.create({
     name: 'light',
     transform: new Transform().translate([-5, 5, -5]),
@@ -190,6 +198,7 @@ function main() {
       range: 8,
     }),
   });
+  */
 
   const orbitController = new OrbitCameraController(
     canvas,
