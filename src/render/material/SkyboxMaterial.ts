@@ -55,7 +55,7 @@ const SHADER_BANK = new ShaderBank(
       viewPos /= viewPos.w;
       vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
       vec3 result = textureCubePackLodHDR(uTexture, dir, uLod, uTextureSize);
-      result = tonemap(result);
+      // result = tonemap(result);
       gl_FragColor = vec4(result, 1.0);
     }
   `),

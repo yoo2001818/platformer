@@ -16,6 +16,7 @@ import {FILMIC} from '../shader/tonemap';
 import {FXAA} from '../shader/fxaa';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
+import { SSAO } from './ssao';
 
 interface LightConfig {
   type: string;
@@ -37,10 +38,12 @@ export class DeferredPipeline implements Pipeline {
   lights: LightConfig[] = [];
   lightUniforms: {[key: string]: unknown;} = {};
   cameraUniforms: {[key: string]: unknown;} = {};
+  ssao: SSAO;
   lightId = '';
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
+    this.ssao = new SSAO(this);
   }
 
   dispose(): void {
@@ -167,6 +170,7 @@ export class DeferredPipeline implements Pipeline {
           uniform sampler2D uDepthBuffer;
           uniform sampler2D uGBuffer0;
           uniform sampler2D uGBuffer1;
+          uniform sampler2D uAOBuffer;
           
           ${this.lights.map((light) => light.shaderBlock.header).join('\n')}
 
@@ -177,6 +181,7 @@ export class DeferredPipeline implements Pipeline {
             vec4 values[GBUFFER_SIZE];
             values[0] = texture2D(uGBuffer0, uv);
             values[1] = texture2D(uGBuffer1, uv);
+            float ao = texture2D(uAOBuffer, uv).x;
 
             MaterialInfo mInfo;
             unpackMaterialInfo(
@@ -190,6 +195,8 @@ export class DeferredPipeline implements Pipeline {
             vec3 result = vec3(0.0);
 
             ${this.lights.map((light) => light.shaderBlock.body).join('\n')}
+
+            result *= ao;
             
             gl_FragColor = vec4(result, 1.0);
           }
@@ -349,6 +356,7 @@ export class DeferredPipeline implements Pipeline {
     };
 
     this.prepare();
+    this.ssao.prepare();
     glRenderer.clear(this.frameBuffer);
 
     // Render to G-buffer
@@ -370,6 +378,9 @@ export class DeferredPipeline implements Pipeline {
       }
     });
 
+    // SSAO
+    this.ssao.render();
+
     glRenderer.clear(this.outPreFrameBuffer);
 
     // Render lights
@@ -383,6 +394,7 @@ export class DeferredPipeline implements Pipeline {
         uDepthBuffer: this.depthBuffer,
         uGBuffer0: this.gBuffers![0],
         uGBuffer1: this.gBuffers![1],
+        uAOBuffer: this.ssao.aoBuffer!,
       },
     });
 

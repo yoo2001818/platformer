@@ -25,6 +25,26 @@ export const MATERIAL_INFO = /* glsl */`
     vecOut[1] = vec4(info.normal * 0.5 + 0.5, info.metalic);
   }
 
+  vec3 depthToViewPos(
+    float depth,
+    vec2 ndc,
+    mat4 inverseProjection
+  ) {
+    vec4 viewPos = inverseProjection * vec4(ndc.xy, depth * 2.0 - 1.0, 1.0);
+    viewPos /= viewPos.w;
+    return viewPos.xyz;
+  }
+
+  vec3 depthToWorldPos(
+    float depth,
+    vec2 ndc,
+    mat4 inverseProjection,
+    mat4 inverseView
+  ) {
+    vec4 viewPos = vec4(depthToViewPos(depth, ndc, inverseProjection), 1.0);
+    return (inverseView * viewPos).xyz;
+  }
+
   void unpackMaterialInfo(
     float depth,
     vec4 vecIn[GBUFFER_SIZE],
@@ -33,10 +53,7 @@ export const MATERIAL_INFO = /* glsl */`
     mat4 inverseView,
     out MaterialInfo mOut
   ) {
-    // TODO: This is not a well-written code
-    vec4 viewPos = inverseProjection * vec4(ndc.xy, depth * 2.0 - 1.0, 1.0);
-    viewPos /= viewPos.w;
-    mOut.position = (inverseView * viewPos).xyz;
+    mOut.position = depthToWorldPos(depth, ndc, inverseProjection, inverseView);
 
     mOut.albedo = vecIn[0].rgb;
     mOut.roughness = vecIn[0].a;

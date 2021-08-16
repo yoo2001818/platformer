@@ -124,7 +124,7 @@ function main() {
     mesh: new Mesh(
       new SkyboxMaterial({
         texture: pbrTexture,
-        lod: 3,
+        lod: 2,
       }),
       new Geometry(quad()),
     ),
