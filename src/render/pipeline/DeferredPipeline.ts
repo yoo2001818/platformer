@@ -134,6 +134,24 @@ export class DeferredPipeline implements Pipeline {
     });
   }
 
+  getForwardShader(id: string, onCreate: () => PipelineShaderBlock): GLShader {
+    const {renderer} = this;
+    return renderer.getResource(`deferred~${id}`, () => {
+      const block = onCreate();
+      return new GLShader(
+        block.vert,
+        /* glsl */`
+          ${block.frag}
+          void main() {
+            vec3 result = vec3(0.0);
+            result = material();
+            gl_FragColor = vec4(result, 1.0);
+          }
+        `,
+      );
+    });
+  }
+
   getLightShader(): GLShader {
     const {renderer} = this;
     return renderer.getResource(`light~${this.lightId}`, () => {

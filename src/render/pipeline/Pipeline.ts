@@ -11,6 +11,7 @@ export interface PipelineShaderBlock {
 export interface Pipeline {
   dispose(): void;
   getDeferredShader(id: string, onCreate: () => PipelineShaderBlock): GLShader;
+  getForwardShader(id: string, onCreate: () => PipelineShaderBlock): GLShader;
   drawDeferred(options: DrawOptions): void;
   drawForward(options: DrawOptions): void;
   render(): void;
