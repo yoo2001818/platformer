@@ -186,6 +186,7 @@ export class GLStateManager {
       }
       if (cull !== state.cull.mode) {
         gl.cullFace(CULL_FACE_MODE[cull]);
+        state.cull.mode = cull;
       }
     } else if (state.cull.enabled) {
       gl.disable(gl.CULL_FACE);

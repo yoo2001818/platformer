@@ -38,8 +38,8 @@ export class DeferredPipeline implements Pipeline {
   depthBuffer: GLTexture2D | null = null;
   gBuffers: GLTexture2D[] | null = null;
   outBuffer: GLTexture2D | null = null;
+  outDepthBuffer: GLTexture2D | null = null;
   frameBuffer: GLFrameBuffer | null = null;
-  outPreFrameBuffer: GLFrameBuffer | null = null;
   outFrameBuffer: GLFrameBuffer | null = null;
   fallbackLights: FallbackLightConfig[] = [];
   fallbackLightUniforms: {[key: string]: unknown;} = {};
@@ -59,6 +59,7 @@ export class DeferredPipeline implements Pipeline {
 
   _collectLights(): void {
     const {entityStore} = this.renderer;
+    this.lights = [];
     this.fallbackLights = [];
     this.fallbackLightUniforms = {};
 
@@ -188,11 +189,10 @@ export class DeferredPipeline implements Pipeline {
 
           uniform mat4 uView;
           uniform mat4 uProjection;
-          uniform mat4 uModel;
           uniform mat4 uInverseView;
           uniform mat4 uInverseProjection;
           uniform vec3 uViewPos;
-          uniform sampler2D uDepthBuffer;
+          uniform highp sampler2D uDepthBuffer;
           uniform sampler2D uGBuffer0;
           uniform sampler2D uGBuffer1;
           uniform sampler2D uAOBuffer;
@@ -321,14 +321,13 @@ export class DeferredPipeline implements Pipeline {
       uniforms: {
         ...this.cameraUniforms,
         ...options.uniforms,
+        uDepthBuffer: this.depthBuffer,
+        uGBuffer0: this.gBuffers![0],
+        uGBuffer1: this.gBuffers![1],
+        uAOBuffer: this.ssao.aoOutBuffer!,
       },
       state: {
-        blend: {
-          equation: 'add',
-          func: ['one', 'one'],
-        },
-        depthMask: false,
-        depth: 'lequal',
+        ...options.state ?? {},
       },
     });
   }
@@ -373,7 +372,14 @@ export class DeferredPipeline implements Pipeline {
       this.outBuffer = new GLTexture2D({
         ...defaultOpts,
         format: 'rgba',
-        type: 'float',
+        type: 'halfFloat',
+      });
+    }
+    if (this.outDepthBuffer == null) {
+      this.outDepthBuffer = new GLTexture2D({
+        ...defaultOpts,
+        format: 'depthStencil',
+        type: 'unsignedInt248',
       });
     }
     if (this.frameBuffer == null) {
@@ -384,18 +390,11 @@ export class DeferredPipeline implements Pipeline {
         color: this.gBuffers!,
       });
     }
-    if (this.outPreFrameBuffer == null) {
-      this.outPreFrameBuffer = new GLFrameBuffer({
-        width,
-        height,
-        color: this.outBuffer!,
-      });
-    }
     if (this.outFrameBuffer == null) {
       this.outFrameBuffer = new GLFrameBuffer({
         width,
         height,
-        depthStencil: this.depthBuffer!,
+        depthStencil: this.outDepthBuffer!,
         color: this.outBuffer!,
       });
     }
@@ -403,6 +402,7 @@ export class DeferredPipeline implements Pipeline {
 
   render(): void {
     const {entityStore, camera, glRenderer} = this.renderer;
+    const {gl} = glRenderer;
 
     if (camera == null) {
       throw new Error('Camera is not specified');
@@ -446,24 +446,31 @@ export class DeferredPipeline implements Pipeline {
     // SSAO
     this.ssao.render();
 
-    glRenderer.clear(this.outPreFrameBuffer);
+    glRenderer.clear(this.outFrameBuffer);
+    glRenderer.blit(
+      this.frameBuffer!,
+      this.outFrameBuffer!,
+      gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT,
+      'nearest',
+    );
 
     // Render lights
     if (this.fallbackLights.length > 0) {
-      glRenderer.draw({
-        frameBuffer: this.outPreFrameBuffer,
+      this.drawLight({
         geometry: LIGHT_QUAD,
         shader: this.getFallbackLightShader(),
-        uniforms: {
-          ...this.cameraUniforms,
-          ...this.fallbackLightUniforms,
-          uDepthBuffer: this.depthBuffer,
-          uGBuffer0: this.gBuffers![0],
-          uGBuffer1: this.gBuffers![1],
-          uAOBuffer: this.ssao.aoOutBuffer!,
+        uniforms: this.fallbackLightUniforms,
+        state: {
+          depthMask: false,
+          cull: false,
+          depth: false,
         },
       });
     }
+    this.lights.forEach((group) => {
+      const {light, entities} = group;
+      light.renderDeferred?.(entities, this.renderer, this);
+    });
 
     // Render forward
     entityStore.forEachChunkWith([meshComp], (chunk) => {

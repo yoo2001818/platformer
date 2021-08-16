@@ -8,6 +8,7 @@ import {GLFrameBuffer} from './GLFrameBuffer';
 import {DrawOptions, GLStateOptions} from './types';
 import {GLCapabilities} from './GLCapabilities';
 import {GLStateManager} from './GLStateManager';
+import {TEXTURE_PARAM_MAP} from './utils';
 
 export class GLRenderer {
   gl: WebGL2RenderingContext | WebGLRenderingContext;
@@ -88,6 +89,28 @@ export class GLRenderer {
       geometry.drawInstanced(primCount);
     } else {
       geometry.draw();
+    }
+  }
+
+  blit(
+    readFb: GLFrameBuffer,
+    drawFb: GLFrameBuffer,
+    mask: number,
+    filter: 'nearest' | 'linear' = 'nearest',
+  ): void {
+    const {gl, capabilities} = this;
+    if (capabilities.isWebGL2) {
+      const gl2 = gl as WebGL2RenderingContext;
+      readFb._blitBind(this, gl2.READ_FRAMEBUFFER);
+      drawFb._blitBind(this, gl2.DRAW_FRAMEBUFFER);
+      gl2.blitFramebuffer(
+        0, 0, readFb.options.width, readFb.options.height,
+        0, 0, drawFb.options.width, drawFb.options.height,
+        mask,
+        TEXTURE_PARAM_MAP[filter],
+      );
+    } else {
+      throw new Error('Not implemented yet');
     }
   }
 }

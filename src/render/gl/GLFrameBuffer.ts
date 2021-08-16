@@ -33,6 +33,19 @@ export class GLFrameBuffer {
     this.options = options;
   }
 
+  _blitBind(renderer: GLRenderer, target: number): void {
+    const {gl} = renderer;
+    if (this.framebuffer == null) {
+      this.renderer = renderer;
+      this.framebuffer = renderer.gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+      this._set(this.options);
+      renderer.boundFrameBuffer = this;
+      gl.bindFramebuffer(target, this.framebuffer);
+    }
+    gl.bindFramebuffer(target, this.framebuffer);
+  }
+
   bind(renderer: GLRenderer): void {
     if (this.framebuffer == null) {
       const {gl} = renderer;

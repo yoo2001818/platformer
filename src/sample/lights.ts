@@ -171,12 +171,12 @@ function main() {
 
   store.create({
     name: 'light',
-    transform: new Transform().translate([5, 5, 5]),
+    transform: new Transform().translate([5, 1, 5]),
     light: new PointLight({
       color: '#0000ff',
-      power: 200,
+      power: 600,
       radius: 1,
-      range: 8,
+      range: 2,
     }),
   });
 
@@ -185,7 +185,7 @@ function main() {
     transform: new Transform().translate([-5, 5, -5]),
     light: new PointLight({
       color: '#ff0000',
-      power: 200,
+      power: 600,
       radius: 1,
       range: 8,
     }),

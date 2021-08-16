@@ -1,5 +1,8 @@
 import {Transform} from '../../3d/Transform';
 import {Entity} from '../../core/Entity';
+import {uvSphere} from '../../geom/uvSphere';
+import {GLGeometry} from '../gl/GLGeometry';
+import {DeferredPipeline} from '../pipeline/DeferredPipeline';
 import {Renderer} from '../Renderer';
 import {POINT_LIGHT} from '../shader/light';
 
@@ -11,6 +14,8 @@ export interface PointLightOptions {
   radius: number;
   range: number;
 }
+
+const LIGHT_GEOM = new GLGeometry(uvSphere(10, 10));
 
 export class PointLight implements Light {
   type = 'point';
@@ -62,5 +67,64 @@ export class PointLight implements Light {
 
   prepare(entities: Entity[], renderer: Renderer): void {
     // noop
+  }
+
+  renderDeferred(
+    entities: Entity[],
+    renderer: Renderer,
+    pipeline: DeferredPipeline,
+  ): void {
+    const shader = pipeline.getLightShader('point', () => ({
+      vert: /* glsl */`
+        #version 100
+        precision highp float;
+
+        attribute vec3 aPosition;
+
+        uniform mat4 uView;
+        uniform mat4 uProjection;
+        uniform mat4 uModel;
+
+        varying vec2 vPosition;
+
+        void main() {
+          vec4 pos = uModel * vec4(aPosition, 1.0);
+          gl_Position = uProjection * uView * pos;
+          gl_Position = gl_Position / gl_Position.w;
+          vPosition = gl_Position.xy;
+        } 
+      `,
+      ...this.getShaderBlock(1),
+    }));
+    entities.forEach((entity) => {
+      const transform = entity.get<Transform>('transform')!;
+      const light = entity.get<PointLight>('light')!;
+      const {options} = light;
+      const pos = transform.getPosition();
+      const range = options.range * 1.05;
+      pipeline.drawLight({
+        geometry: LIGHT_GEOM,
+        shader,
+        uniforms: {
+          uModel: [
+            range, 0, 0, 0,
+            0, range, 0, 0,
+            0, 0, range, 0,
+            pos[0], pos[1], pos[2], 1,
+          ],
+          ...this.getUniforms([entity]),
+        },
+        state: {
+          depthMask: false,
+          stencil: {
+            func: ['always', 0, 0],
+            op: [
+              ['keep', 'decr', 'keep'],
+              ['keep', 'incr', 'keep'],
+            ],
+          },
+        },
+      });
+    });
   }
 }

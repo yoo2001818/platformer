@@ -17,7 +17,7 @@ export function convertFloat(value: unknown): number {
   throw new Error(`Unexpect value ${value}`);
 }
 
-const floatBuf = Array.from({length: 16}, (_, i) => new Float32Array(i));
+const floatBuf = Array.from({length: 17}, (_, i) => new Float32Array(i));
 
 export function convertFloatArray(
   value: unknown,
