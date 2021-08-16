@@ -200,7 +200,11 @@ export class DeferredPipeline implements Pipeline {
           ${block.header}
 
           void main() {
-            vec2 uv = vPosition * 0.5 + 0.5;
+            vec2 position = vPosition;
+            ${block.noperspective ? `
+              position *= gl_FragCoord.w;
+            ` : ''}
+            vec2 uv = position * 0.5 + 0.5;
             float depth = texture2D(uDepthBuffer, uv).x;
             vec4 values[GBUFFER_SIZE];
             values[0] = texture2D(uGBuffer0, uv);
@@ -209,7 +213,7 @@ export class DeferredPipeline implements Pipeline {
 
             MaterialInfo mInfo;
             unpackMaterialInfo(
-              depth, values, vPosition,
+              depth, values, position,
               uInverseProjection, uInverseView,
               mInfo
             );
@@ -327,6 +331,10 @@ export class DeferredPipeline implements Pipeline {
         uAOBuffer: this.ssao.aoOutBuffer!,
       },
       state: {
+        blend: {
+          equation: 'add',
+          func: ['one', 'one'],
+        },
         ...options.state ?? {},
       },
     });

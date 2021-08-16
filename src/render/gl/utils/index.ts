@@ -197,9 +197,9 @@ export const BLEND_FUNC = {
 
 export const STENCIL_OP = {
   keep: 0x1E00,
-  zero: 0x1E01,
-  replace: 0x1E02,
-  incr: 0x1E03,
+  zero: 0,
+  replace: 0x1E01,
+  incr: 0x1E02,
   incrWrap: 0x8507,
   decr: 0x1E03,
   decrWrap: 0x8508,

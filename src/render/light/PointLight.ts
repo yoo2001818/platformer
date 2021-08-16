@@ -2,6 +2,7 @@ import {Transform} from '../../3d/Transform';
 import {Entity} from '../../core/Entity';
 import {uvSphere} from '../../geom/uvSphere';
 import {GLGeometry} from '../gl/GLGeometry';
+import {GLShader} from '../gl/GLShader';
 import {DeferredPipeline} from '../pipeline/DeferredPipeline';
 import {Renderer} from '../Renderer';
 import {POINT_LIGHT} from '../shader/light';
@@ -74,26 +75,39 @@ export class PointLight implements Light {
     renderer: Renderer,
     pipeline: DeferredPipeline,
   ): void {
+    const vert = /* glsl */`
+      #version 100
+      precision highp float;
+
+      attribute vec3 aPosition;
+
+      uniform mat4 uView;
+      uniform mat4 uProjection;
+      uniform mat4 uModel;
+
+      varying vec2 vPosition;
+
+      void main() {
+        vec4 pos = uModel * vec4(aPosition, 1.0);
+        gl_Position = uProjection * uView * pos;
+        vPosition = gl_Position.xy;
+      } 
+    `;
+    const stencilShader = renderer.getResource('point~stencil', () => {
+      return new GLShader(
+        vert,
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          void main() {
+          }
+        `,
+      );
+    });
     const shader = pipeline.getLightShader('point', () => ({
-      vert: /* glsl */`
-        #version 100
-        precision highp float;
-
-        attribute vec3 aPosition;
-
-        uniform mat4 uView;
-        uniform mat4 uProjection;
-        uniform mat4 uModel;
-
-        varying vec2 vPosition;
-
-        void main() {
-          vec4 pos = uModel * vec4(aPosition, 1.0);
-          gl_Position = uProjection * uView * pos;
-          gl_Position = gl_Position / gl_Position.w;
-          vPosition = gl_Position.xy;
-        } 
-      `,
+      vert,
+      noperspective: true,
       ...this.getShaderBlock(1),
     }));
     entities.forEach((entity) => {
@@ -102,26 +116,43 @@ export class PointLight implements Light {
       const {options} = light;
       const pos = transform.getPosition();
       const range = options.range * 1.05;
-      pipeline.drawLight({
+      const uniforms = {
+        uModel: [
+          range, 0, 0, 0,
+          0, range, 0, 0,
+          0, 0, range, 0,
+          pos[0], pos[1], pos[2], 1,
+        ],
+        ...this.getUniforms([entity]),
+      };
+      pipeline.drawForward({
         geometry: LIGHT_GEOM,
-        shader,
-        uniforms: {
-          uModel: [
-            range, 0, 0, 0,
-            0, range, 0, 0,
-            0, 0, range, 0,
-            pos[0], pos[1], pos[2], 1,
-          ],
-          ...this.getUniforms([entity]),
-        },
+        shader: stencilShader,
+        uniforms,
         state: {
+          colorMask: [false, false, false, false],
           depthMask: false,
+          cull: false,
           stencil: {
-            func: ['always', 0, 0],
+            func: ['always', 0, 0xFFFF],
             op: [
               ['keep', 'decr', 'keep'],
               ['keep', 'incr', 'keep'],
             ],
+          },
+        },
+      });
+      pipeline.drawLight({
+        geometry: LIGHT_GEOM,
+        shader,
+        uniforms,
+        state: {
+          depthMask: false,
+          depth: false,
+          cull: 'front',
+          stencil: {
+            func: ['notequal', 0, 0xFFFF],
+            op: ['zero', 'zero', 'zero'],
           },
         },
       });

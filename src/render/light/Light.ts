@@ -10,6 +10,7 @@ export interface LightShaderBlock {
 export interface LightPipelineShaderBlock {
   vert: string;
   header: string;
+  noperspective?: boolean;
   body: string;
 }
 

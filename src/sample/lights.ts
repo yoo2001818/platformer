@@ -174,7 +174,7 @@ function main() {
     transform: new Transform().translate([5, 1, 5]),
     light: new PointLight({
       color: '#0000ff',
-      power: 600,
+      power: 200,
       radius: 1,
       range: 2,
     }),
