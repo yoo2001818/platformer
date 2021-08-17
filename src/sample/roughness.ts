@@ -4,7 +4,7 @@ import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
 import {parseObj} from '../geom/loader/obj';
 import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
-import {StandardMaterial} from '../render/material/BasicMaterial';
+import {StandardMaterial} from '../render/material/StandardMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
 import {quad} from '../geom/quad';
 import {TransformComponent} from '../3d/TransformComponent';

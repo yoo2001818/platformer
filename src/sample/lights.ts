@@ -4,7 +4,7 @@ import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
 import {parseObj} from '../geom/loader/obj';
 import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
-import {StandardMaterial} from '../render/material/BasicMaterial';
+import {StandardMaterial} from '../render/material/StandardMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
 import {calcNormals} from '../geom/calcNormals';
 import {quad} from '../geom/quad';
@@ -24,6 +24,7 @@ import {getHDRType} from '../render/hdr/utils';
 import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
 import {PointLight} from '../render/light/PointLight';
 import {EnvironmentLight} from '../render/light/EnvironmentLight';
+import { DirectionalLight } from '../render/light/DirectionalLight';
 
 const store = new EntityStore();
 
@@ -167,6 +168,16 @@ function main() {
     name: 'envLight',
     transform: new Transform(),
     light: new EnvironmentLight({texture: pbrTexture, power: 1}),
+  });
+
+  store.create({
+    name: 'directionalLight',
+    transform: new Transform()
+      .rotateX(-40 * Math.PI / 180),
+    light: new DirectionalLight({
+      color: '#ffffff',
+      power: 30,
+    }),
   });
 
   for (let i = 0; i < 100; i += 1) {

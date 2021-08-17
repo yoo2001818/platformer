@@ -6,7 +6,7 @@ import {box} from '../geom/box';
 // import {parseObj} from '../geom/loader/obj';
 import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
-import {StandardMaterial} from '../render/material/BasicMaterial';
+import {StandardMaterial} from '../render/material/StandardMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
 import {TransformComponent} from '../3d/TransformComponent';
 import {Transform} from '../3d/Transform';

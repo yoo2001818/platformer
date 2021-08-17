@@ -25,6 +25,25 @@ export const POINT_LIGHT = /* glsl */`
   }
 `;
 
+export const DIRECTIONAL_LIGHT = /* glsl */`
+  struct DirectionalLight {
+    vec4 direction;
+    vec3 color;
+  };
+
+  vec3 calcDirectional(vec3 viewPos, MaterialInfo mInfo, DirectionalLight light) {
+    vec3 L = normalize(light.direction.xyz);
+    vec3 V = normalize(viewPos - mInfo.position);
+    vec3 N = mInfo.normal;
+
+    float dotNL = max(dot(N, L), 0.0);
+
+    vec3 radiance = light.direction.w * dotNL * light.color;
+
+    return radiance * calcBRDF(L, V, N, mInfo);
+  }
+`;
+
 export const ENVIRONMENT_MAP = /* glsl */`
   vec3 calcEnvironmentMap(vec3 viewPos, MaterialInfo mInfo, sampler2D brdfMap, sampler2D envMap, vec2 mapSize, float power) {
     vec3 albedo = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
