@@ -36,7 +36,7 @@ export class ShadowMapManager {
     this.height = 2048;
   }
 
-  get(handle?: ShadowMapHandle): ShadowMapHandle {
+  get(handle?: ShadowMapHandle | null): ShadowMapHandle {
     if (handle != null) {
       return handle;
     }
