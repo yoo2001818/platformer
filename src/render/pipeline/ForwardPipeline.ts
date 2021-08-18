@@ -55,8 +55,8 @@ export class ForwardPipeline implements Pipeline {
 
     for (const [type, entities] of lightMap.entries()) {
       const light = entities[0].get<Light>('light')!;
-      const uniforms = light.getUniforms(entities, this.renderer);
       light.prepare(entities, this.renderer);
+      const uniforms = light.getUniforms(entities, this.renderer);
       this.lights.push({
         type,
         size: entities.length,
@@ -177,8 +177,9 @@ export class ForwardPipeline implements Pipeline {
   }
 
   renderShadow(options: DrawOptions): void {
-    const {entityStore} = this.renderer;
+    const {entityStore, glRenderer} = this.renderer;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
+    glRenderer.clear(options.frameBuffer);
     entityStore.forEachChunkWith([meshComp], (chunk) => {
       const mesh = meshComp.getChunk(chunk, 0);
       if (mesh != null) {
