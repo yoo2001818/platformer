@@ -43,7 +43,7 @@ export class ShadowMapManager {
     // TODO Actually implement logic
     return {
       id: 1,
-      bounds: [0, 0, 256, 256],
+      bounds: [0, 0, 2048, 2048],
     };
   }
 

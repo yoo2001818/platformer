@@ -303,8 +303,11 @@ export class DeferredPipeline implements Pipeline {
         /* glsl */`
           #version 100
           precision highp float;
+
+          varying vec3 vNormal;
+
           void main() {
-            gl_FragColor = vec4(0.0);
+            gl_FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
           }
         `,
       );
@@ -434,8 +437,9 @@ export class DeferredPipeline implements Pipeline {
   }
 
   renderShadow(options: DrawOptions): void {
-    const {entityStore} = this.renderer;
+    const {entityStore, glRenderer} = this.renderer;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
+    glRenderer.clear(options.frameBuffer);
     entityStore.forEachChunkWith([meshComp], (chunk) => {
       const mesh = meshComp.getChunk(chunk, 0);
       if (mesh != null) {

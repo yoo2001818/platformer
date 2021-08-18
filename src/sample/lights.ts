@@ -24,7 +24,7 @@ import {getHDRType} from '../render/hdr/utils';
 import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
 import {PointLight} from '../render/light/PointLight';
 import {EnvironmentLight} from '../render/light/EnvironmentLight';
-import { DirectionalLight } from '../render/light/DirectionalLight';
+import {DirectionalShadowLight} from '../render/light/DirectionalShadowLight';
 
 const store = new EntityStore();
 
@@ -83,7 +83,7 @@ function main() {
     camera: new Camera({
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
-      far: 1000,
+      far: 100,
       near: 0.1,
     }),
   });
@@ -173,14 +173,15 @@ function main() {
   store.create({
     name: 'directionalLight',
     transform: new Transform()
+      .rotateY(90 * Math.PI / 180)
       .rotateX(-40 * Math.PI / 180),
-    light: new DirectionalLight({
+    light: new DirectionalShadowLight({
       color: '#ffffff',
       power: 30,
     }),
   });
 
-  for (let i = 0; i < 100; i += 1) {
+  for (let i = 0; i < 200; i += 1) {
     store.create({
       name: 'light',
       transform: new Transform()
@@ -191,7 +192,7 @@ function main() {
         ]),
       light: new PointLight({
         color: [Math.random(), Math.random(), Math.random()],
-        power: 100,
+        power: 30,
         radius: 1,
         range: 2,
       }),
