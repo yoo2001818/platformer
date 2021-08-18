@@ -10,7 +10,7 @@ import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
 
-import {Pipeline, PipelineShaderBlock} from './Pipeline';
+import {Pipeline, PipelineShaderBlock, PipelineShadowShaderBlock} from './Pipeline';
 
 interface LightConfig {
   type: string;
@@ -113,7 +113,7 @@ export class ForwardPipeline implements Pipeline {
 
   getForwardShader(id: string, onCreate: () => PipelineShaderBlock): GLShader {
     const {renderer} = this;
-    return renderer.getResource(`deferred~${id}`, () => {
+    return renderer.getResource(`forward~${id}`, () => {
       const block = onCreate();
       return new GLShader(
         block.vert,
@@ -123,6 +123,23 @@ export class ForwardPipeline implements Pipeline {
             vec3 result = vec3(0.0);
             result = material();
             gl_FragColor = vec4(tonemap(result), 1.0);
+          }
+        `,
+      );
+    });
+  }
+
+  getShadowShader(id: string, onCreate: () => PipelineShadowShaderBlock): GLShader {
+    const {renderer} = this;
+    return renderer.getResource(`shadow~${id}`, () => {
+      const block = onCreate();
+      return new GLShader(
+        block.vert,
+        /* glsl */`
+          #version 100
+          precision highp float;
+          void main() {
+            gl_FragColor = vec4(0.0);
           }
         `,
       );
@@ -152,7 +169,30 @@ export class ForwardPipeline implements Pipeline {
     });
   }
 
-  renderDepth(options: DrawOptions): void {
+  drawShadow(options: DrawOptions): void {
+    const {renderer: {glRenderer}} = this;
+    glRenderer.draw({
+      ...options,
+    });
+  }
+
+  renderShadow(options: DrawOptions): void {
+    const {entityStore} = this.renderer;
+    const meshComp = entityStore.getComponent<MeshComponent>('mesh');
+    entityStore.forEachChunkWith([meshComp], (chunk) => {
+      const mesh = meshComp.getChunk(chunk, 0);
+      if (mesh != null) {
+        mesh.geometries.forEach((geometry, index) => {
+          const materialIndex = Math.min(mesh.materials.length - 1, index);
+          const material = mesh.materials[materialIndex];
+          if (material == null) {
+            throw new Error('Geometry is null');
+          }
+          const glGeometry = geometry.getGLGeometry(this.renderer);
+          material.renderShadow?.(chunk, glGeometry, this.renderer, options);
+        });
+      }
+    });
   }
 
   render(): void {

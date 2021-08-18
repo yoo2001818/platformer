@@ -5,6 +5,7 @@ import {Material} from '../Material';
 import {Renderer} from '../Renderer';
 import {createId} from '../utils/createId';
 import {GLTexture} from '../gl/GLTexture';
+import {PipelineShadowOptions} from '../pipeline/Pipeline';
 
 export interface StandardMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
@@ -23,6 +24,59 @@ export class StandardMaterial implements Material {
   constructor(options: StandardMaterialOptions) {
     this.id = createId();
     this.options = options;
+  }
+
+  renderShadow(
+    chunk: EntityChunk,
+    geometry: GLGeometry,
+    renderer: Renderer,
+    options: PipelineShadowOptions,
+  ): void {
+    const {entityStore, pipeline} = renderer;
+    const transformComp =
+      entityStore.getComponent<TransformComponent>('transform')!;
+    const shader = pipeline.getShadowShader('basic', () => ({
+      vert: /* glsl */`
+        #version 100
+        precision highp float;
+
+        attribute vec3 aPosition;
+        attribute vec3 aNormal;
+        attribute vec2 aTexCoord;
+
+        uniform mat4 uView;
+        uniform mat4 uProjection;
+        uniform mat4 uModel;
+
+        varying vec3 vPosition;
+        varying vec3 vNormal;
+        varying vec2 vTexCoord;
+
+        void main() {
+          vec4 pos = uModel * vec4(aPosition, 1.0);
+          gl_Position = uProjection * uView * pos;
+          vPosition = pos.xyz;
+          // TODO Normal 3x3 matrix
+          vNormal = (uModel * vec4(aNormal, 0.0)).xyz;
+          vTexCoord = aTexCoord;
+        } 
+      `,
+    }));
+    chunk.forEach((entity) => {
+      const transform = entity.get(transformComp);
+      if (transform == null) {
+        return;
+      }
+      pipeline.drawShadow({
+        ...options,
+        shader,
+        geometry,
+        uniforms: {
+          ...options.uniforms,
+          uModel: transform.getMatrix(),
+        },
+      });
+    });
   }
 
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void {

@@ -15,7 +15,7 @@ import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
 import {FXAA} from '../shader/fxaa';
 
-import {Pipeline, PipelineShaderBlock} from './Pipeline';
+import {Pipeline, PipelineShaderBlock, PipelineShadowShaderBlock} from './Pipeline';
 import {SSAO} from './ssao';
 
 interface FallbackLightConfig {
@@ -294,6 +294,23 @@ export class DeferredPipeline implements Pipeline {
     });
   }
 
+  getShadowShader(id: string, onCreate: () => PipelineShadowShaderBlock): GLShader {
+    const {renderer} = this;
+    return renderer.getResource(`shadow~${id}`, () => {
+      const block = onCreate();
+      return new GLShader(
+        block.vert,
+        /* glsl */`
+          #version 100
+          precision highp float;
+          void main() {
+            gl_FragColor = vec4(0.0);
+          }
+        `,
+      );
+    });
+  }
+
   drawDeferred(options: DrawOptions): void {
     const {renderer: {glRenderer}} = this;
     glRenderer.draw({
@@ -315,6 +332,13 @@ export class DeferredPipeline implements Pipeline {
         ...this.cameraUniforms,
         ...options.uniforms,
       },
+    });
+  }
+
+  drawShadow(options: DrawOptions): void {
+    const {renderer: {glRenderer}} = this;
+    glRenderer.draw({
+      ...options,
     });
   }
 
@@ -407,6 +431,25 @@ export class DeferredPipeline implements Pipeline {
         color: this.outBuffer!,
       });
     }
+  }
+
+  renderShadow(options: DrawOptions): void {
+    const {entityStore} = this.renderer;
+    const meshComp = entityStore.getComponent<MeshComponent>('mesh');
+    entityStore.forEachChunkWith([meshComp], (chunk) => {
+      const mesh = meshComp.getChunk(chunk, 0);
+      if (mesh != null) {
+        mesh.geometries.forEach((geometry, index) => {
+          const materialIndex = Math.min(mesh.materials.length - 1, index);
+          const material = mesh.materials[materialIndex];
+          if (material == null) {
+            throw new Error('Geometry is null');
+          }
+          const glGeometry = geometry.getGLGeometry(this.renderer);
+          material.renderShadow?.(chunk, glGeometry, this.renderer, options);
+        });
+      }
+    });
   }
 
   render(): void {

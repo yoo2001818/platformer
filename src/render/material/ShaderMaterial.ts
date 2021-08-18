@@ -6,6 +6,7 @@ import {GLShader} from '../gl/GLShader';
 import {Material} from '../Material';
 import {Renderer} from '../Renderer';
 import {createId} from '../utils/createId';
+import {PipelineShadowOptions} from '../pipeline/Pipeline';
 
 export type ShaderMaterialUniformSetter =
 | {[key: string]: unknown;}
@@ -13,6 +14,8 @@ export type ShaderMaterialUniformSetter =
 
 export class ShaderMaterial implements Material {
   id: number;
+  vert: string;
+  frag: string;
   glShader: GLShader;
   uniforms: ShaderMaterialUniformSetter;
   mode: 'forward' = 'forward';
@@ -23,8 +26,39 @@ export class ShaderMaterial implements Material {
     uniforms: ShaderMaterialUniformSetter = {},
   ) {
     this.id = createId();
+    this.vert = vert;
+    this.frag = frag;
     this.glShader = new GLShader(vert, frag);
     this.uniforms = uniforms;
+  }
+
+  renderShadow(
+    chunk: EntityChunk,
+    geometry: GLGeometry,
+    renderer: Renderer,
+    options: PipelineShadowOptions,
+  ): void {
+    const {entityStore, pipeline} = renderer;
+    const transformComp =
+      entityStore.getComponent<TransformComponent>('transform')!;
+    const shader = pipeline.getShadowShader(`shader-${this.id}`, () => ({
+      vert: this.vert,
+    }));
+    chunk.forEach((entity) => {
+      const transform = entity.get(transformComp);
+      if (transform == null) {
+        return;
+      }
+      pipeline.drawShadow({
+        ...options,
+        shader,
+        geometry,
+        uniforms: {
+          ...options.uniforms,
+          uModel: transform.getMatrix(),
+        },
+      });
+    });
   }
 
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void {
