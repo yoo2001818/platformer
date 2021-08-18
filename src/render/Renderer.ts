@@ -5,6 +5,7 @@ import {GLRenderer} from './gl/GLRenderer';
 import {DeferredPipeline} from './pipeline/DeferredPipeline';
 import {ForwardPipeline} from './pipeline/ForwardPipeline';
 import {Pipeline} from './pipeline/Pipeline';
+import {ShadowMapManager} from './ShadowMapManager';
 
 export class Renderer {
   glRenderer: GLRenderer;
@@ -12,6 +13,7 @@ export class Renderer {
   pipeline: Pipeline;
   camera: Entity | null;
   resources: Map<string | number, unknown>;
+  shadowMapManager: ShadowMapManager;
   frameId: number;
 
   constructor(
@@ -28,6 +30,7 @@ export class Renderer {
     }
     this.camera = null;
     this.resources = new Map();
+    this.shadowMapManager = new ShadowMapManager(this);
     this.frameId = 0;
   }
 
