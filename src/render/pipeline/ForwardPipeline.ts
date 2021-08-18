@@ -56,6 +56,7 @@ export class ForwardPipeline implements Pipeline {
     for (const [type, entities] of lightMap.entries()) {
       const light = entities[0].get<Light>('light')!;
       const uniforms = light.getUniforms(entities, this.renderer);
+      light.prepare(entities, this.renderer);
       this.lights.push({
         type,
         size: entities.length,
@@ -149,6 +150,9 @@ export class ForwardPipeline implements Pipeline {
         ...options.uniforms,
       },
     });
+  }
+
+  renderDepth(options: DrawOptions): void {
   }
 
   render(): void {

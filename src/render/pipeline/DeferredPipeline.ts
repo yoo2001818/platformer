@@ -79,6 +79,7 @@ export class DeferredPipeline implements Pipeline {
 
     for (const [type, entities] of lightMap.entries()) {
       const light = entities[0].get<Light>('light')!;
+      light.prepare(entities, this.renderer);
       if (light.renderDeferred == null) {
         const uniforms = light.getUniforms(entities, this.renderer);
         this.fallbackLights.push({
