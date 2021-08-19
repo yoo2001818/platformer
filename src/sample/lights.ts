@@ -84,7 +84,7 @@ function main() {
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
       far: 100,
-      near: 0.1,
+      near: 1,
     }),
   });
 
@@ -167,7 +167,7 @@ function main() {
   store.create({
     name: 'envLight',
     transform: new Transform(),
-    light: new EnvironmentLight({texture: pbrTexture, power: 1}),
+    light: new EnvironmentLight({texture: pbrTexture, power: 0}),
   });
 
   store.create({
@@ -181,6 +181,7 @@ function main() {
     }),
   });
 
+  /*
   for (let i = 0; i < 20; i += 1) {
     store.create({
       name: 'light',
@@ -199,7 +200,6 @@ function main() {
     });
   }
 
-  /*
   store.create({
     name: 'light',
     transform: new Transform().translate([-5, 5, -5]),

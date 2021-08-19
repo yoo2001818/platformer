@@ -13,6 +13,7 @@ export const MATERIAL_INFO = /* glsl */`
     vec3 albedo;
     vec3 normal;
     vec3 position;
+    float depth;
     float roughness;
     float metalic;
   };
@@ -54,7 +55,7 @@ export const MATERIAL_INFO = /* glsl */`
     out MaterialInfo mOut
   ) {
     mOut.position = depthToWorldPos(depth, ndc, inverseProjection, inverseView);
-
+    mOut.depth = depth;
     mOut.albedo = vecIn[0].rgb;
     mOut.roughness = vecIn[0].a;
     mOut.normal = normalize(vecIn[1].rgb * 2.0 - 1.0);
