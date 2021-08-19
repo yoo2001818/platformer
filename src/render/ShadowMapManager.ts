@@ -12,6 +12,7 @@ export class ShadowMapManager {
   frameBuffer: GLFrameBuffer;
   width: number;
   height: number;
+  id: number;
 
   constructor(renderer: Renderer) {
     // TODO: While I aim to implement VSM or any other methods, this comes first
@@ -34,6 +35,7 @@ export class ShadowMapManager {
     });
     this.width = 2048;
     this.height = 2048;
+    this.id = 0;
   }
 
   get(handle?: ShadowMapHandle | null): ShadowMapHandle {
@@ -41,10 +43,12 @@ export class ShadowMapManager {
       return handle;
     }
     // TODO Actually implement logic
-    return {
-      id: 1,
-      bounds: [0, 0, 2048, 2048],
+    const result: ShadowMapHandle = {
+      id: this.id,
+      bounds: [this.id * 512, 0, 512, 512],
     };
+    this.id += 1;
+    return result;
   }
 
   release(handle: ShadowMapHandle): void {

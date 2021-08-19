@@ -283,7 +283,23 @@ export class GLStateManager {
       gl.disable(gl.STENCIL_TEST);
       state.stencil.enabled = false;
     }
-    // TODO viewport
+    if (options.viewport) {
+      const viewport = options.viewport;
+      gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    }
+    if (options.scissor) {
+      if (!state.scissor.enabled) {
+        gl.enable(gl.SCISSOR_TEST);
+        state.scissor.enabled = true;
+      }
+      if (!arrayEqual(options.scissor, state.scissor.scissor)) {
+        const scissor = options.scissor;
+        gl.scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+      }
+    } else if (state.scissor.enabled) {
+      gl.disable(gl.SCISSOR_TEST);
+      state.scissor.enabled = false;
+    }
     // TODO scissor
     // TODO polygonOffset
   }
