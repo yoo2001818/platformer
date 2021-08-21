@@ -302,12 +302,17 @@ export class DeferredPipeline implements Pipeline {
         block.vert,
         /* glsl */`
           #version 100
+          #extension GL_OES_standard_derivatives : enable
           precision highp float;
 
           varying vec3 vNormal;
 
           void main() {
-            gl_FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
+            float intensity = gl_FragCoord.z;
+            float dx = dFdx(intensity);
+            float dy = dFdy(intensity);
+            float moment = intensity * intensity + 0.25 * (dx * dx + dy * dy);
+            gl_FragColor = vec4(intensity, moment, 0.0, 1.0);
           }
         `,
       );
