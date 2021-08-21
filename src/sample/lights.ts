@@ -83,8 +83,8 @@ function main() {
     camera: new Camera({
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
-      far: 100,
-      near: 1,
+      far: 50,
+      near: 2,
     }),
   });
 
