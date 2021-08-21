@@ -64,10 +64,15 @@ export class DirectionalShadowLight implements Light {
           lightPos = lightPos * 0.5 + 0.5;
           vec2 lightUV = lightPos.xy;
           lightUV = shadowUV.xy + lightUV * shadowUV.zw;
-          float lightValue = texture2D(uDirectionalShadowMap, lightUV).r;
-          float lightInten = 0.0;
-          if (lightValue + 0.0005 >= lightPos.z) {
-            lightInten = 1.0;
+          vec2 lightValue = texture2D(uDirectionalShadowMap, lightUV).rg;
+          float lightDepth = lightValue.r;
+          float lightMoment = lightValue.g;
+          float lightInten = 1.0;
+          if (lightPos.z > lightDepth) {
+            float variance = max(lightMoment - lightDepth * lightDepth, 0.00025);
+            float d = lightPos.z - lightDepth;
+            float pMax = variance / (variance + d * d);
+            lightInten = pMax;
           }
           result += lightInten * calcDirectional(viewPos, mInfo, light);
         }
