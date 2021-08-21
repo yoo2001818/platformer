@@ -8,6 +8,7 @@ export interface ShadowMapHandle {
 }
 
 export class ShadowMapManager {
+  depthMap: GLTexture2D;
   texture: GLTexture2D;
   frameBuffer: GLFrameBuffer;
   width: number;
@@ -15,8 +16,7 @@ export class ShadowMapManager {
   id: number;
 
   constructor(renderer: Renderer) {
-    // TODO: While I aim to implement VSM or any other methods, this comes first
-    this.texture = new GLTexture2D({
+    this.depthMap = new GLTexture2D({
       format: 'depth',
       type: 'unsignedInt',
       // About 16MB
@@ -28,10 +28,23 @@ export class ShadowMapManager {
       wrapT: 'clampToEdge',
       mipmap: false,
     });
+    this.texture = new GLTexture2D({
+      format: 'rgba',
+      type: 'float',
+      // About 64MB
+      width: 2048,
+      height: 2048,
+      magFilter: 'linear',
+      minFilter: 'linear',
+      wrapS: 'clampToEdge',
+      wrapT: 'clampToEdge',
+      mipmap: false,
+    });
     this.frameBuffer = new GLFrameBuffer({
       width: 2048,
       height: 2048,
-      depth: this.texture,
+      depth: this.depthMap,
+      color: this.texture,
     });
     this.width = 2048;
     this.height = 2048;

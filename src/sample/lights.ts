@@ -167,7 +167,7 @@ function main() {
   store.create({
     name: 'envLight',
     transform: new Transform(),
-    light: new EnvironmentLight({texture: pbrTexture, power: 0}),
+    light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
 
   store.create({

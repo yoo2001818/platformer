@@ -440,7 +440,9 @@ export class DeferredPipeline implements Pipeline {
     const {entityStore, glRenderer} = this.renderer;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     glRenderer.setState({scissor: options.state?.viewport});
+    glRenderer.gl.clearColor(1, 1, 1, 1);
     glRenderer.clear(options.frameBuffer);
+    glRenderer.gl.clearColor(0, 0, 0, 0);
     entityStore.forEachChunkWith([meshComp], (chunk) => {
       const mesh = meshComp.getChunk(chunk, 0);
       if (mesh != null) {

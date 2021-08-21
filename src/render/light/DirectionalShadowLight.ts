@@ -70,8 +70,6 @@ export class DirectionalShadowLight implements Light {
             lightInten = 1.0;
           }
           result += lightInten * calcDirectional(viewPos, mInfo, light);
-          // result += vec3(lightUV, float(cascadeId) / 3.0);
-          // result = vec3(fract(lightPos.xy), lightValue / lightInten);
         }
       `,
     };
@@ -125,66 +123,16 @@ export class DirectionalShadowLight implements Light {
   prepare(entities: Entity[], renderer: Renderer): void {
     const {shadowMapManager, camera, pipeline} = renderer;
 
-    let debugCanvas: CanvasRenderingContext2D;
-    if ((window as any).debugCanvas == null) {
-      const elem = document.createElement('canvas');
-      elem.width = 550;
-      elem.height = 400;
-      document.body.appendChild(elem);
-      const ctx = elem.getContext('2d');
-      (window as any).debugCanvas = ctx;
-      debugCanvas = ctx!;
-    } else {
-      debugCanvas = (window as any).debugCanvas;
-    }
-    debugCanvas.clearRect(0, 0, 550, 400);
-
     const cameraData = camera!.get<Camera>('camera')!;
+    const {near, far} = cameraData.options;
     const cameraProjection =
       cameraData.getProjection(1);
     const cameraInvProjection =
       cameraData.getInverseProjection(renderer.getAspectRatio());
     const cameraInvView = cameraData.getInverseView(camera!);
 
-    // Draw camera
-    {
-      const vertices = [
-        vec4.fromValues(-1, -1, -1, 1),
-        vec4.fromValues(1, -1, -1, 1),
-        vec4.fromValues(-1, 1, -1, 1),
-        vec4.fromValues(1, 1, -1, 1),
-        vec4.fromValues(-1, -1, 1, 1),
-        vec4.fromValues(1, -1, 1, 1),
-        vec4.fromValues(-1, 1, 1, 1),
-        vec4.fromValues(1, 1, 1, 1),
-      ].map((corner, index) => {
-        const pos: Float32Array = vec4.create() as Float32Array;
-        // NDC -> view
-        vec4.transformMat4(pos, corner, cameraInvProjection);
-        vec4.scale(pos, pos, 1 / pos[3]);
-        // view -> world
-        vec4.transformMat4(pos, pos, cameraInvView);
-        return pos;
-      });
-      [
-        [0, 1], [0, 2], [1, 3], [2, 3],
-        [4, 5], [4, 6], [5, 7], [6, 7],
-        [0, 4], [1, 5], [2, 6], [3, 7],
-      ].forEach(([a, b]) => {
-        const aPos = vertices[a];
-        const bPos = vertices[b];
-        debugCanvas.strokeStyle = '#f00';
-        debugCanvas.beginPath();
-        debugCanvas.lineTo(aPos[0] + 550 / 2, aPos[2] + 400 / 2);
-        debugCanvas.lineTo(bPos[0] + 550 / 2, bPos[2] + 400 / 2);
-        debugCanvas.stroke();
-      });
-    }
-
     const cameraZ = cameraProjection[10];
     const cameraW = cameraProjection[14];
-    const cameraNear = cameraW / (cameraZ - 1);
-    const cameraFar = cameraW / (cameraZ + 1);
 
     // Note that this must be performed FOR EACH directional light
     entities.forEach((entity) => {
@@ -199,11 +147,11 @@ export class DirectionalShadowLight implements Light {
         light.atlases[i] = atlas;
 
         const breakPrevRaw = CASCADE_BREAKPOINTS[i];
-        const breakPrevZ = cameraNear + breakPrevRaw * (cameraFar - cameraNear);
+        const breakPrevZ = near + breakPrevRaw * (far - near);
         const breakPrev = (-breakPrevZ * cameraZ + cameraW) / breakPrevZ;
 
         const breakNextRaw = CASCADE_BREAKPOINTS[i + 1];
-        const breakNextZ = cameraNear + breakNextRaw * (cameraFar - cameraNear);
+        const breakNextZ = near + breakNextRaw * (far - near);
         const breakNext = (-breakNextZ * cameraZ + cameraW) / breakNextZ;
 
         light.breakpoints[i] = breakNext;
@@ -251,37 +199,6 @@ export class DirectionalShadowLight implements Light {
           -maxVec[2], -minVec[2],
         );
         mat4.mul(light.viewProjections[i], lightProj, lightView);
-        const lightInv = mat4.create();
-        mat4.invert(lightInv, light.viewProjections[i]);
-        {
-          const vertices = [
-            vec4.fromValues(-1, -1, -1, 1),
-            vec4.fromValues(1, -1, -1, 1),
-            vec4.fromValues(-1, 1, -1, 1),
-            vec4.fromValues(1, 1, -1, 1),
-            vec4.fromValues(-1, -1, 1, 1),
-            vec4.fromValues(1, -1, 1, 1),
-            vec4.fromValues(-1, 1, 1, 1),
-            vec4.fromValues(1, 1, 1, 1),
-          ].map((corner, index) => {
-            const pos: Float32Array = vec4.create() as Float32Array;
-            vec4.transformMat4(pos, corner, lightInv);
-            return pos;
-          });
-          [
-            [0, 1], [0, 2], [1, 3], [2, 3],
-            [4, 5], [4, 6], [5, 7], [6, 7],
-            [0, 4], [1, 5], [2, 6], [3, 7],
-          ].forEach(([a, b]) => {
-            const aPos = vertices[a];
-            const bPos = vertices[b];
-            debugCanvas.strokeStyle = `rgb(0, 0, ${i * 70 + 50})`;
-            debugCanvas.beginPath();
-            debugCanvas.lineTo(aPos[0] + 550 / 2, aPos[2] + 400 / 2);
-            debugCanvas.lineTo(bPos[0] + 550 / 2, bPos[2] + 400 / 2);
-            debugCanvas.stroke();
-          });
-        }
         // Construct shadow map
         pipeline.renderShadow({
           frameBuffer: shadowMapManager.frameBuffer,
