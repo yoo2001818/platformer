@@ -72,22 +72,22 @@ export class ShadowMapManager {
   constructor(renderer: Renderer) {
     this.renderer = renderer;
     this.tempDepth1 = new GLRenderBuffer({
-      width: 512,
-      height: 512,
+      width: 1024,
+      height: 1024,
       format: 'depthComponent24',
       samples: 4,
     });
     this.tempBuffer1 = new GLRenderBuffer({
-      width: 512,
-      height: 512,
+      width: 1024,
+      height: 1024,
       format: 'rgba32f',
       samples: 4,
     });
     this.tempTexture2 = new GLTexture2D({
       format: 'rgba',
       type: 'float',
-      width: 512,
-      height: 512,
+      width: 1024,
+      height: 1024,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -97,8 +97,8 @@ export class ShadowMapManager {
     this.tempTexture3 = new GLTexture2D({
       format: 'rgba',
       type: 'float',
-      width: 512,
-      height: 512,
+      width: 1024,
+      height: 1024,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -106,27 +106,26 @@ export class ShadowMapManager {
       mipmap: false,
     });
     this.tempFrame1 = new GLFrameBuffer({
-      width: 512,
-      height: 512,
+      width: 1024,
+      height: 1024,
       depth: this.tempDepth1,
       color: this.tempBuffer1,
     });
     this.tempFrame2 = new GLFrameBuffer({
-      width: 512,
-      height: 512,
+      width: 1024,
+      height: 1024,
       color: this.tempTexture2,
     });
     this.tempFrame3 = new GLFrameBuffer({
-      width: 512,
-      height: 512,
+      width: 1024,
+      height: 1024,
       color: this.tempTexture3,
     });
     this.texture = new GLTexture2D({
       format: 'rgba',
       type: 'float',
-      // About 64MB
-      width: 2048,
-      height: 2048,
+      width: 4096,
+      height: 4096,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -134,12 +133,12 @@ export class ShadowMapManager {
       mipmap: false,
     });
     this.frameBuffer = new GLFrameBuffer({
-      width: 2048,
-      height: 2048,
+      width: 4096,
+      height: 4096,
       color: this.texture,
     });
-    this.width = 2048;
-    this.height = 2048;
+    this.width = 4096;
+    this.height = 4096;
     this.id = 0;
   }
 
@@ -150,7 +149,7 @@ export class ShadowMapManager {
     // TODO Actually implement logic
     const result: ShadowMapHandle = {
       id: this.id,
-      bounds: [this.id * 512, 0, 512, 512],
+      bounds: [this.id * 1024, 0, 1024, 1024],
     };
     this.id += 1;
     return result;

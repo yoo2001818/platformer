@@ -81,7 +81,7 @@ function main() {
     camera: new Camera({
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
-      far: 100,
+      far: 1000,
       near: 1,
     }),
   });
@@ -122,6 +122,18 @@ function main() {
       mesh: coneMesh,
     });
   }
+
+  store.create({
+    name: 'cone',
+    transform: new Transform()
+      .setScale([1, 1, 1])
+      .translate([
+        0,
+        0.15,
+        0,
+      ]),
+    mesh: coneMesh,
+  });
 
   store.create({
     name: 'floor',
