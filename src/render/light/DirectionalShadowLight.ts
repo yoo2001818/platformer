@@ -206,15 +206,13 @@ export class DirectionalShadowLight implements Light {
         mat4.mul(light.viewProjections[i], lightProj, lightView);
         // Construct shadow map
         pipeline.renderShadow({
-          frameBuffer: shadowMapManager.frameBuffer,
-          state: {
-            viewport: atlas.bounds,
-          },
+          ...shadowMapManager.beginRender(atlas),
           uniforms: {
             uProjection: lightProj,
             uView: lightView,
           },
         });
+        shadowMapManager.finalizeRender(atlas);
       }
     });
   }
