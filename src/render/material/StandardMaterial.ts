@@ -39,50 +39,72 @@ export class StandardMaterial implements Material {
     renderer: Renderer,
     options: PipelineShadowOptions,
   ): void {
-    const {entityStore, pipeline} = renderer;
+    const {entityStore, pipeline, glRenderer} = renderer;
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
-    const shader = pipeline.getShadowShader('basic', () => ({
+    let featureBits = 0;
+    featureBits |= INSTANCING_BIT;
+    const shader = pipeline.getShadowShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
+        ${featureBits & INSTANCING_BIT ? '#define USE_INSTANCING' : ''}
         #version 100
         precision highp float;
 
         attribute vec3 aPosition;
         attribute vec3 aNormal;
         attribute vec2 aTexCoord;
+        #ifdef USE_INSTANCING
+        attribute mat4 aModel;
+        #endif
 
         uniform mat4 uView;
         uniform mat4 uProjection;
+        #ifndef USE_INSTANCING
         uniform mat4 uModel;
+        #endif
+        uniform vec2 uTexScale;
 
         varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec2 vTexCoord;
 
         void main() {
-          vec4 pos = uModel * vec4(aPosition, 1.0);
+          #ifdef USE_INSTANCING
+          mat4 model = aModel;
+          #else
+          mat4 model = uModel;
+          #endif
+          vec4 pos = model * vec4(aPosition, 1.0);
           gl_Position = uProjection * uView * pos;
           vPosition = pos.xyz;
           // TODO Normal 3x3 matrix
-          vNormal = (uModel * vec4(aNormal, 0.0)).xyz;
-          vTexCoord = aTexCoord;
+          vNormal = (model * vec4(aNormal, 0.0)).xyz;
+          vTexCoord = aTexCoord * uTexScale;
         } 
       `,
     }));
+    const buffer = new Float32Array(chunk.size * 16);
+    let index = 0;
     chunk.forEach((entity) => {
       const transform = entity.get(transformComp);
-      if (transform == null) {
-        return;
-      }
-      pipeline.drawShadow({
-        ...options,
-        shader,
-        geometry,
-        uniforms: {
-          ...options.uniforms,
-          uModel: transform.getMatrix(),
-        },
-      });
+      buffer.set(transform!.getMatrix(), index * 16);
+      index += 1;
+    });
+    // Pass instanced buffer to GPU
+    this.instancedBuffer.set(buffer);
+    // Bind the shader and bind aModel attribute
+    shader.bind(glRenderer);
+    geometry.bind(glRenderer, shader);
+    shader.setAttribute('aModel', {
+      buffer: this.instancedBuffer,
+      divisor: 1,
+    });
+    pipeline.drawShadow({
+      ...options,
+      shader,
+      geometry,
+      uniforms: options.uniforms,
+      primCount: chunk.size,
     });
   }
 

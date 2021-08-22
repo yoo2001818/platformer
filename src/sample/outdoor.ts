@@ -81,7 +81,7 @@ function main() {
     camera: new Camera({
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
-      far: 1000,
+      far: 100,
       near: 1,
     }),
   });
@@ -109,15 +109,15 @@ function main() {
     new Geometry(calcTangents(bakeChannelGeom(coneModel[0].geometry))),
   );
 
-  for (let i = 0; i < 300; i += 1) {
+  for (let i = 0; i < 2000; i += 1) {
     store.create({
       name: 'cone',
       transform: new Transform()
         .setScale([0.1, 0.1, 0.1])
         .translate([
-          Math.random() * 200 - 100,
+          Math.random() * 600 - 300,
           0.15,
-          Math.random() * 200 - 100,
+          Math.random() * 600 - 300,
         ]),
       mesh: coneMesh,
     });
