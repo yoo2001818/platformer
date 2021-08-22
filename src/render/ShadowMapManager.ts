@@ -9,7 +9,7 @@ import {PipelineShadowOptions} from './pipeline/Pipeline';
 import {Renderer} from './Renderer';
 
 const QUAD = new GLGeometry(quad());
-const FINIALIZE_SHADER = new GLShader(
+const BLUR_SHADER = new GLShader(
   /* glsl */`
     #version 100
     precision highp float;
@@ -30,9 +30,16 @@ const FINIALIZE_SHADER = new GLShader(
     varying vec2 vPosition;
 
     uniform highp sampler2D uTexture;
+    uniform vec2 uResolution;
+    uniform vec2 uDirection;
 
     void main() {
-      gl_FragColor = texture2D(uTexture, vPosition);
+      vec4 color = vec4(0.0);
+      vec2 off1 = vec2(1.3333333333333333) * uDirection;
+      color += texture2D(uTexture, vPosition) * 0.29411764705882354;
+      color += texture2D(uTexture, vPosition + (off1 / uResolution)) * 0.35294117647058826;
+      color += texture2D(uTexture, vPosition - (off1 / uResolution)) * 0.35294117647058826;
+      gl_FragColor = color;
     }
   `,
 );
@@ -68,13 +75,13 @@ export class ShadowMapManager {
       width: 512,
       height: 512,
       format: 'depthComponent24',
-      samples: 16,
+      samples: 4,
     });
     this.tempBuffer1 = new GLRenderBuffer({
       width: 512,
       height: 512,
       format: 'rgba32f',
-      samples: 16,
+      samples: 4,
     });
     this.tempTexture2 = new GLTexture2D({
       format: 'rgba',
@@ -168,13 +175,32 @@ export class ShadowMapManager {
       this.tempFrame2,
       gl.COLOR_BUFFER_BIT,
     );
-    // tempTexture2 -> output
+    // tempTexture2 -> tempTexture3 (X)
+    glRenderer.draw({
+      frameBuffer: this.tempFrame3,
+      geometry: QUAD,
+      shader: BLUR_SHADER,
+      uniforms: {
+        uTexture: this.tempTexture2,
+        uResolution: [
+          this.tempTexture2.getWidth(),
+          this.tempTexture2.getHeight(),
+        ],
+        uDirection: [1, 0],
+      },
+    });
+    // tempTexture3 -> output (Y)
     glRenderer.draw({
       frameBuffer: this.frameBuffer,
       geometry: QUAD,
-      shader: FINIALIZE_SHADER,
+      shader: BLUR_SHADER,
       uniforms: {
-        uTexture: this.tempTexture2,
+        uTexture: this.tempTexture3,
+        uResolution: [
+          this.tempTexture3.getWidth(),
+          this.tempTexture3.getHeight(),
+        ],
+        uDirection: [0, 1],
       },
       state: {
         viewport: handle.bounds,

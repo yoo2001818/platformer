@@ -40,8 +40,8 @@ export class GLFrameBuffer {
       this.framebuffer = renderer.gl.createFramebuffer();
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
       this._set(this.options);
-      renderer.boundFrameBuffer = this;
-      gl.bindFramebuffer(target, this.framebuffer);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      renderer.boundFrameBuffer = null;
     }
     gl.bindFramebuffer(target, this.framebuffer);
   }
