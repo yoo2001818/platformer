@@ -114,8 +114,14 @@ export class GLFrameBuffer {
         inst.texture,
         0,
       );
-    } else {
-      // TODO: RenderBuffer support
+    } else if (attachment instanceof GLRenderBuffer) {
+      attachment.bind(renderer);
+      gl.framebufferRenderbuffer(
+        gl.FRAMEBUFFER,
+        fbTarget,
+        gl.RENDERBUFFER,
+        attachment.renderBuffer,
+      );
     }
   }
 

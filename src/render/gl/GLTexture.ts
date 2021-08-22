@@ -29,6 +29,7 @@ export interface GLTextureFormat {
   width?: number;
   height?: number;
   mipmap?: boolean;
+  // TODO: This should be derived from "internalFormat", even for WebGL1
   format?:
     | 'rgba'
     | 'rgb'

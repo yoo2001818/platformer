@@ -104,6 +104,7 @@ export const WEBGL2_TEXTURE_FORMAT_MAP = {
   depthComponent16: 0x81A5,
   depthComponent24: 0x81A6,
   depthComponent32f: 0x8CAC,
+  stencilIndex8: 0x8D48,
   depth24stencil8: 0x88F0,
   depth32fstencil8: 0x8CAD,
   r8: 0x8229,

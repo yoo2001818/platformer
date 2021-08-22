@@ -5,6 +5,7 @@ import {GLElementArrayBuffer} from './GLElementArrayBuffer';
 import {GLVertexArray} from './GLVertexArray';
 import {GLShader} from './GLShader';
 import {GLFrameBuffer} from './GLFrameBuffer';
+import {GLRenderBuffer} from './GLRenderBuffer';
 import {DrawOptions, GLStateOptions} from './types';
 import {GLCapabilities} from './GLCapabilities';
 import {GLStateManager} from './GLStateManager';
@@ -17,6 +18,7 @@ export class GLRenderer {
   stateManager: GLStateManager;
   capabilities: GLCapabilities;
   boundFrameBuffer: GLFrameBuffer | null = null;
+  boundRenderBuffer: GLRenderBuffer | null = null;
   boundArrayBuffer: GLArrayBuffer | null = null;
   boundElementArrayBuffer: GLElementArrayBuffer | null = null;
   boundVertexArray: GLVertexArray | null = null;
