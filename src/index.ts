@@ -1,4 +1,4 @@
-import './sample/axe';
+import './sample/outdoor';
 
 /*
 document.body.style.margin = '0';

@@ -12,6 +12,7 @@ export interface StandardMaterialOptions {
   metalic: number | GLTexture;
   roughness: number | GLTexture;
   normal?: GLTexture | null;
+  texScale?: [number, number] | null;
 }
 
 const ALBEDO_BIT = 1;
@@ -89,6 +90,7 @@ export class StandardMaterial implements Material {
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
     const uniformOptions: {[key: string]: any;} = {
+      uTexScale: options.texScale ?? [1, 1],
       uMaterial: {...options},
     };
 
@@ -129,6 +131,7 @@ export class StandardMaterial implements Material {
         uniform mat4 uView;
         uniform mat4 uProjection;
         uniform mat4 uModel;
+        uniform vec2 uTexScale;
 
         varying vec3 vPosition;
         varying vec3 vNormal;
@@ -143,7 +146,7 @@ export class StandardMaterial implements Material {
           vPosition = pos.xyz;
           // TODO Normal 3x3 matrix
           vNormal = (uModel * vec4(aNormal, 0.0)).xyz;
-          vTexCoord = aTexCoord;
+          vTexCoord = aTexCoord * uTexScale;
           #ifdef USE_NORMAL_MAP
           vTangent = vec4((uModel * vec4(aTangent.xyz, 0.0)).xyz, aTangent.w);
           #endif

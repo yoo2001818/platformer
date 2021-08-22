@@ -22,10 +22,10 @@ import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {getHDRType} from '../render/hdr/utils';
 import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
-import {PointLight} from '../render/light/PointLight';
 import {EnvironmentLight} from '../render/light/EnvironmentLight';
 import {DirectionalShadowLight} from '../render/light/DirectionalShadowLight';
-import { calcNormals } from '../geom/calcNormals';
+import {calcNormals} from '../geom/calcNormals';
+import {GLTextureImage} from '../render/gl/GLTextureImage';
 
 const store = new EntityStore();
 
@@ -81,8 +81,8 @@ function main() {
     camera: new Camera({
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
-      far: 100,
-      near: 0.1,
+      far: 50,
+      near: 1,
     }),
   });
 
@@ -99,10 +99,10 @@ function main() {
   // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
   const axeModel = parseObj(require('./models/axe/axe.obj').default);
   const axeMat = new StandardMaterial({
-    albedo: new GLTexture2D({source: createImage(require('./models/axe/albedo.png'))}),
-    metalic: new GLTexture2D({source: createImage(require('./models/axe/metalic.png'))}),
-    roughness: new GLTexture2D({source: createImage(require('./models/axe/roughness.png'))}),
-    normal: new GLTexture2D({source: createImage(require('./models/axe/normal.png'))}),
+    albedo: new GLTextureImage(require('./models/axe/albedo.png')),
+    metalic: new GLTextureImage(require('./models/axe/metalic.png')),
+    roughness: new GLTextureImage(require('./models/axe/roughness.png')),
+    normal: new GLTextureImage(require('./models/axe/normal.png')),
   });
 
   store.create({
@@ -135,7 +135,6 @@ function main() {
     ),
   });
 
-  /*
   store.create({
     name: 'skybox',
     transform: new Transform(),
@@ -147,12 +146,11 @@ function main() {
       new Geometry(quad()),
     ),
   });
-  */
 
   store.create({
     name: 'envLight',
     transform: new Transform(),
-    light: new EnvironmentLight({texture: pbrTexture, power: 0}),
+    light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
 
   store.create({
