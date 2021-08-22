@@ -1,7 +1,5 @@
 import {Component} from '../core/components';
 import {Entity} from '../core/Entity';
-import {EntityChunk} from '../core/EntityChunk';
-import {EntityGroup} from '../core/EntityGroup';
 import {EntityStore} from '../core/EntityStore';
 
 // TODO: Change this to accept EntityHandle
@@ -9,7 +7,7 @@ export class ParentComponent
   implements Component<Entity | null, Entity | null> {
 
   index: number | null = null;
-  childrenMap: Map<number | null, EntityGroup[]> = new Map();
+  childrenMap: Map<number | null, Entity[]> = new Map();
 
   _validateHash(
     entity: Entity,
@@ -41,12 +39,16 @@ export class ParentComponent
   }
 
   set(entity: Entity, value: Entity): void {
+    const prev = entity._getRawMap<Entity | null>(this, null);
     this._validateHash(
       entity,
-      entity._getRawMap(this, null),
+      prev,
       value,
     );
+    this._removeChildren(prev?.handle.id ?? null, entity);
     entity._setRawMap(this, value);
+    // TODO: Entity without parent won't be populated in the index
+    this._setChildren(value?.handle.id ?? null, entity);
   }
 
   delete(entity: Entity): void {
@@ -59,47 +61,37 @@ export class ParentComponent
   }
 
   getHashCode(value: Entity | null): number {
-    if (value == null) {
-      return -1;
+    return value == null ? 0 : 1;
+  }
+
+  _removeChildren(id: number | null, entity: Entity) {
+    const entityList = this.childrenMap.get(id);
+    if (entityList != null) {
+      // TODO It could be faster..
+      this.childrenMap.set(id, entityList.filter((v) => v !== entity));
     }
-    return value.handle.id;
   }
 
-  initChunk(chunk: EntityChunk, value: Entity | null): void {
-    chunk._setRawMap(this, value);
-  }
-
-  getChunk(chunk: EntityChunk, offset: number): Entity | null {
-    return chunk._getRawMap(this);
-  }
-
-  setChunk(chunk: EntityChunk, offset: number, value: Entity | null): void {
-    // Do nothing. :/
-  }
-
-  initGroup(group: EntityGroup, value: Entity | null): void {
-    const id = value?.handle.id ?? null;
-    let groupList = this.childrenMap.get(id);
-    if (groupList == null) {
-      groupList = [];
-      this.childrenMap.set(id, groupList);
+  _setChildren(id: number | null, entity: Entity) {
+    let entityList = this.childrenMap.get(id);
+    if (entityList == null) {
+      entityList = [];
+      this.childrenMap.set(id, entityList);
     }
-    groupList.push(group);
+    entityList.push(entity);
   }
 
-  getChildren(parent: Entity | null): EntityGroup[] {
+  getChildren(parent: Entity | null): Entity[] {
     const id = parent?.handle.id ?? null;
-    const groupList = this.childrenMap.get(id);
-    return groupList ?? [];
+    const entityList = this.childrenMap.get(id);
+    return entityList ?? [];
   }
 
   forEachChildren(
     parent: Entity | null,
     callback: (entity: Entity) => void,
   ): void {
-    this.getChildren(parent).forEach((group) => {
-      group.forEach(callback);
-    });
+    this.getChildren(parent).forEach(callback);
   }
 
 }

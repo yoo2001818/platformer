@@ -128,12 +128,36 @@ function main() {
     name: 'cone2',
     transform: new Transform()
       .translate([
-        150,
+        100,
         0,
         0,
       ]),
     mesh: coneMesh,
     parent: cone1,
+  });
+
+  store.create({
+    name: 'cone3',
+    transform: new Transform()
+      .translate([
+        0,
+        100,
+        0,
+      ]),
+    mesh: coneMesh,
+    parent: cone2,
+  });
+
+  store.create({
+    name: 'cone3',
+    transform: new Transform()
+      .translate([
+        0,
+        -100,
+        0,
+      ]),
+    mesh: coneMesh,
+    parent: cone2,
   });
 
   store.create({
@@ -203,8 +227,8 @@ function main() {
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
     orbitController.update(delta);
     renderer.render();
-    cone1.get<Transform>('transform')!
-      .rotateY(delta * 0.004);
+    cone1.get<Transform>('transform')!.rotateY(delta * 0.004);
+    cone2.get<Transform>('transform')!.rotateZ(delta * 0.003);
 
     requestAnimationFrame(update);
   }

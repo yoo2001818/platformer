@@ -1,5 +1,6 @@
 import {mat4, vec3, quat} from 'gl-matrix';
-import { Entity } from '../core/Entity';
+
+import {Entity} from '../core/Entity';
 
 export class Transform {
   position: Float32Array;
