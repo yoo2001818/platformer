@@ -25,6 +25,7 @@ import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
 import {PointLight} from '../render/light/PointLight';
 import {EnvironmentLight} from '../render/light/EnvironmentLight';
 import {DirectionalShadowLight} from '../render/light/DirectionalShadowLight';
+import { calcNormals } from '../geom/calcNormals';
 
 const store = new EntityStore();
 
@@ -107,13 +108,34 @@ function main() {
   store.create({
     name: 'axe',
     transform: new Transform()
-      .setScale([0.01, 0.01, 0.01]),
+      .setScale([0.01, 0.01, 0.01])
+      .rotateX(Math.PI / 2)
+      .rotateZ(Math.PI / 2),
     mesh: new Mesh(
       axeMat,
       new Geometry(calcTangents(bakeChannelGeom(axeModel[0].geometry))),
     ),
   });
 
+  store.create({
+    name: 'floor',
+    transform: new Transform()
+      .rotateX(-Math.PI / 2)
+      .setScale([10, 10, 10])
+      .translate([0, -0.5, 0]),
+    mesh: new Mesh(
+      new StandardMaterial({
+        albedo: new GLTexture2D({source: createImage(require('./textures/wood49.albedo.jpg'))}),
+        metalic: 0,
+        roughness: new GLTexture2D({source: createImage(require('./textures/wood49.roughness.jpg'))}),
+        normal: new GLTexture2D({source: createImage(require('./textures/wood49.normal.jpg'))}),
+        // ao: new GLTexture2D({source: createImage(require('./textures/ground48.ao.jpg'))}),
+      }),
+      new Geometry(calcTangents(calcNormals(quad()))),
+    ),
+  });
+
+  /*
   store.create({
     name: 'skybox',
     transform: new Transform(),
@@ -125,11 +147,23 @@ function main() {
       new Geometry(quad()),
     ),
   });
+  */
 
   store.create({
     name: 'envLight',
     transform: new Transform(),
-    light: new EnvironmentLight({texture: pbrTexture, power: 1}),
+    light: new EnvironmentLight({texture: pbrTexture, power: 0}),
+  });
+
+  store.create({
+    name: 'directionalLight',
+    transform: new Transform()
+      .rotateY(90 * Math.PI / 180)
+      .rotateX(-40 * Math.PI / 180),
+    light: new DirectionalShadowLight({
+      color: '#ffffff',
+      power: 30,
+    }),
   });
 
   const orbitController = new OrbitCameraController(

@@ -89,7 +89,7 @@ export class StandardMaterial implements Material {
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
     const uniformOptions: {[key: string]: any;} = {
-      uMaterial: options,
+      uMaterial: {...options},
     };
 
     // Retrieve shader feature bits
@@ -104,10 +104,12 @@ export class StandardMaterial implements Material {
     }
     if (options.roughness instanceof GLTexture) {
       featureBits |= ROUGHNESS_BIT;
+      uniformOptions.uMaterial.roughness = 0;
       uniformOptions.uRoughnessMap = options.roughness;
     }
     if (options.metalic instanceof GLTexture) {
       featureBits |= METALIC_BIT;
+      uniformOptions.uMaterial.metalic = 0;
       uniformOptions.uMetalicMap = options.metalic;
     }
 
@@ -211,7 +213,7 @@ export class StandardMaterial implements Material {
           #ifdef USE_METALIC_MAP
             mInfo.metalic = texture2D(uMetalicMap, vTexCoord).r;
           #else
-            mInfo.metalic = uMaterial.roughness;
+            mInfo.metalic = uMaterial.metalic;
           #endif
         } 
       `,
