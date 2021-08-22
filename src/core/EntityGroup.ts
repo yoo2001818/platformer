@@ -6,10 +6,18 @@ export class EntityGroup {
   chunks: EntityChunk[];
   availableChunks: EntityChunk[];
 
-  constructor(hashCodes: number[]) {
+  constructor(hashCodes: number[], protoEntity: Entity) {
     this.hashCodes = hashCodes;
     this.chunks = [];
     this.availableChunks = [];
+    this.init(protoEntity);
+  }
+
+  init(protoEntity: Entity): void {
+    protoEntity.store.getComponents().forEach((component) => {
+      const value = protoEntity.get(component);
+      component.initGroup?.(this, value);
+    });
   }
 
   allocate(entity: Entity): EntityChunk {

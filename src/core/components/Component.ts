@@ -1,5 +1,6 @@
 import type {Entity} from '../Entity';
 import type {EntityChunk} from '../EntityChunk';
+import type {EntityGroup} from '../EntityGroup';
 import type {EntityStore} from '../EntityStore';
 
 export interface Component<
@@ -19,4 +20,6 @@ export interface Component<
   initChunk?(chunk: EntityChunk, value: TWriteValue | null): void;
   getChunk?(chunk: EntityChunk, offset: number): TReadValue | null;
   setChunk?(chunk: EntityChunk, offset: number, value: TWriteValue): void;
+
+  initGroup?(group: EntityGroup, value: TWriteValue | null): void;
 }

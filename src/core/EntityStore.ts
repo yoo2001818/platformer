@@ -114,10 +114,10 @@ export class EntityStore {
       if (group != null) {
         return group;
       }
-      const newGroup = new EntityGroup(hashCodes);
+      const newGroup = new EntityGroup(hashCodes, entity);
       matchedGroups.push(newGroup);
     }
-    const newGroup = new EntityGroup(hashCodes);
+    const newGroup = new EntityGroup(hashCodes, entity);
     this.groups.set(hashCode, [newGroup]);
     return newGroup;
   }
