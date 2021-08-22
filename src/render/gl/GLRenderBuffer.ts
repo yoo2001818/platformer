@@ -82,6 +82,7 @@ export class GLRenderBuffer {
           options.height,
         );
       }
+      this.renderBuffer = renderBuffer;
       renderer.boundRenderBuffer = this;
     }
     if (renderer.boundRenderBuffer !== this) {

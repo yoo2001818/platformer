@@ -1,4 +1,5 @@
 import {GLFrameBuffer} from './gl/GLFrameBuffer';
+import {GLRenderBuffer} from './gl/GLRenderBuffer';
 import {GLTexture2D} from './gl/GLTexture2D';
 import {Renderer} from './Renderer';
 
@@ -8,7 +9,7 @@ export interface ShadowMapHandle {
 }
 
 export class ShadowMapManager {
-  depthMap: GLTexture2D;
+  depthMap: GLRenderBuffer;
   texture: GLTexture2D;
   frameBuffer: GLFrameBuffer;
   width: number;
@@ -16,17 +17,10 @@ export class ShadowMapManager {
   id: number;
 
   constructor(renderer: Renderer) {
-    this.depthMap = new GLTexture2D({
-      format: 'depth',
-      type: 'unsignedInt',
-      // About 16MB
+    this.depthMap = new GLRenderBuffer({
       width: 2048,
       height: 2048,
-      magFilter: 'linear',
-      minFilter: 'linear',
-      wrapS: 'clampToEdge',
-      wrapT: 'clampToEdge',
-      mipmap: false,
+      format: 'depthComponent24',
     });
     this.texture = new GLTexture2D({
       format: 'rgba',
