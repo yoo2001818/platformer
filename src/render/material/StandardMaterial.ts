@@ -11,11 +11,13 @@ export interface StandardMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
   metalic: number | GLTexture;
   roughness: number | GLTexture;
+  normal?: GLTexture | null;
 }
 
 const ALBEDO_BIT = 1;
 const METALIC_BIT = 2;
 const ROUGHNESS_BIT = 4;
+const NORMAL_BIT = 8;
 
 export class StandardMaterial implements Material {
   id: number;
@@ -96,15 +98,23 @@ export class StandardMaterial implements Material {
       featureBits |= ALBEDO_BIT;
       uniformOptions.uAlbedoMap = options.albedo;
     }
+    if (options.normal instanceof GLTexture) {
+      featureBits |= NORMAL_BIT;
+      uniformOptions.uNormalMap = options.normal;
+    }
 
     const shader = pipeline.getDeferredShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
+        ${featureBits & NORMAL_BIT ? '#define USE_NORMAL_MAP' : ''}
         #version 100
         precision highp float;
 
         attribute vec3 aPosition;
         attribute vec3 aNormal;
         attribute vec2 aTexCoord;
+        #ifdef USE_NORMAL_MAP
+        attribute vec4 aTangent;
+        #endif
 
         uniform mat4 uView;
         uniform mat4 uProjection;
@@ -113,6 +123,9 @@ export class StandardMaterial implements Material {
         varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec2 vTexCoord;
+        #ifdef USE_NORMAL_MAP
+        varying vec4 vTangent;
+        #endif
 
         void main() {
           vec4 pos = uModel * vec4(aPosition, 1.0);
@@ -121,12 +134,16 @@ export class StandardMaterial implements Material {
           // TODO Normal 3x3 matrix
           vNormal = (uModel * vec4(aNormal, 0.0)).xyz;
           vTexCoord = aTexCoord;
+          #ifdef USE_NORMAL_MAP
+          vTangent = vec4((uModel * vec4(aTangent.xyz, 0.0)).xyz, aTangent.w);
+          #endif
         } 
       `,
       frag: /* glsl */`
         ${featureBits & ALBEDO_BIT ? '#define USE_ALBEDO_MAP' : ''}
         ${featureBits & METALIC_BIT ? '#define USE_METALIC_MAP' : ''}
         ${featureBits & ROUGHNESS_BIT ? '#define USE_ROUGHNESS_MAP' : ''}
+        ${featureBits & NORMAL_BIT ? '#define USE_NORMAL_MAP' : ''}
 
         struct Material {
           vec3 albedo;
@@ -137,10 +154,16 @@ export class StandardMaterial implements Material {
         varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec2 vTexCoord;
+        #ifdef USE_NORMAL_MAP
+        varying vec4 vTangent;
+        #endif
 
         uniform Material uMaterial;
         #ifdef USE_ALBEDO_MAP
         uniform sampler2D uAlbedoMap;
+        #endif
+        #ifdef USE_NORMAL_MAP
+        uniform sampler2D uNormalMap;
         #endif
 
         void material(out MaterialInfo mInfo) {
@@ -152,7 +175,18 @@ export class StandardMaterial implements Material {
           // Tone mapping
           mInfo.albedo = pow(mInfo.albedo, vec3(2.2));
 
+          #ifdef USE_NORMAL_MAP
+          vec3 N = normalize(vNormal);
+          vec3 T = normalize(vTangent.xyz);
+          T = normalize(T - dot(T, N) * N);
+          vec3 B = cross(T, N) * vTangent.w;
+          mat3 tangent = mat3(T, B, N);
+          vec3 normal = texture2D(uNormalMap, vTexCoord).xyz * 2.0 - 1.0;
+          normal.y = -normal.y;
+          mInfo.normal = tangent * normalize(normal);
+          #else
           mInfo.normal = normalize(vNormal);
+          #endif
           mInfo.position = vPosition;
 
           mInfo.roughness = uMaterial.roughness;

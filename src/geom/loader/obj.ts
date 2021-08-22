@@ -19,7 +19,7 @@ export function parseObj(input: string): ObjEntity[] {
     if (line[0] === '#') {
       return;
     }
-    const words = line.split(/\s+/g);
+    const words = line.trim().split(/\s+/g);
     // o -> Object
     // v -> aPosition
     // vt -> aTexCoord

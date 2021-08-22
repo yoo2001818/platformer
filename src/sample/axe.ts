@@ -101,6 +101,7 @@ function main() {
     albedo: new GLTexture2D({source: createImage(require('./models/axe/albedo.png'))}),
     metalic: 0,
     roughness: 0.12,
+    normal: new GLTexture2D({source: createImage(require('./models/axe/normal.png'))}),
   });
 
   store.create({
