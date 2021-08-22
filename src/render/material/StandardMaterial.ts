@@ -6,6 +6,7 @@ import {Renderer} from '../Renderer';
 import {createId} from '../utils/createId';
 import {GLTexture} from '../gl/GLTexture';
 import {PipelineShadowOptions} from '../pipeline/Pipeline';
+import {GLArrayBuffer} from '../gl/GLArrayBuffer';
 
 export interface StandardMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
@@ -19,14 +20,17 @@ const ALBEDO_BIT = 1;
 const METALIC_BIT = 2;
 const ROUGHNESS_BIT = 4;
 const NORMAL_BIT = 8;
+const INSTANCING_BIT = 16;
 
 export class StandardMaterial implements Material {
   id: number;
   mode: 'deferred' = 'deferred';
   options: StandardMaterialOptions;
+  instancedBuffer: GLArrayBuffer;
   constructor(options: StandardMaterialOptions) {
     this.id = createId();
     this.options = options;
+    this.instancedBuffer = new GLArrayBuffer(null, 'stream');
   }
 
   renderShadow(
@@ -84,7 +88,7 @@ export class StandardMaterial implements Material {
 
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void {
     const {options} = this;
-    const {pipeline, entityStore} = renderer;
+    const {pipeline, entityStore, glRenderer} = renderer;
 
     // Prepare shader uniforms
     const transformComp =
@@ -115,9 +119,12 @@ export class StandardMaterial implements Material {
       uniformOptions.uMetalicMap = options.metalic;
     }
 
+    featureBits |= INSTANCING_BIT;
+
     const shader = pipeline.getDeferredShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
         ${featureBits & NORMAL_BIT ? '#define USE_NORMAL_MAP' : ''}
+        ${featureBits & INSTANCING_BIT ? '#define USE_INSTANCING' : ''}
         #version 100
         precision highp float;
 
@@ -127,10 +134,15 @@ export class StandardMaterial implements Material {
         #ifdef USE_NORMAL_MAP
         attribute vec4 aTangent;
         #endif
+        #ifdef USE_INSTANCING
+        attribute mat4 aModel;
+        #endif
 
         uniform mat4 uView;
         uniform mat4 uProjection;
+        #ifndef USE_INSTANCING
         uniform mat4 uModel;
+        #endif
         uniform vec2 uTexScale;
 
         varying vec3 vPosition;
@@ -141,14 +153,19 @@ export class StandardMaterial implements Material {
         #endif
 
         void main() {
-          vec4 pos = uModel * vec4(aPosition, 1.0);
+          #ifdef USE_INSTANCING
+          mat4 model = aModel;
+          #else
+          mat4 model = uModel;
+          #endif
+          vec4 pos = model * vec4(aPosition, 1.0);
           gl_Position = uProjection * uView * pos;
           vPosition = pos.xyz;
           // TODO Normal 3x3 matrix
-          vNormal = (uModel * vec4(aNormal, 0.0)).xyz;
+          vNormal = (model * vec4(aNormal, 0.0)).xyz;
           vTexCoord = aTexCoord * uTexScale;
           #ifdef USE_NORMAL_MAP
-          vTangent = vec4((uModel * vec4(aTangent.xyz, 0.0)).xyz, aTangent.w);
+          vTangent = vec4((model * vec4(aTangent.xyz, 0.0)).xyz, aTangent.w);
           #endif
         } 
       `,
@@ -222,19 +239,27 @@ export class StandardMaterial implements Material {
       `,
     }));
 
+    const buffer = new Float32Array(chunk.size * 16);
+    let index = 0;
     chunk.forEach((entity) => {
       const transform = entity.get(transformComp);
-      if (transform == null) {
-        return;
-      }
-      pipeline.drawDeferred({
-        shader,
-        geometry,
-        uniforms: {
-          ...uniformOptions,
-          uModel: transform.getMatrix(),
-        },
-      });
+      buffer.set(transform!.getMatrix(), index * 16);
+      index += 1;
+    });
+    // Pass instanced buffer to GPU
+    this.instancedBuffer.set(buffer);
+    // Bind the shader and bind aModel attribute
+    shader.bind(glRenderer);
+    geometry.bind(glRenderer, shader);
+    shader.setAttribute('aModel', {
+      buffer: this.instancedBuffer,
+      divisor: 1,
+    });
+    pipeline.drawDeferred({
+      shader,
+      geometry,
+      uniforms: uniformOptions,
+      primCount: chunk.size,
     });
   }
 

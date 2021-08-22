@@ -24,36 +24,50 @@ function compileShader(
   return shader;
 }
 
-function getTypeSize(gl: WebGLRenderingContext, type: number): number {
+interface TypeData {
+  size: number;
+  stride: number;
+  numVectors: number;
+}
+
+function getTypeData(gl: WebGLRenderingContext, type: number): TypeData {
   switch (type) {
     case gl.FLOAT:
-      return 1;
+      return {size: 1, stride: 4, numVectors: 1};
     case gl.FLOAT_VEC2:
+      return {size: 2, stride: 8, numVectors: 1};
     case gl.INT_VEC2:
+      return {size: 2, stride: 8, numVectors: 1};
     case gl.BOOL_VEC2:
-      return 2;
+      return {size: 2, stride: 2, numVectors: 1};
     case gl.FLOAT_VEC3:
+      return {size: 3, stride: 12, numVectors: 1};
     case gl.INT_VEC3:
+      return {size: 3, stride: 12, numVectors: 1};
     case gl.BOOL_VEC3:
-      return 3;
+      return {size: 3, stride: 3, numVectors: 1};
     case gl.FLOAT_VEC4:
+      return {size: 4, stride: 16, numVectors: 1};
     case gl.INT_VEC4:
+      return {size: 4, stride: 16, numVectors: 1};
     case gl.BOOL_VEC4:
-      return 4;
+      return {size: 4, stride: 4, numVectors: 1};
     case gl.FLOAT_MAT2:
-      return 4;
+      return {size: 2, stride: 8, numVectors: 2};
     case gl.FLOAT_MAT3:
-      return 9;
+      return {size: 3, stride: 12, numVectors: 3};
     case gl.FLOAT_MAT4:
-      return 16;
+      return {size: 4, stride: 16, numVectors: 4};
     case gl.BOOL:
     case gl.BYTE:
     case gl.UNSIGNED_BYTE:
+      return {size: 1, stride: 1, numVectors: 1};
     case gl.SHORT:
     case gl.UNSIGNED_SHORT:
+      return {size: 1, stride: 2, numVectors: 1};
     case gl.INT:
     case gl.UNSIGNED_INT:
-      return 1;
+      return {size: 1, stride: 4, numVectors: 1};
     default:
       throw new Error('Unsupported type');
   }
@@ -172,15 +186,21 @@ export class GLShader {
     if (attribute == null) {
       return;
     }
+    const typeData = getTypeData(gl, attribute.type);
+    let setOptions: AttributeOptions;
     if (options instanceof GLArrayBuffer) {
-      renderer.attributeManager.set(attribute.location, {
-        buffer: options,
-        size: getTypeSize(gl, attribute.type),
-      });
+      setOptions = {buffer: options};
     } else {
-      renderer.attributeManager.set(attribute.location, {
-        ...options,
-        size: getTypeSize(gl, attribute.type),
+      setOptions = options;
+    }
+    const stride = setOptions.stride ?? typeData.stride * typeData.numVectors;
+    const offset = setOptions.offset ?? 0;
+    for (let i = 0; i < typeData.numVectors; i += 1) {
+      renderer.attributeManager.set(attribute.location + i, {
+        ...setOptions,
+        size: typeData.size,
+        offset: offset + typeData.stride * i,
+        stride,
       });
     }
   }
