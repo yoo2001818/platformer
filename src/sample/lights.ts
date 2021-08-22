@@ -83,8 +83,8 @@ function main() {
     camera: new Camera({
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
-      far: 50,
-      near: 2,
+      far: 100,
+      near: 0.1,
     }),
   });
 
@@ -181,7 +181,6 @@ function main() {
     }),
   });
 
-  /*
   for (let i = 0; i < 20; i += 1) {
     store.create({
       name: 'light',
@@ -199,18 +198,6 @@ function main() {
       }),
     });
   }
-
-  store.create({
-    name: 'light',
-    transform: new Transform().translate([-5, 5, -5]),
-    light: new PointLight({
-      color: '#ff0000',
-      power: 600,
-      radius: 1,
-      range: 8,
-    }),
-  });
-  */
 
   const orbitController = new OrbitCameraController(
     canvas,

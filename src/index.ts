@@ -1,4 +1,4 @@
-import './sample/lights';
+import './sample/axe';
 
 /*
 document.body.style.margin = '0';
