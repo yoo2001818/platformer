@@ -55,7 +55,7 @@ export class ShaderMaterial implements Material {
         geometry,
         uniforms: {
           ...options.uniforms,
-          uModel: transform.getMatrix(),
+          uModel: transform.getMatrixWorld(),
         },
       });
     });
@@ -93,7 +93,7 @@ export class ShaderMaterial implements Material {
       }
       // Set uniforms and draw the element
       this.glShader.setUniforms({
-        uModel: transform.getMatrix(),
+        uModel: transform.getMatrixWorld(),
       });
       geometry.draw();
     });

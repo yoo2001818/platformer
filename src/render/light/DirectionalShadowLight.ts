@@ -143,7 +143,7 @@ export class DirectionalShadowLight implements Light {
     entities.forEach((entity) => {
       const light = entity.get<DirectionalShadowLight>('light')!;
       const transform = entity.get<Transform>('transform')!;
-      const lightModel = transform.getMatrix();
+      const lightModel = transform.getMatrixWorld();
       const lightView = mat4.create();
       mat4.invert(lightView, lightModel);
 

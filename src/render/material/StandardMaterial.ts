@@ -87,7 +87,7 @@ export class StandardMaterial implements Material {
     let index = 0;
     chunk.forEach((entity) => {
       const transform = entity.get(transformComp);
-      buffer.set(transform!.getMatrix(), index * 16);
+      buffer.set(transform!.getMatrixWorld(), index * 16);
       index += 1;
     });
     // Pass instanced buffer to GPU
@@ -265,7 +265,7 @@ export class StandardMaterial implements Material {
     let index = 0;
     chunk.forEach((entity) => {
       const transform = entity.get(transformComp);
-      buffer.set(transform!.getMatrix(), index * 16);
+      buffer.set(transform!.getMatrixWorld(), index * 16);
       index += 1;
     });
     // Pass instanced buffer to GPU

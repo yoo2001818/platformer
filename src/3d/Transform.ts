@@ -1,4 +1,5 @@
 import {mat4, vec3, quat} from 'gl-matrix';
+import { Entity } from '../core/Entity';
 
 export class Transform {
   position: Float32Array;
@@ -7,14 +8,21 @@ export class Transform {
   matrix: Float32Array;
   _matrixVersion: number;
   _componentVersion: number;
+  worldMatrix: Float32Array;
+  _worldVersion: number;
+  _parentId: number;
+  entity: Entity | null = null;
 
   constructor() {
     this.position = new Float32Array([0, 0, 0]);
     this.scale = new Float32Array([1, 1, 1]);
     this.rotation = quat.create() as Float32Array;
     this.matrix = mat4.create() as Float32Array;
+    this.worldMatrix = mat4.create() as Float32Array;
     this._matrixVersion = 0;
     this._componentVersion = 0;
+    this._worldVersion = 0;
+    this._parentId = -1;
   }
 
   _updateComponents(): void {
@@ -38,6 +46,40 @@ export class Transform {
     }
   }
 
+  _updateWorldMatrix(): void {
+    this._updateMatrix();
+    const parent = this.entity?.get<Entity | null>('parent');
+    if (parent != null) {
+      const parentTransform = parent.get<Transform>('transform')!;
+      const parentMat = parentTransform.getMatrixWorld();
+      const targetId = parent.handle.id;
+      const targetVersion = this._matrixVersion + parentTransform._worldVersion;
+      if (
+        this._parentId !== targetId ||
+        this._worldVersion !== targetVersion
+      ) {
+        mat4.mul(this.worldMatrix, parentMat, this.matrix);
+        this._parentId = targetId;
+        this._worldVersion = targetVersion;
+      }
+    } else if (
+      this._parentId !== -1 ||
+      this._worldVersion !== this._matrixVersion
+    ) {
+      mat4.copy(this.worldMatrix, this.matrix);
+      this._parentId = -1;
+      this._worldVersion = this._matrixVersion;
+    }
+  }
+
+  register(entity: Entity): void {
+    this.entity = entity;
+  }
+
+  unregister(): void {
+    this.entity = null;
+  }
+
   getPosition(): Float32Array {
     this._updateComponents();
     return this.position;
@@ -53,9 +95,14 @@ export class Transform {
     return this.rotation;
   }
 
-  getMatrix(): Float32Array {
+  getMatrixLocal(): Float32Array {
     this._updateMatrix();
     return this.matrix;
+  }
+
+  getMatrixWorld(): Float32Array {
+    this._updateWorldMatrix();
+    return this.worldMatrix;
   }
 
   markChanged(): void {

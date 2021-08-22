@@ -51,7 +51,7 @@ export class Camera {
 
   getView(entity: Entity): Float32Array {
     const transform = entity.get<Transform>('transform')!;
-    mat4.invert(this.view, transform.getMatrix());
+    mat4.invert(this.view, transform.getMatrixWorld());
     return this.view;
   }
 
@@ -62,6 +62,6 @@ export class Camera {
 
   getInverseView(entity: Entity): Float32Array {
     const transform = entity.get<Transform>('transform')!;
-    return transform.getMatrix();
+    return transform.getMatrixWorld();
   }
 }
