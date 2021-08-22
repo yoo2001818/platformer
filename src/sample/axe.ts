@@ -99,8 +99,8 @@ function main() {
   const axeModel = parseObj(require('./models/axe/axe.obj').default);
   const axeMat = new StandardMaterial({
     albedo: new GLTexture2D({source: createImage(require('./models/axe/albedo.png'))}),
-    metalic: 0,
-    roughness: 0.12,
+    metalic: new GLTexture2D({source: createImage(require('./models/axe/metalic.png'))}),
+    roughness: new GLTexture2D({source: createImage(require('./models/axe/roughness.png'))}),
     normal: new GLTexture2D({source: createImage(require('./models/axe/normal.png'))}),
   });
 

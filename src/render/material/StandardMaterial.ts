@@ -102,6 +102,14 @@ export class StandardMaterial implements Material {
       featureBits |= NORMAL_BIT;
       uniformOptions.uNormalMap = options.normal;
     }
+    if (options.roughness instanceof GLTexture) {
+      featureBits |= ROUGHNESS_BIT;
+      uniformOptions.uRoughnessMap = options.roughness;
+    }
+    if (options.metalic instanceof GLTexture) {
+      featureBits |= METALIC_BIT;
+      uniformOptions.uMetalicMap = options.metalic;
+    }
 
     const shader = pipeline.getDeferredShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
@@ -162,6 +170,12 @@ export class StandardMaterial implements Material {
         #ifdef USE_ALBEDO_MAP
         uniform sampler2D uAlbedoMap;
         #endif
+        #ifdef USE_METALIC_MAP
+        uniform sampler2D uMetalicMap;
+        #endif
+        #ifdef USE_ROUGHNESS_MAP
+        uniform sampler2D uRoughnessMap;
+        #endif
         #ifdef USE_NORMAL_MAP
         uniform sampler2D uNormalMap;
         #endif
@@ -176,21 +190,29 @@ export class StandardMaterial implements Material {
           mInfo.albedo = pow(mInfo.albedo, vec3(2.2));
 
           #ifdef USE_NORMAL_MAP
-          vec3 N = normalize(vNormal);
-          vec3 T = normalize(vTangent.xyz);
-          T = normalize(T - dot(T, N) * N);
-          vec3 B = cross(T, N) * vTangent.w;
-          mat3 tangent = mat3(T, B, N);
-          vec3 normal = texture2D(uNormalMap, vTexCoord).xyz * 2.0 - 1.0;
-          normal.y = -normal.y;
-          mInfo.normal = tangent * normalize(normal);
+            vec3 N = normalize(vNormal);
+            vec3 T = normalize(vTangent.xyz);
+            T = normalize(T - dot(T, N) * N);
+            vec3 B = cross(T, N) * vTangent.w;
+            mat3 tangent = mat3(T, B, N);
+            vec3 normal = texture2D(uNormalMap, vTexCoord).xyz * 2.0 - 1.0;
+            normal.y = -normal.y;
+            mInfo.normal = tangent * normalize(normal);
           #else
-          mInfo.normal = normalize(vNormal);
+            mInfo.normal = normalize(vNormal);
           #endif
           mInfo.position = vPosition;
 
-          mInfo.roughness = uMaterial.roughness;
-          mInfo.metalic = uMaterial.metalic;
+          #ifdef USE_ROUGHNESS_MAP
+            mInfo.roughness = texture2D(uRoughnessMap, vTexCoord).r;
+          #else
+            mInfo.roughness = uMaterial.roughness;
+          #endif
+          #ifdef USE_METALIC_MAP
+            mInfo.metalic = texture2D(uMetalicMap, vTexCoord).r;
+          #else
+            mInfo.metalic = uMaterial.roughness;
+          #endif
         } 
       `,
     }));
