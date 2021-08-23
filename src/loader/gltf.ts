@@ -1,7 +1,11 @@
-import { Geometry } from '../render/Geometry';
+import {Transform} from '../3d/Transform';
+import {Geometry} from '../render/Geometry';
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 import {GLElementArrayBuffer} from '../render/gl/GLElementArrayBuffer';
-import { AttributeOptions } from '../render/gl/types';
+import {AttributeOptions, GLAttributeType} from '../render/gl/types';
+import {Material} from '../render/Material';
+import {StandardMaterial} from '../render/material/StandardMaterial';
+import {Mesh} from '../render/Mesh';
 
 function checkVersion(current: string, target: string): boolean {
   const currentNums = current.split('.').map((v) => parseInt(v, 10));
@@ -18,8 +22,42 @@ function checkVersion(current: string, target: string): boolean {
 }
 
 const BASE64_PREFIX = 'data:application/octet-stream;base64,';
+const COMPONENT_TYPE_MAP: {[key: number]: GLAttributeType;} = {
+  5120: 'byte',
+  5121: 'unsignedByte',
+  5122: 'short',
+  5123: 'unsignedShort',
+  5125: 'unsignedInt',
+  5126: 'float',
+};
+const TYPE_SIZE_MAP: {[key: string]: number;} = {
+  SCALAR: 1,
+  VEC2: 2,
+  VEC3: 3,
+  VEC4: 4,
+  MAT2: 4,
+  MAT3: 9,
+  MAT4: 16,
+};
+const ATTRIBUTE_MAP: {[key: string]: string;} = {
+  POSITION: 'aPosition',
+  NORMAL: 'aNormal',
+  TANGENT: 'aTangent',
+  TEXCOORD_0: 'aTexCoord',
+  TEXCOORD_1: 'aTexCoord2',
+  COLOR_0: 'aColor',
+  JOINTS_0: 'aSkinJoints',
+  WEIGHTS_0: 'aSkinWeights',
+};
+const ATTRIBUTE_NOT_NORMALIZED_MAP: {[key: string]: boolean;} = {
+  JOINTS_0: true,
+};
 
-export function parseGLTF(input: any): void {
+export interface GLTFResult {
+  entities: {[key: string]: any;}[];
+}
+
+export function parseGLTF(input: any): GLTFResult {
   // Since we have no reason to use type definitions for gltf, we're using
   // any for most of the code. However it is possible to change the above 'any'
   // to valid type definition, and it should compile correctly.
@@ -57,13 +95,16 @@ export function parseGLTF(input: any): void {
       throw new Error('Invalid buffer reference');
     }
     return {buffer, byteLength, byteOffset};
-  }) as {buffer: ArrayBuffer, byteLength: number, byteOffset: number}[];
+  }) as {buffer: ArrayBuffer;byteLength: number;byteOffset: number;}[];
 
   // These are populated by the accessors.
   const glArrayBuffers: GLArrayBuffer[] = [];
   const glElementArrayBuffers: GLElementArrayBuffer[] = [];
 
-  const getAttribute = (index: number): AttributeOptions => {
+  const getAttribute = (
+    index: number,
+    normalized: boolean,
+  ): {attribute: AttributeOptions; count: number;} => {
     const accessor = input.accessors[index];
     if (accessor == null) {
       throw new Error('Invalid accessor reference');
@@ -78,28 +119,127 @@ export function parseGLTF(input: any): void {
     }
     let glArrayBuffer = glArrayBuffers[accessor.bufferView];
     if (glArrayBuffer == null) {
-      glArrayBuffer = new GLArrayBuffer(
-        bufferView.buffer.slice(bufferView.byteOffset, bufferView.byteOffset),
-      );
+      glArrayBuffer = new GLArrayBuffer(bufferView.buffer.slice(
+        bufferView.byteOffset,
+        bufferView.byteOffset + bufferView.byteLength,
+      ));
       glArrayBuffers[accessor.bufferView] = glArrayBuffer;
     }
+    const type = COMPONENT_TYPE_MAP[accessor.componentType];
+    const size = TYPE_SIZE_MAP[accessor.type];
     return {
-      buffer: glArrayBuffer,
-      // TODO: Read off of componentType / type
-      size: 4,
-      type: 'short',
-      offset: accessor.byteOffset,
+      attribute: {
+        buffer: glArrayBuffer,
+        size,
+        type,
+        offset: accessor.byteOffset ?? 0,
+        normalized: false,
+      },
+      count: accessor.count,
     };
   };
+  const getIndices = (index: number): GLElementArrayBuffer => {
+    const accessor = input.accessors[index];
+    if (accessor == null) {
+      throw new Error('Invalid accessor reference');
+    }
+    if (accessor.sparse != null) {
+      // FIXME
+      throw new Error('Sparse accessor is not supported yet');
+    }
+    const bufferView = bufferViews[accessor.bufferView];
+    if (bufferView == null) {
+      throw new Error('Invalid bufferView reference');
+    }
+    const byteOffset = accessor.byteOffset ?? 0;
+    let glElementArrayBuffer = glElementArrayBuffers[accessor.bufferView];
+    if (glElementArrayBuffer == null) {
+      const sliced =
+        bufferView.buffer.slice(
+          bufferView.byteOffset + byteOffset,
+          bufferView.byteOffset + bufferView.byteLength - byteOffset,
+        );
+      let array;
+      switch (COMPONENT_TYPE_MAP[accessor.componentType]) {
+        case 'unsignedByte':
+          array = new Uint8Array(sliced);
+          break;
+        case 'unsignedShort':
+          array = new Uint16Array(sliced);
+          break;
+        case 'unsignedInt':
+          array = new Uint32Array(sliced);
+          break;
+        default:
+      }
+      glElementArrayBuffer = new GLElementArrayBuffer(array);
+      glElementArrayBuffers[accessor.bufferView] = glElementArrayBuffer;
+    }
+    return glElementArrayBuffer;
+  };
 
-  const meshes = input.meshes.map((mesh: any) => {
+  const meshes: Mesh[] = input.meshes.map((mesh: any) => {
+    const geometries: Geometry[] = [];
+    const materials: Material[] = [];
     mesh.primitives.map((primitive: any) => {
-      new Geometry({
-        attributes: 
-        indices: 
-        // mode: primitive.mode,
+      const attributes: {[key: string]: AttributeOptions;} = {};
+      let count = 0;
+      Object.keys(primitive.attributes).forEach((key) => {
+        const name = ATTRIBUTE_MAP[key];
+        if (name == null) {
+          // Ignore invalid attribute
+          return;
+        }
+        const normalized = !ATTRIBUTE_NOT_NORMALIZED_MAP[key];
+        const result = getAttribute(primitive.attributes[key], normalized);
+        attributes[name] = result.attribute;
+        count = result.count;
       });
+      const indices = primitive.indices != null
+        ? getIndices(primitive.indices)
+        : undefined;
+      console.log(attributes);
+      geometries.push(new Geometry({
+        attributes,
+        indices,
+        mode: primitive.mode,
+        count: indices == null ? count : undefined,
+      }));
+      materials.push(new StandardMaterial({
+        albedo: '#ffffff',
+        metalic: 0,
+        roughness: 0.5,
+      }));
     });
+      console.log(geometries);
+    return new Mesh(materials, geometries);
+  });
+
+  const nodes: {[key: string]: any;}[] = input.nodes.map((node: any) => {
+    const entity: {[key: string]: any;} = {};
+    const transform = new Transform();
+    if ('matrix' in node) {
+      transform.setMatrix(node.matrix);
+    } else if ('translation' in node) {
+      transform.setPosition(node.translation);
+      if (node.rotation != null) {
+        transform.setRotation(node.rotation);
+      }
+      if (node.scale != null) {
+        transform.setScale(node.scale);
+      }
+    }
+    entity.transform = transform;
+    if ('mesh' in node) {
+      const mesh = meshes[node.mesh];
+      if (mesh == null) {
+        throw new Error('Invalid mesh reference');
+      }
+      entity.mesh = mesh;
+    }
+    return entity;
   });
   console.log(input);
+  console.log(nodes);
+  return {entities: nodes};
 }

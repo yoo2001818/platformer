@@ -98,7 +98,7 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  parseGLTF(require('./models/dragon.gltf'));
+  store.createEntities(parseGLTF(require('./models/dragon.gltf')).entities);
 
   store.create({
     name: 'floor',

@@ -71,6 +71,10 @@ export class EntityStore {
     return entity;
   }
 
+  createEntities(entities: {[key: string]: any;}[]): Entity[] {
+    return entities.map((options) => this.create(options));
+  }
+
   get(handle: EntityHandle): Entity | null {
     if (this.entities.length <= handle.id) {
       return null;

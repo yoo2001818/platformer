@@ -26,6 +26,7 @@ export type GLAttributeType =
   | 'short'
   | 'unsignedByte'
   | 'unsignedShort'
+  | 'unsignedInt'
   | 'float';
 
 export interface AttributeOptions {
