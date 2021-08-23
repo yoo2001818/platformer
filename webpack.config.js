@@ -46,6 +46,10 @@ const config = {
         test: /\.(obj)$/i,
         use: 'raw-loader',
       },
+      {
+        test: /\.(gltf)$/i,
+        use: 'json-loader',
+      },
     ],
   },
   resolve: {

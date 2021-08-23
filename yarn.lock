@@ -7232,6 +7232,13 @@ fsevents@^2.3.2:
   languageName: node
   linkType: hard
 
+"json-loader@npm:^0.5.7":
+  version: 0.5.7
+  resolution: "json-loader@npm:0.5.7"
+  checksum: 2c6102f9cd088dd1beca8e81d348209290a0167bae33bb4af843e5ac2e733c241f7c9b7728d84d17baa24a6a2c2edc4ea0c76b9dc86ee6871f38608cfc85d114
+  languageName: node
+  linkType: hard
+
 "json-parse-better-errors@npm:^1.0.1, json-parse-better-errors@npm:^1.0.2":
   version: 1.0.2
   resolution: "json-parse-better-errors@npm:1.0.2"
@@ -8962,6 +8969,7 @@ fsevents@^2.3.2:
     html-webpack-plugin: ^5.3.1
     jest: ^27.0.4
     jest-pnp-resolver: ^1.2.2
+    json-loader: ^0.5.7
     pnp-webpack-plugin: ^1.6.4
     raw-loader: ^4.0.2
     style-loader: ^2.0.0

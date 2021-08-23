@@ -26,6 +26,7 @@ import {EnvironmentLight} from '../render/light/EnvironmentLight';
 import {DirectionalShadowLight} from '../render/light/DirectionalShadowLight';
 import {calcNormals} from '../geom/calcNormals';
 import {GLTextureImage} from '../render/gl/GLTextureImage';
+import {ParentComponent} from '../3d/ParentComponent';
 
 const store = new EntityStore();
 
@@ -35,6 +36,7 @@ const velComp = new Float32ArrayComponent(4);
 const cameraComp = new ObjectComponent<Camera>();
 const lightComp = new ObjectComponent<Light>();
 const meshComp = new MeshComponent();
+const parentComp = new ParentComponent();
 
 store.registerComponents({
   name: nameComp,
@@ -43,6 +45,7 @@ store.registerComponents({
   camera: cameraComp,
   mesh: meshComp,
   light: lightComp,
+  parent: parentComp,
 });
 
 function main() {
