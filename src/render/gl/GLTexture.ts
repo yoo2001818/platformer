@@ -59,6 +59,7 @@ export interface GLTextureFormat {
     | 'unsignedInt'
     | 'int'
     | 'float32unsignedInt248rev';
+  flipY?: boolean;
 }
 
 export interface GLTextureOptions extends

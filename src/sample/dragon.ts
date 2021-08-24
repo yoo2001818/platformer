@@ -26,6 +26,7 @@ import {calcNormals} from '../geom/calcNormals';
 import {GLTextureImage} from '../render/gl/GLTextureImage';
 import {ParentComponent} from '../3d/ParentComponent';
 import {parseGLTF} from '../loader/gltf';
+// import { PointLight } from '../render/light/PointLight';
 
 const store = new EntityStore();
 
@@ -69,7 +70,7 @@ function main() {
     width: 4096,
     height: 2048,
     format: 'rgba',
-    source: createImage(require('./immenstadter_horn_2k.rgbe.png')),
+    source: createImage(require('./studio_country_hall_2k.rgbe.png')),
     magFilter: 'nearest',
     minFilter: 'nearest',
     mipmap: false,
@@ -84,7 +85,7 @@ function main() {
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
       far: 100,
-      near: 1,
+      near: 0.3,
     }),
   });
 
@@ -104,14 +105,15 @@ function main() {
     name: 'floor',
     transform: new Transform()
       .rotateX(-Math.PI / 2)
-      .setScale([40, 40, 40]),
+      .setScale([40, 40, 40])
+      .translate([0, -0.1, 0]),
     mesh: new Mesh(
       new StandardMaterial({
         albedo: new GLTextureImage(require('./textures/forestground01.albedo.jpg')),
         metalic: 0,
         roughness: new GLTextureImage(require('./textures/forestground01.roughness.jpg')),
         normal: new GLTextureImage(require('./textures/forestground01.normal.jpg')),
-        texScale: [4, 4],
+        texScale: [20, 20],
       }),
       new Geometry(calcTangents(calcNormals(quad()))),
     ),
@@ -142,9 +144,29 @@ function main() {
       .rotateX(-40 * Math.PI / 180),
     light: new DirectionalShadowLight({
       color: '#ffffff',
-      power: 30,
+      power: 10,
     }),
   });
+
+  /*
+  for (let i = 0; i < 200; i += 1) {
+    store.create({
+      name: 'light',
+      transform: new Transform()
+        .translate([
+          Math.random() * 10 - 5,
+          Math.random() * 2,
+          Math.random() * 10 - 5,
+        ]),
+      light: new PointLight({
+        color: [Math.random(), Math.random(), Math.random()],
+        power: 5,
+        radius: 1,
+        range: 2,
+      }),
+    });
+  }
+  */
 
   const orbitController = new OrbitCameraController(
     canvas,
@@ -167,6 +189,7 @@ function main() {
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
     orbitController.update(delta);
     renderer.render();
+    renderer.renderGizmos();
 
     requestAnimationFrame(update);
   }

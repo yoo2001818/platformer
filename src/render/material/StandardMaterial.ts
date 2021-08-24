@@ -227,11 +227,11 @@ export class StandardMaterial implements Material {
         void material(out MaterialInfo mInfo) {
           #ifdef USE_ALBEDO_MAP
             mInfo.albedo = texture2D(uAlbedoMap, vTexCoord).rgb;
+            mInfo.albedo = pow(mInfo.albedo, vec3(2.2));
           #else
             mInfo.albedo = uMaterial.albedo;
           #endif
           // Tone mapping
-          mInfo.albedo = pow(mInfo.albedo, vec3(2.2));
 
           #ifdef USE_NORMAL_MAP
             vec3 N = normalize(vNormal);

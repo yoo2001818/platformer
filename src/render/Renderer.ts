@@ -1,11 +1,45 @@
+import {mat4} from 'gl-matrix';
+
+import {Camera} from '../3d/Camera';
+import {Transform} from '../3d/Transform';
 import {Entity} from '../core/Entity';
 import {EntityStore} from '../core/EntityStore';
+import {box} from '../geom/box';
+import {calcNormals} from '../geom/calcNormals';
 
+import {GLGeometry} from './gl/GLGeometry';
 import {GLRenderer} from './gl/GLRenderer';
+import {GLShader} from './gl/GLShader';
 import {DeferredPipeline} from './pipeline/DeferredPipeline';
 import {ForwardPipeline} from './pipeline/ForwardPipeline';
 import {Pipeline} from './pipeline/Pipeline';
 import {ShadowMapManager} from './ShadowMapManager';
+
+const GIZMO_CUBE = new GLGeometry(calcNormals(box()));
+const GIZMO_SHADER = new GLShader(
+  /* glsl */`
+    #version 100
+    precision highp float;
+
+    attribute vec3 aPosition;
+
+    uniform mat4 uView;
+    uniform mat4 uProjection;
+    uniform mat4 uModel;
+
+    void main() {
+      gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
+    } 
+  `,
+  /* glsl */`
+    #version 100
+    precision highp float;
+
+    void main() {
+      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+  `,
+);
 
 export class Renderer {
   glRenderer: GLRenderer;
@@ -60,5 +94,31 @@ export class Renderer {
     }
     this.frameId += 1;
     pipeline.render();
+  }
+
+  renderGizmos(): void {
+    const {entityStore, camera, glRenderer} = this;
+    const cameraData = camera!.get<Camera>('camera')!;
+    const aspect = this.getAspectRatio();
+    // Render gizmos on the top of displayed result
+    entityStore.forEachWith(['transform'], (entity) => {
+      const transform = entity.get<Transform>('transform')!;
+      const pos = transform.getPositionWorld();
+      const mat = mat4.create();
+      mat4.translate(mat, mat, pos);
+      mat4.scale(mat, mat, [0.04, 0.04, 0.04]);
+      glRenderer.draw({
+        geometry: GIZMO_CUBE,
+        shader: GIZMO_SHADER,
+        uniforms: {
+          uView: cameraData.getView(camera!),
+          uProjection: cameraData.getProjection(aspect),
+          uModel: mat,
+        },
+        state: {
+          depth: 'always',
+        },
+      });
+    });
   }
 }

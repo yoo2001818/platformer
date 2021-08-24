@@ -116,6 +116,12 @@ export class Entity {
     }
   }
 
+  setMap(options: {[key: string]: any;}): void {
+    Object.keys(options).forEach((key) => {
+      this.set(key, options[key]);
+    });
+  }
+
   getHashCodes(): number[] {
     return this.store.getComponents().map((component) => {
       return component.getHashCode(component.get(this));

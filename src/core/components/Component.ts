@@ -5,7 +5,7 @@ import type {EntityStore} from '../EntityStore';
 
 export interface Component<
   TReadValue,
-  TWriteValue extends TReadValue = TReadValue
+  TWriteValue = TReadValue
 > {
   getIndex(): number | null;
   register(store: EntityStore, index: number): void;

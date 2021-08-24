@@ -59,6 +59,7 @@ export class Transform {
         this._parentId !== targetId ||
         this._worldVersion !== targetVersion
       ) {
+        console.log(targetId, targetVersion, this._parentId, this._worldVersion);
         mat4.mul(this.worldMatrix, parentMat, this.matrix);
         this._parentId = targetId;
         this._worldVersion = targetVersion;
@@ -104,6 +105,21 @@ export class Transform {
   getMatrixWorld(): Float32Array {
     this._updateWorldMatrix();
     return this.worldMatrix;
+  }
+
+  getPositionWorld(): Float32Array {
+    this._updateWorldMatrix();
+    return mat4.getTranslation(vec3.create(), this.worldMatrix) as Float32Array;
+  }
+
+  getScaleWorld(): Float32Array {
+    this._updateWorldMatrix();
+    return mat4.getScaling(vec3.create(), this.worldMatrix) as Float32Array;
+  }
+
+  getRotationWorld(): Float32Array {
+    this._updateWorldMatrix();
+    return mat4.getRotation(quat.create(), this.worldMatrix) as Float32Array;
   }
 
   markChanged(): void {

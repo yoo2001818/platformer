@@ -283,11 +283,13 @@ export class DeferredPipeline implements Pipeline {
           varying vec2 vPosition;
 
           uniform sampler2D uBuffer;
+          uniform sampler2D uDepthBuffer;
           uniform vec2 uResolution;
           
           void main() {
             vec2 uv = vPosition * 0.5 + 0.5;
             gl_FragColor = vec4(tonemap(fxaa(uBuffer, uv, uResolution).xyz), 1.0);
+            gl_FragDepth = texture2D(uDepthBuffer, uv).x;
           }
         `,
       );
@@ -562,7 +564,11 @@ export class DeferredPipeline implements Pipeline {
       shader: this.getDisplayShader(),
       uniforms: {
         uBuffer: this.outBuffer,
+        uDepthBuffer: this.outDepthBuffer,
         uResolution: [width, height],
+      },
+      state: {
+        depth: false,
       },
     });
   }

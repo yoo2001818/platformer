@@ -1,6 +1,7 @@
 import {Component} from './components/Component';
 import {Entity} from './Entity';
 import {EntityChunk} from './EntityChunk';
+import {EntityFuture} from './EntityFuture';
 import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
 import {sortEntity} from './sortEntity';
@@ -16,6 +17,10 @@ export class EntityStore {
 
   groups: Map<number, EntityGroup[]>;
 
+  // FIXME: This should be specified differently; it is only used for
+  // createEntities
+  futureResolver: ((future: EntityFuture) => Entity) | null;
+
   constructor() {
     this.components = [];
     this.componentNames = new Map();
@@ -25,6 +30,8 @@ export class EntityStore {
     this.floatingEntities = [];
 
     this.groups = new Map();
+
+    this.futureResolver = null;
   }
 
   registerComponent(name: string, component: Component<any>): void {
@@ -64,15 +71,27 @@ export class EntityStore {
     this.entities.push(entity);
     entity._markFloating();
     if (options != null) {
-      Object.keys(options).forEach((key) => {
-        entity.set(key, options[key]);
-      });
+      entity.setMap(options);
     }
     return entity;
   }
 
   createEntities(entities: {[key: string]: any;}[]): Entity[] {
-    return entities.map((options) => this.create(options));
+    const createdEntities: Entity[] = [];
+    this.futureResolver = (future) => {
+      return createdEntities[future.index];
+    };
+    const result = entities.map((options) => {
+      const entity = this.create();
+      createdEntities.push(entity);
+      return entity;
+    });
+    entities.forEach((options, index) => {
+      const entity = result[index];
+      entity.setMap(options);
+    });
+    this.futureResolver = null;
+    return result;
   }
 
   get(handle: EntityHandle): Entity | null {

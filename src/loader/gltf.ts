@@ -1,10 +1,13 @@
 import {Transform} from '../3d/Transform';
+import {EntityFuture} from '../core/EntityFuture';
 import {Geometry} from '../render/Geometry';
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 import {GLElementArrayBuffer} from '../render/gl/GLElementArrayBuffer';
+import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {AttributeOptions, GLAttributeType} from '../render/gl/types';
+import {TEXTURE_PARAM_MAP} from '../render/gl/utils';
 import {Material} from '../render/Material';
-import {StandardMaterial} from '../render/material/StandardMaterial';
+import {StandardMaterial, StandardMaterialOptions} from '../render/material/StandardMaterial';
 import {Mesh} from '../render/Mesh';
 
 function checkVersion(current: string, target: string): boolean {
@@ -52,6 +55,13 @@ const ATTRIBUTE_MAP: {[key: string]: string;} = {
 const ATTRIBUTE_NOT_NORMALIZED_MAP: {[key: string]: boolean;} = {
   JOINTS_0: true,
 };
+const INV_TEXTURE_PARAM_MAP: {
+  [key: number]: keyof typeof TEXTURE_PARAM_MAP;
+} = {};
+Object.keys(TEXTURE_PARAM_MAP).forEach((key) => {
+  const keyVal = key as keyof typeof TEXTURE_PARAM_MAP;
+  INV_TEXTURE_PARAM_MAP[TEXTURE_PARAM_MAP[keyVal]] = keyVal;
+});
 
 export interface GLTFResult {
   entities: {[key: string]: any;}[];
@@ -75,7 +85,7 @@ export function parseGLTF(input: any): GLTFResult {
   }
 
   // Create buffers and buffer views.
-  const buffers: ArrayBuffer[] = input.buffers.map((buffer: any) => {
+  const buffers: ArrayBuffer[] = (input.buffers ?? []).map((buffer: any) => {
     // TODO: I don't think streaming gltf is an option for now. But implement it
     // sometime...
     if (buffer.uri.startsWith(BASE64_PREFIX)) {
@@ -87,7 +97,7 @@ export function parseGLTF(input: any): GLTFResult {
       throw new Error('URI scheme not supported');
     }
   });
-  const bufferViews = input.bufferViews.map((bufferView: any) => {
+  const bufferViews = (input.bufferViews ?? []).map((bufferView: any) => {
     const buffer = buffers[bufferView.buffer];
     const byteLength: number = bufferView.byteLength;
     const byteOffset: number = bufferView.byteOffset;
@@ -96,6 +106,79 @@ export function parseGLTF(input: any): GLTFResult {
     }
     return {buffer, byteLength, byteOffset};
   }) as {buffer: ArrayBuffer;byteLength: number;byteOffset: number;}[];
+
+  // Create images and textures
+  const images = (input.images ?? []).map((image: any): HTMLImageElement => {
+    if ('uri' in image) {
+      const imgElem = new Image();
+      imgElem.src = image.uri;
+      return imgElem;
+    } else if ('bufferView' in image) {
+      const bufferView = bufferViews[image.bufferView];
+      if (bufferView == null) {
+        throw new Error('Invalid bufferView reference');
+      }
+      const data = bufferView.buffer.slice(
+        bufferView.byteOffset,
+        bufferView.byteOffset + bufferView.byteLength,
+      );
+      const blob = new Blob([data], {type: image.mimeType});
+      const imgElem = new Image();
+      imgElem.src = URL.createObjectURL(blob);
+      // TODO: Delete object URL
+      return imgElem;
+    }
+    throw new Error('Invalid image definition');
+  });
+  const textures = (input.textures ?? []).map((texture: any): GLTexture2D => {
+    const source = images[texture.source];
+    const sampler = (input.samplers ?? [])[texture.sampler];
+    if (source == null) {
+      throw new Error('Invalid source reference');
+    }
+    return new GLTexture2D({
+      source,
+      format: 'rgba',
+      magFilter: INV_TEXTURE_PARAM_MAP[sampler.magFilter ?? 'linear'] as any,
+      minFilter: INV_TEXTURE_PARAM_MAP[sampler.minFilter ?? 'nearestMipmapLinear'] as any,
+      wrapS: INV_TEXTURE_PARAM_MAP[sampler.wrapS ?? 'repeat'] as any,
+      wrapT: INV_TEXTURE_PARAM_MAP[sampler.wrapT ?? 'repeat'] as any,
+      flipY: false,
+    });
+  });
+  const materials = (input.materials ?? []).map((material: any): Material => {
+    console.log(material);
+    // TODO: material.name
+    if ('pbrMetallicRoughness' in material) {
+      // TODO: material.emissiveFactor
+      // TODO: material.normalTexture
+      const pbr = material.pbrMetallicRoughness;
+      const options: Partial<StandardMaterialOptions> = {};
+      if ('baseColorTexture' in pbr) {
+        options.albedo = textures[pbr.baseColorTexture.index];
+      } else {
+        options.albedo = pbr.baseColorFactor ?? '#ffffff';
+      }
+      if ('metallicRoughnessTexture' in pbr) {
+        // options.albedo = textures[pbr.baseColorTexture.index];
+        // TODO
+      } else {
+        options.metalic = pbr.metallicFactor ?? 1;
+        options.roughness = Math.sqrt(pbr.roughnessFactor ?? 1);
+      }
+      if ('normalTexture' in material) {
+        options.normal = textures[material.normalTexture.index];
+      }
+      return new StandardMaterial(options as StandardMaterialOptions);
+    } else {
+      throw new Error('Invalid material');
+    }
+  });
+  const defaultMaterial = new StandardMaterial({
+    albedo: '#ffffff',
+    metalic: 0,
+    roughness: 0.5,
+  });
 
   // These are populated by the accessors.
   const glArrayBuffers: GLArrayBuffer[] = [];
@@ -180,7 +263,7 @@ export function parseGLTF(input: any): GLTFResult {
 
   const meshes: Mesh[] = input.meshes.map((mesh: any) => {
     const geometries: Geometry[] = [];
-    const materials: Material[] = [];
+    const outMaterials: Material[] = [];
     mesh.primitives.map((primitive: any) => {
       const attributes: {[key: string]: AttributeOptions;} = {};
       let count = 0;
@@ -205,14 +288,9 @@ export function parseGLTF(input: any): GLTFResult {
         mode: primitive.mode,
         count: indices == null ? count : undefined,
       }));
-      materials.push(new StandardMaterial({
-        albedo: '#ffffff',
-        metalic: 0,
-        roughness: 0.5,
-      }));
+      outMaterials.push(materials[primitive.material] ?? defaultMaterial);
     });
-      console.log(geometries);
-    return new Mesh(materials, geometries);
+    return new Mesh(outMaterials, geometries);
   });
 
   const nodes: {[key: string]: any;}[] = input.nodes.map((node: any) => {
@@ -220,8 +298,10 @@ export function parseGLTF(input: any): GLTFResult {
     const transform = new Transform();
     if ('matrix' in node) {
       transform.setMatrix(node.matrix);
-    } else if ('translation' in node) {
-      transform.setPosition(node.translation);
+    } else {
+      if (node.translation != null) {
+        transform.setPosition(node.translation);
+      }
       if (node.rotation != null) {
         transform.setRotation(node.rotation);
       }
@@ -237,7 +317,22 @@ export function parseGLTF(input: any): GLTFResult {
       }
       entity.mesh = mesh;
     }
+    if ('name' in node) {
+      entity.name = node.name;
+    }
     return entity;
+  });
+  // Set up node childrens, after all entities are generated
+  input.nodes.map((node: any, index: number) => {
+    if ('children' in node) {
+      node.children.forEach((childId: any) => {
+        const childNode = nodes[childId];
+        if (childNode == null) {
+          throw new Error('Invalid child reference');
+        }
+        childNode.parent = new EntityFuture(index);
+      });
+    }
   });
   console.log(input);
   console.log(nodes);

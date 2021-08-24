@@ -54,6 +54,7 @@ export const TYPE_LENGTHS: {[key in GLAttributeType]: number;} = {
   short: 2,
   unsignedByte: 1,
   unsignedShort: 2,
+  unsignedInt: 4,
   float: 4,
 };
 

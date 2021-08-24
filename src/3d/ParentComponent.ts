@@ -1,11 +1,13 @@
 import {Component} from '../core/components';
 import {Entity} from '../core/Entity';
+import {EntityFuture} from '../core/EntityFuture';
 import {EntityStore} from '../core/EntityStore';
 
 // TODO: Change this to accept EntityHandle
 export class ParentComponent
-  implements Component<Entity | null, Entity | null> {
+  implements Component<Entity | null, Entity | EntityFuture | null> {
 
+  entityStore: EntityStore | null = null;
   index: number | null = null;
   childrenMap: Map<number | null, Entity[]> = new Map();
 
@@ -26,11 +28,13 @@ export class ParentComponent
   }
 
   register(store: EntityStore, index: number): void {
+    this.entityStore = store;
     this.index = index;
     this.childrenMap = new Map();
   }
 
   unregister(): void {
+    this.entityStore = null;
     this.index = null;
   }
 
@@ -38,7 +42,15 @@ export class ParentComponent
     return entity._getRawMap(this, null);
   }
 
-  set(entity: Entity, value: Entity): void {
+  set(entity: Entity, value: Entity | EntityFuture): void {
+    if (value instanceof EntityFuture) {
+      if (this.entityStore?.futureResolver == null) {
+        throw new Error('FutureResolver must be defined first before setting');
+      }
+      const target = this.entityStore!.futureResolver!(value);
+      this.set(entity, target);
+      return;
+    }
     const prev = entity._getRawMap<Entity | null>(this, null);
     this._validateHash(
       entity,
