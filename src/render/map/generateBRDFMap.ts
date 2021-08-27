@@ -89,8 +89,10 @@ export function generateBRDFMap(): GLTexture {
     minFilter: 'linear',
     magFilter: 'linear',
     mipmap: false,
+    format: 'rgba',
   }, (renderer) => {
     const hammersleyMap = generateHammersleyMap(1024);
+    const {capabilities} = renderer;
 
     const texture = new GLTexture2D({
       width: 512,
@@ -101,6 +103,14 @@ export function generateBRDFMap(): GLTexture {
       magFilter: 'linear',
       mipmap: false,
       source: null,
+      format: 'rgba',
+      // Use half float only if supported. Otherwise fallback to unsigned byte.
+      // It may show artifacts in round objects, but it'd be fine...
+      type:
+        capabilities.hasHalfFloatBuffer() &&
+        capabilities.hasHalfFloatTextureLinear()
+        ? 'halfFloat'
+        : 'unsignedByte',
     });
     texture.bind(renderer);
 
