@@ -27,9 +27,11 @@ export interface AnimationClip {
 export interface Animation {
   targets: AnimationTarget[];
   clips: AnimationClip[];
+  currentTime: number;
 }
 
 export interface AnimationWithFuture {
   targets: AnimationTargetWithFuture[];
   clips: AnimationClip[];
+  currentTime: number;
 }

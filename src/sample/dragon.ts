@@ -27,6 +27,7 @@ import {GLTextureImage} from '../render/gl/GLTextureImage';
 import {ParentComponent} from '../3d/ParentComponent';
 import {parseGLTF} from '../loader/gltf';
 import {AnimationComponent} from '../anim/AnimationComponent';
+import {updateAnimation} from '../anim/updateAnimation';
 // import { PointLight } from '../render/light/PointLight';
 
 const store = new EntityStore();
@@ -102,7 +103,7 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  store.createEntities(parseGLTF(require('./models/dragon.gltf')).entities);
+  store.createEntities(parseGLTF(require('./models/cat.gltf')).entities);
 
   store.create({
     name: 'floor',
@@ -193,6 +194,8 @@ function main() {
     orbitController.update(delta);
     renderer.render();
     renderer.renderGizmos();
+
+    updateAnimation(store, delta / 1000);
 
     requestAnimationFrame(update);
   }

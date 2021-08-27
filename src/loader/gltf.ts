@@ -63,6 +63,12 @@ Object.keys(TEXTURE_PARAM_MAP).forEach((key) => {
   const keyVal = key as keyof typeof TEXTURE_PARAM_MAP;
   INV_TEXTURE_PARAM_MAP[TEXTURE_PARAM_MAP[keyVal]] = keyVal;
 });
+const ANIMATION_PATH_MAP: {[key: string]: string;} = {
+  translation: 'position',
+  rotation: 'rotation',
+  scale: 'scale',
+  weights: 'weights',
+};
 
 export interface GLTFResult {
   entities: {[key: string]: any;}[];
@@ -386,7 +392,7 @@ export function parseGLTF(input: any): GLTFResult {
         } else {
           targets.push({
             entity: new EntityFuture(channel.target.node),
-            path: channel.target.path,
+            path: ANIMATION_PATH_MAP[channel.target.path] as any,
           });
           targetMap.set(targetKey, targets.length - 1);
           targetId = targets.length - 1;
@@ -416,6 +422,7 @@ export function parseGLTF(input: any): GLTFResult {
       animation: {
         targets,
         clips,
+        currentTime: 0,
       },
     });
   }
