@@ -21,16 +21,15 @@ export interface AnimationChannel {
 export interface AnimationClip {
   name: string;
   channels: AnimationChannel[];
+  duration: number;
 }
 
-export interface AnimationController {
+export interface Animation {
   targets: AnimationTarget[];
   clips: AnimationClip[];
-  currentTime: number;
 }
 
-export interface AnimationControllerWithFuture {
+export interface AnimationWithFuture {
   targets: AnimationTargetWithFuture[];
   clips: AnimationClip[];
-  currentTime: number;
 }

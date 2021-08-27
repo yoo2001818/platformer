@@ -1,11 +1,12 @@
 import {Transform} from '../3d/Transform';
+import {AnimationClip, AnimationTargetWithFuture} from '../anim/Animation';
 import {EntityFuture} from '../core/EntityFuture';
 import {Geometry} from '../render/Geometry';
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 import {GLElementArrayBuffer} from '../render/gl/GLElementArrayBuffer';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {AttributeOptions, GLAttributeType} from '../render/gl/types';
-import {TEXTURE_PARAM_MAP} from '../render/gl/utils';
+import {TEXTURE_PARAM_MAP, TYPE_LENGTHS} from '../render/gl/utils';
 import {Material} from '../render/Material';
 import {StandardMaterial, StandardMaterialOptions} from '../render/material/StandardMaterial';
 import {Mesh} from '../render/Mesh';
@@ -260,6 +261,40 @@ export function parseGLTF(input: any): GLTFResult {
     }
     return glElementArrayBuffer;
   };
+  const getAccessorFloat32Array = (
+    index: number,
+    normalized: boolean,
+  ): Float32Array => {
+    const accessor = input.accessors[index];
+    if (accessor == null) {
+      throw new Error('Invalid accessor reference');
+    }
+    if (accessor.sparse != null) {
+      // FIXME
+      throw new Error('Sparse accessor is not supported yet');
+    }
+    const bufferView = bufferViews[accessor.bufferView];
+    if (bufferView == null) {
+      throw new Error('Invalid bufferView reference');
+    }
+    const type = COMPONENT_TYPE_MAP[accessor.componentType];
+    if (type !== 'float') {
+      throw new Error('Component type must be float for now');
+    }
+    const size = TYPE_SIZE_MAP[accessor.type];
+    const byteSize = size * TYPE_LENGTHS[type] * accessor.count;
+    return new Float32Array(bufferView.buffer.slice(
+      bufferView.byteOffset + (accessor.byteOffset ?? 0),
+      bufferView.byteOffset + (accessor.byteOffset ?? 0) + byteSize,
+    ));
+  };
+  const getAccessorBounds = (index: number): {min: number[];max: number[];} => {
+    const accessor = input.accessors[index];
+    if (accessor == null) {
+      throw new Error('Invalid accessor reference');
+    }
+    return {min: accessor.min, max: accessor.max};
+  };
 
   const meshes: Mesh[] = input.meshes.map((mesh: any) => {
     const geometries: Geometry[] = [];
@@ -334,6 +369,56 @@ export function parseGLTF(input: any): GLTFResult {
       });
     }
   });
+  // Set up animation controller node if any animation is specified
+  if (input.animations != null) {
+    const targetMap: Map<string, number> = new Map();
+    const targets: AnimationTargetWithFuture[] = [];
+    const clips: AnimationClip[] = input.animations.map((
+      animation: any,
+    ): AnimationClip => {
+      let duration = 0;
+      const channels = animation.channels.map((channel: any) => {
+        // Retrieve target ID. Generate target entry if needed
+        let targetId: number;
+        const targetKey = `${channel.target.node}-${channel.target.path}`;
+        if (targetMap.has(targetKey)) {
+          targetId = targetMap.get(targetKey)!;
+        } else {
+          targets.push({
+            entity: new EntityFuture(channel.target.node),
+            path: channel.target.path,
+          });
+          targetMap.set(targetKey, targets.length - 1);
+          targetId = targets.length - 1;
+        }
+        // Retrieve sampler
+        const sampler = animation.samplers[channel.sampler];
+        if (sampler == null) {
+          throw new Error('Invalid sampler reference');
+        }
+        const input = getAccessorFloat32Array(sampler.input, true);
+        const output = getAccessorFloat32Array(sampler.output, true);
+        duration = getAccessorBounds(sampler.input).max[0];
+        return {
+          target: targetId,
+          input,
+          output,
+          interpolation: sampler.interpolation,
+        };
+      });
+      return {
+        name: animation.name,
+        channels,
+        duration,
+      };
+    });
+    nodes.push({
+      animation: {
+        targets,
+        clips,
+      },
+    });
+  }
   console.log(input);
   console.log(nodes);
   return {entities: nodes};

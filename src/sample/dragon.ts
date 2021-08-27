@@ -26,6 +26,7 @@ import {calcNormals} from '../geom/calcNormals';
 import {GLTextureImage} from '../render/gl/GLTextureImage';
 import {ParentComponent} from '../3d/ParentComponent';
 import {parseGLTF} from '../loader/gltf';
+import {AnimationComponent} from '../anim/AnimationComponent';
 // import { PointLight } from '../render/light/PointLight';
 
 const store = new EntityStore();
@@ -37,6 +38,7 @@ const cameraComp = new ObjectComponent<Camera>();
 const lightComp = new ObjectComponent<Light>();
 const meshComp = new MeshComponent();
 const parentComp = new ParentComponent();
+const animationComp = new AnimationComponent();
 
 store.registerComponents({
   name: nameComp,
@@ -46,6 +48,7 @@ store.registerComponents({
   mesh: meshComp,
   light: lightComp,
   parent: parentComp,
+  animation: animationComp,
 });
 
 function main() {

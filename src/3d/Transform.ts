@@ -59,7 +59,6 @@ export class Transform {
         this._parentId !== targetId ||
         this._worldVersion !== targetVersion
       ) {
-        console.log(targetId, targetVersion, this._parentId, this._worldVersion);
         mat4.mul(this.worldMatrix, parentMat, this.matrix);
         this._parentId = targetId;
         this._worldVersion = targetVersion;

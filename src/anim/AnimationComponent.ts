@@ -2,14 +2,14 @@ import {ObjectFutureComponent} from '../core/components/ObjectFutureComponent';
 import {EntityFuture} from '../core/EntityFuture';
 
 import {
-  AnimationController,
-  AnimationControllerWithFuture,
+  Animation,
+  AnimationWithFuture,
   AnimationTarget,
-} from './AnimationController';
+} from './Animation';
 
-export class AnimationControllerComponents extends ObjectFutureComponent<
-  AnimationController,
-  AnimationControllerWithFuture
+export class AnimationComponent extends ObjectFutureComponent<
+  Animation,
+  AnimationWithFuture
 > {
   constructor() {
     super((value, getFuture) => ({
