@@ -37,6 +37,18 @@ function interpolateArray(
   return output;
 }
 
+function runDiff(a: Float32Array, b: Float32Array): boolean {
+  if (a.length !== b.length) {
+    return true;
+  }
+  for (let i = 0; i < a.length; i += 1) {
+    if (Math.abs(a[i] - b[i]) > 1e-10) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function updateAnimation(
   store: EntityStore,
   deltaTime: number,
@@ -58,20 +70,33 @@ export function updateAnimation(
         const target = animation.targets[channel.target];
         const transform = target.entity.get<Transform>('transform')!;
         switch (target.path) {
-          case 'position':
-            transform.setPosition(interpolateArray(pos, t, 3, channel.output));
-            break;
-          case 'rotation': {
-            const min = channel.output.subarray(pos * 4, (pos + 1) * 4);
-            const max = channel.output.subarray((pos + 1) * 4, (pos + 2) * 4);
-            const out = quat.create();
-            quat.slerp(out, min, max, t);
-            transform.setRotation(out);
+          case 'position': {
+            const prev = transform.getPosition();
+            const out = interpolateArray(pos, t, 3, channel.output);
+            if (runDiff(prev, out)) {
+              transform.setPosition(out);
+            }
             break;
           }
-          case 'scale':
-            transform.setScale(interpolateArray(pos, t, 3, channel.output));
+          case 'rotation': {
+            const prev = transform.getRotation();
+            const min = channel.output.subarray(pos * 4, (pos + 1) * 4);
+            const max = channel.output.subarray((pos + 1) * 4, (pos + 2) * 4);
+            const out = quat.create() as Float32Array;
+            quat.slerp(out, min, max, t);
+            if (runDiff(prev, out)) {
+              transform.setRotation(out);
+            }
             break;
+          }
+          case 'scale': {
+            const prev = transform.getScale();
+            const out = interpolateArray(pos, t, 3, channel.output);
+            if (runDiff(prev, out)) {
+              transform.setScale(out);
+            }
+            break;
+          }
           default:
             throw new Error(`Unknown animation path ${target.path}`);
         }
