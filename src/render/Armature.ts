@@ -1,10 +1,11 @@
 import {mat4} from 'gl-matrix';
 
-import {Transform} from '../3d/Transform';
 import {TransformComponent} from '../3d/TransformComponent';
 import {Entity} from '../core/Entity';
 import {EntityFuture} from '../core/EntityFuture';
 import {EntityStore} from '../core/EntityStore';
+
+import {GLTexture2D} from './gl/GLTexture2D';
 
 export interface ArmatureOptions {
   inverseBindMatrices: Float32Array;
@@ -21,11 +22,21 @@ export interface ArmatureOptionsWithFuture {
 export class Armature {
   options: ArmatureOptions;
   matrixData: Float32Array;
+  texture: GLTexture2D;
   entityStore: EntityStore | null;
 
   constructor(options: ArmatureOptions) {
     this.options = options;
     this.matrixData = new Float32Array(options.inverseBindMatrices.length);
+    this.texture = new GLTexture2D({
+      format: 'rgba',
+      type: 'float',
+      minFilter: 'nearest',
+      magFilter: 'nearest',
+      wrapS: 'clampToEdge',
+      wrapT: 'clampToEdge',
+      source: null,
+    });
     this.entityStore = null;
   }
 
@@ -43,12 +54,28 @@ export class Armature {
       entityStore.getComponent<TransformComponent>('transform');
     // Loop all entities and multiply with inverse bind matrices
     for (let i = 0; i < joints.length; i += 1) {
-      const target = matrixData.slice(i * 16, (i + 1) * 16);
-      const invMatrix = inverseBindMatrices.slice(i * 16, (i + 1) * 16);
+      const target = matrixData.subarray(i * 16, (i + 1) * 16);
+      const invMatrix = inverseBindMatrices.subarray(i * 16, (i + 1) * 16);
       const entity = joints[i];
       const transform = transformComp.get(entity)!;
-      mat4.multiply(target, invMatrix, transform.getMatrixWorld());
+      mat4.multiply(target, transform.getMatrixWorld(), invMatrix);
     }
     return matrixData;
+  }
+
+  getTexture(): GLTexture2D {
+    const matrix = this.getMatrix();
+    this.texture.setOptions({
+      format: 'rgba',
+      type: 'float',
+      minFilter: 'nearest',
+      magFilter: 'nearest',
+      wrapS: 'clampToEdge',
+      wrapT: 'clampToEdge',
+      source: matrix,
+      width: matrix.length / 4,
+      height: 1,
+    });
+    return this.texture;
   }
 }

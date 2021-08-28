@@ -7,6 +7,7 @@ import {createId} from '../utils/createId';
 import {GLTexture} from '../gl/GLTexture';
 import {PipelineShadowOptions} from '../pipeline/Pipeline';
 import {GLArrayBuffer} from '../gl/GLArrayBuffer';
+import {Armature} from '../Armature';
 
 export interface StandardMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
@@ -141,13 +142,17 @@ export class StandardMaterial implements Material {
       uniformOptions.uMaterial.metalic = 0;
       uniformOptions.uMetalicMap = options.metalic;
     }
-
-    featureBits |= INSTANCING_BIT;
+    if (chunk.has('armature')) {
+      featureBits |= ARMATURE_BIT;
+    } else {
+      featureBits |= INSTANCING_BIT;
+    }
 
     const shader = pipeline.getDeferredShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
         ${featureBits & NORMAL_BIT ? '#define USE_NORMAL_MAP' : ''}
         ${featureBits & INSTANCING_BIT ? '#define USE_INSTANCING' : ''}
+        ${featureBits & ARMATURE_BIT ? '#define USE_ARMATURE' : ''}
         #version 100
         precision highp float;
 
@@ -161,7 +166,7 @@ export class StandardMaterial implements Material {
         attribute mat4 aModel;
         #endif
         #ifdef USE_ARMATURE
-        attribute ivec4 aSkinJoints;
+        attribute vec4 aSkinJoints;
         attribute vec4 aSkinWeights;
         #endif
 
@@ -171,6 +176,10 @@ export class StandardMaterial implements Material {
         uniform mat4 uModel;
         #endif
         uniform vec2 uTexScale;
+        #ifdef USE_ARMATURE
+        uniform sampler2D uArmatureMap;
+        uniform vec2 uArmatureMapSize;
+        #endif
 
         varying vec3 vPosition;
         varying vec3 vNormal;
@@ -179,11 +188,34 @@ export class StandardMaterial implements Material {
         varying vec4 vTangent;
         #endif
 
+        #ifdef USE_ARMATURE
+        void fetchArmature(inout mat4 mat, int index, float weight) {
+          if (weight > 0.0) {
+            vec2 texelSize = 1.0 / uArmatureMapSize;
+            vec2 coord = vec2((float(index * 4) + 0.5) * texelSize.x, 0.5);
+            mat4 outMat = mat4(
+              vec4(texture2D(uArmatureMap, coord)),
+              vec4(texture2D(uArmatureMap, coord + vec2(1.0, 0.0) * texelSize)),
+              vec4(texture2D(uArmatureMap, coord + vec2(2.0, 0.0) * texelSize)),
+              vec4(texture2D(uArmatureMap, coord + vec2(3.0, 0.0) * texelSize))
+            );
+            mat += weight * outMat;
+          }
+        }
+        #endif
+
         void main() {
           #ifdef USE_INSTANCING
           mat4 model = aModel;
           #else
           mat4 model = uModel;
+          #endif
+          #ifdef USE_ARMATURE
+          mat4 armatureMat = mat4(0.0);
+          for (int i = 0; i < 4; ++i) {
+            fetchArmature(armatureMat, int(aSkinJoints[i]), aSkinWeights[i]);
+          }
+          model = model * armatureMat;
           #endif
           vec4 pos = model * vec4(aPosition, 1.0);
           gl_Position = uProjection * uView * pos;
@@ -266,28 +298,50 @@ export class StandardMaterial implements Material {
       `,
     }));
 
-    const buffer = new Float32Array(chunk.size * 16);
-    let index = 0;
-    chunk.forEach((entity) => {
-      const transform = entity.get(transformComp);
-      buffer.set(transform!.getMatrixWorld(), index * 16);
-      index += 1;
-    });
-    // Pass instanced buffer to GPU
-    this.instancedBuffer.set(buffer);
-    // Bind the shader and bind aModel attribute
-    shader.bind(glRenderer);
-    geometry.bind(glRenderer, shader);
-    shader.setAttribute('aModel', {
-      buffer: this.instancedBuffer,
-      divisor: 1,
-    });
-    pipeline.drawDeferred({
-      shader,
-      geometry,
-      uniforms: uniformOptions,
-      primCount: chunk.size,
-    });
+    if (chunk.has('armature')) {
+      // Draw each armature separately;
+      chunk.forEach((entity) => {
+        const transform = entity.get(transformComp)!;
+        const armature = entity.get<Armature>('armature')!;
+        const armatureMap = armature.getTexture();
+        pipeline.drawDeferred({
+          shader,
+          geometry,
+          uniforms: {
+            ...uniformOptions,
+            uModel: transform.getMatrixWorld(),
+            uArmatureMap: armatureMap,
+            uArmatureMapSize: [
+              armatureMap.getWidth(),
+              armatureMap.getHeight(),
+            ],
+          },
+        });
+      });
+    } else {
+      const buffer = new Float32Array(chunk.size * 16);
+      let index = 0;
+      chunk.forEach((entity) => {
+        const transform = entity.get(transformComp);
+        buffer.set(transform!.getMatrixWorld(), index * 16);
+        index += 1;
+      });
+      // Pass instanced buffer to GPU
+      this.instancedBuffer.set(buffer);
+      // Bind the shader and bind aModel attribute
+      shader.bind(glRenderer);
+      geometry.bind(glRenderer, shader);
+      shader.setAttribute('aModel', {
+        buffer: this.instancedBuffer,
+        divisor: 1,
+      });
+      pipeline.drawDeferred({
+        shader,
+        geometry,
+        uniforms: uniformOptions,
+        primCount: chunk.size,
+      });
+    }
   }
 
   dispose(): void {

@@ -106,7 +106,7 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  store.createEntities(parseGLTF(require('./models/cat.gltf')).entities);
+  store.createEntities(parseGLTF(require('./models/dragon.gltf')).entities);
 
   store.create({
     name: 'floor',
@@ -196,7 +196,7 @@ function main() {
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
     orbitController.update(delta);
     renderer.render();
-    renderer.renderGizmos();
+    // renderer.renderGizmos();
 
     updateAnimation(store, delta / 1000);
 

@@ -1,12 +1,16 @@
+import {Component} from './components';
 import {Entity} from './Entity';
 import {EntityChunk} from './EntityChunk';
+import {EntityStore} from './EntityStore';
 
 export class EntityGroup {
+  store: EntityStore;
   hashCodes: number[];
   chunks: EntityChunk[];
   availableChunks: EntityChunk[];
 
-  constructor(hashCodes: number[], protoEntity: Entity) {
+  constructor(store: EntityStore, hashCodes: number[], protoEntity: Entity) {
+    this.store = store;
     this.hashCodes = hashCodes;
     this.chunks = [];
     this.availableChunks = [];
@@ -35,6 +39,13 @@ export class EntityGroup {
     this.chunks.push(newChunk);
     this.availableChunks.push(newChunk);
     return newChunk;
+  }
+
+  has(component: Component<any, any> | string): boolean {
+    if (typeof component === 'string') {
+      return this.has(this.store.getComponent(component));
+    }
+    return this.hashCodes[component.getIndex()!] !== 0;
   }
 
   _getNextSize(): number {

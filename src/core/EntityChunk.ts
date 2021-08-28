@@ -89,6 +89,13 @@ export class EntityChunk {
     this.assignedOffsets[offset] = true;
   }
 
+  has(component: Component<any, any> | string): boolean {
+    if (typeof component === 'string') {
+      return this.has(this.group.store.getComponent(component));
+    }
+    return this.group.hashCodes[component.getIndex()!] !== 0;
+  }
+
   _handleFloat(entity: Entity): void {
     const offset = entity.chunkOffset;
     entity.chunk = null;

@@ -188,11 +188,11 @@ export class GLTexture {
     if (anisotropicExt) {
       const max =
         gl.getParameter(anisotropicExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
-      let anistropicValue = 0;
+      let anistropicValue = 1;
       if (params.anistropic === 'max') {
         anistropicValue = max;
       } else if (params.minFilter === 'nearest') {
-        anistropicValue = 0;
+        anistropicValue = 1;
       } else {
         anistropicValue = max;
       }

@@ -9,6 +9,7 @@ import {convertFloatArray, step} from './uniform/utils';
 import {GLArrayBuffer} from './GLArrayBuffer';
 import {GLTexture} from './GLTexture';
 import {convertShaderToWebGL2} from './utils/convertShaderToWebGL2';
+import {TYPE_LENGTHS} from './utils';
 
 function compileShader(
   gl: WebGLRenderingContext,
@@ -26,48 +27,47 @@ function compileShader(
 
 interface TypeData {
   size: number;
-  stride: number;
   numVectors: number;
 }
 
 function getTypeData(gl: WebGLRenderingContext, type: number): TypeData {
   switch (type) {
     case gl.FLOAT:
-      return {size: 1, stride: 4, numVectors: 1};
+      return {size: 1, numVectors: 1};
     case gl.FLOAT_VEC2:
-      return {size: 2, stride: 8, numVectors: 1};
+      return {size: 2, numVectors: 1};
     case gl.INT_VEC2:
-      return {size: 2, stride: 8, numVectors: 1};
+      return {size: 2, numVectors: 1};
     case gl.BOOL_VEC2:
-      return {size: 2, stride: 2, numVectors: 1};
+      return {size: 2, numVectors: 1};
     case gl.FLOAT_VEC3:
-      return {size: 3, stride: 12, numVectors: 1};
+      return {size: 3, numVectors: 1};
     case gl.INT_VEC3:
-      return {size: 3, stride: 12, numVectors: 1};
+      return {size: 3, numVectors: 1};
     case gl.BOOL_VEC3:
-      return {size: 3, stride: 3, numVectors: 1};
+      return {size: 3, numVectors: 1};
     case gl.FLOAT_VEC4:
-      return {size: 4, stride: 16, numVectors: 1};
+      return {size: 4, numVectors: 1};
     case gl.INT_VEC4:
-      return {size: 4, stride: 16, numVectors: 1};
+      return {size: 4, numVectors: 1};
     case gl.BOOL_VEC4:
-      return {size: 4, stride: 4, numVectors: 1};
+      return {size: 4, numVectors: 1};
     case gl.FLOAT_MAT2:
-      return {size: 2, stride: 8, numVectors: 2};
+      return {size: 2, numVectors: 2};
     case gl.FLOAT_MAT3:
-      return {size: 3, stride: 12, numVectors: 3};
+      return {size: 3, numVectors: 3};
     case gl.FLOAT_MAT4:
-      return {size: 4, stride: 16, numVectors: 4};
+      return {size: 4, numVectors: 4};
     case gl.BOOL:
     case gl.BYTE:
     case gl.UNSIGNED_BYTE:
-      return {size: 1, stride: 1, numVectors: 1};
+      return {size: 1, numVectors: 1};
     case gl.SHORT:
     case gl.UNSIGNED_SHORT:
-      return {size: 1, stride: 2, numVectors: 1};
+      return {size: 1, numVectors: 1};
     case gl.INT:
     case gl.UNSIGNED_INT:
-      return {size: 1, stride: 4, numVectors: 1};
+      return {size: 1, numVectors: 1};
     default:
       throw new Error('Unsupported type');
   }
@@ -193,13 +193,18 @@ export class GLShader {
     } else {
       setOptions = options;
     }
-    const stride = setOptions.stride ?? typeData.stride * typeData.numVectors;
+    const dataType = setOptions.type ?? setOptions.buffer.dataType;
+    if (dataType == null) {
+      throw new Error('dataType must be specified');
+    }
+    const byteSize = TYPE_LENGTHS[dataType] * typeData.size;
+    const stride = setOptions.stride ?? byteSize * typeData.numVectors;
     const offset = setOptions.offset ?? 0;
     for (let i = 0; i < typeData.numVectors; i += 1) {
       renderer.attributeManager.set(attribute.location + i, {
         ...setOptions,
         size: typeData.size,
-        offset: offset + typeData.stride * i,
+        offset: offset + byteSize * i,
         stride,
       });
     }

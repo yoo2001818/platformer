@@ -137,10 +137,10 @@ export class EntityStore {
       if (group != null) {
         return group;
       }
-      const newGroup = new EntityGroup(hashCodes, entity);
+      const newGroup = new EntityGroup(this, hashCodes, entity);
       matchedGroups.push(newGroup);
     }
-    const newGroup = new EntityGroup(hashCodes, entity);
+    const newGroup = new EntityGroup(this, hashCodes, entity);
     this.groups.set(hashCode, [newGroup]);
     return newGroup;
   }
@@ -178,7 +178,7 @@ export class EntityStore {
     this.forEachGroup((group) => {
       // Check for hashCode
       const passed = mappedComponents.every(
-        (component) => group.hashCodes[component.getIndex()!] !== 0,
+        (component) => group.has(component),
       );
       if (!passed) {
         return;
@@ -211,7 +211,7 @@ export class EntityStore {
     this.forEachGroup((group) => {
       // Check for hashCode
       const passed = mappedComponents.every(
-        (component) => group.hashCodes[component.getIndex()!] !== 0,
+        (component) => group.has(component),
       );
       if (!passed) {
         return;
