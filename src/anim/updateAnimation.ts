@@ -1,3 +1,4 @@
+import { quat } from 'gl-matrix';
 import {Transform} from '../3d/Transform';
 import {EntityStore} from '../core/EntityStore';
 
@@ -59,9 +60,14 @@ export function updateAnimation(
           case 'position':
             transform.setPosition(interpolateArray(pos, t, 3, channel.output));
             break;
-          case 'rotation':
-            transform.setRotation(interpolateArray(pos, t, 4, channel.output));
+          case 'rotation': {
+            const min = channel.output.subarray(pos * 4, (pos + 1) * 4);
+            const max = channel.output.subarray((pos + 1) * 4, (pos + 2) * 4);
+            const out = quat.create();
+            quat.slerp(out, min, max, t);
+            transform.setRotation(out);
             break;
+          }
           case 'scale':
             transform.setScale(interpolateArray(pos, t, 3, channel.output));
             break;
