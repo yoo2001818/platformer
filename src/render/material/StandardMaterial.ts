@@ -23,6 +23,7 @@ const ROUGHNESS_BIT = 4;
 const NORMAL_BIT = 8;
 const INSTANCING_BIT = 16;
 const ARMATURE_BIT = 32;
+const ARMATURE2_BIT = 64;
 
 export class StandardMaterial implements Material {
   id: number;
@@ -144,6 +145,9 @@ export class StandardMaterial implements Material {
     }
     if (chunk.has('armature')) {
       featureBits |= ARMATURE_BIT;
+      if (geometry.options.attributes.aSkinJoints2) {
+        featureBits |= ARMATURE2_BIT;
+      }
     } else {
       featureBits |= INSTANCING_BIT;
     }
@@ -153,6 +157,7 @@ export class StandardMaterial implements Material {
         ${featureBits & NORMAL_BIT ? '#define USE_NORMAL_MAP' : ''}
         ${featureBits & INSTANCING_BIT ? '#define USE_INSTANCING' : ''}
         ${featureBits & ARMATURE_BIT ? '#define USE_ARMATURE' : ''}
+        ${featureBits & ARMATURE2_BIT ? '#define USE_ARMATURE2' : ''}
         #version 100
         precision highp float;
 
@@ -168,6 +173,10 @@ export class StandardMaterial implements Material {
         #ifdef USE_ARMATURE
         attribute vec4 aSkinJoints;
         attribute vec4 aSkinWeights;
+        #endif
+        #ifdef USE_ARMATURE2
+        attribute vec4 aSkinJoints2;
+        attribute vec4 aSkinWeights2;
         #endif
 
         uniform mat4 uView;
@@ -215,6 +224,11 @@ export class StandardMaterial implements Material {
           for (int i = 0; i < 4; ++i) {
             fetchArmature(armatureMat, int(aSkinJoints[i]), aSkinWeights[i]);
           }
+          #ifdef USE_ARMATURE2
+          for (int i = 0; i < 4; ++i) {
+            fetchArmature(armatureMat, int(aSkinJoints2[i]), aSkinWeights2[i]);
+          }
+          #endif
           model = model * armatureMat;
           #endif
           vec4 pos = model * vec4(aPosition, 1.0);

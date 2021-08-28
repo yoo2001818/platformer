@@ -1,4 +1,5 @@
-import { quat } from 'gl-matrix';
+import {quat} from 'gl-matrix';
+
 import {Transform} from '../3d/Transform';
 import {EntityStore} from '../core/EntityStore';
 

@@ -66,6 +66,6 @@ export const MATERIAL_INFO = /* glsl */`
     vec3 albedo = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
     vec3 fresnel = mix(vec3(0.04), mInfo.albedo, mInfo.metalic);
 
-    return brdfCookTorr(L, V, N, mInfo.roughness * mInfo.roughness, albedo, fresnel);
+    return brdfCookTorr(L, V, N, max(mInfo.roughness * mInfo.roughness, 0.000001), albedo, fresnel);
   }
 `;

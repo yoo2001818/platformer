@@ -53,6 +53,8 @@ const ATTRIBUTE_MAP: {[key: string]: string;} = {
   COLOR_0: 'aColor',
   JOINTS_0: 'aSkinJoints',
   WEIGHTS_0: 'aSkinWeights',
+  JOINTS_1: 'aSkinJoints2',
+  WEIGHTS_1: 'aSkinWeights2',
 };
 const ATTRIBUTE_NOT_NORMALIZED_MAP: {[key: string]: boolean;} = {
   JOINTS_0: true,
@@ -155,7 +157,6 @@ export function parseGLTF(input: any): GLTFResult {
     });
   });
   const materials = (input.materials ?? []).map((material: any): Material => {
-    console.log(material);
     // TODO: material.name
     if ('pbrMetallicRoughness' in material) {
       // TODO: material.emissiveFactor
@@ -323,7 +324,6 @@ export function parseGLTF(input: any): GLTFResult {
       const indices = primitive.indices != null
         ? getIndices(primitive.indices)
         : undefined;
-      console.log(attributes);
       geometries.push(new Geometry({
         attributes,
         indices,
