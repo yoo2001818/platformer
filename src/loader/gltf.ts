@@ -1,7 +1,7 @@
 import {Transform} from '../3d/Transform';
 import {AnimationClip, AnimationTargetWithFuture} from '../anim/Animation';
 import {EntityFuture} from '../core/EntityFuture';
-import {ArmatureWithFuture} from '../render/Armature';
+import {ArmatureOptionsWithFuture} from '../render/Armature';
 import {Geometry} from '../render/Geometry';
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 import {GLElementArrayBuffer} from '../render/gl/GLElementArrayBuffer';
@@ -383,7 +383,7 @@ export function parseGLTF(input: any): GLTFResult {
       if (skin.inverseBindMatrices == null) {
         throw new Error('inverse bind matrix must be provided ... for now');
       }
-      const armature: ArmatureWithFuture = {
+      const armature: ArmatureOptionsWithFuture = {
         inverseBindMatrices: getAccessorFloat32Array(
           skin.inverseBindMatrices,
           false,

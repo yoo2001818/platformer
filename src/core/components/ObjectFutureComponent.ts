@@ -59,7 +59,7 @@ export class ObjectFutureComponent<
     return entity._getRawMap(this, null);
   }
 
-  set(entity: Entity, value: TWriteValue): void {
+  set(entity: Entity, value: TWriteValue): TReadValue {
     const mapped = this._deserialize(value, (future) => {
       if (future instanceof Entity) {
         return future;
@@ -76,6 +76,7 @@ export class ObjectFutureComponent<
       mapped,
     );
     entity._setRawMap(this, mapped);
+    return mapped;
   }
 
   delete(entity: Entity): void {
