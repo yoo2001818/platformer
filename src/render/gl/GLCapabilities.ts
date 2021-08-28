@@ -40,6 +40,8 @@ export class GLCapabilities {
       );
     }
     gl.getExtension('EXT_shader_texture_lod');
+    gl.getExtension('OES_standard_derivatives');
+    gl.getExtension('EXT_frag_depth');
     this.depthTexExt = gl.getExtension('WEBGL_depth_texture');
     this.floatTexExt = gl.getExtension('OES_texture_float');
     this.floatTexLinearExt = gl.getExtension('OES_texture_float_linear');

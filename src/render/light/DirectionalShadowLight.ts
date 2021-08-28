@@ -55,26 +55,30 @@ export class DirectionalShadowLight implements Light {
               break;
             }
           }
-          int j = NUM_DIRECTIONAL_SHADOW_CASCADES * i + cascadeId;
           DirectionalLight light = uDirectionalShadowLights[i];
-          vec4 shadowUV = uDirectionalShadowUV[j];
-          mat4 shadowMatrix = uDirectionalShadowMatrix[j];
-          vec4 lightProj = shadowMatrix * vec4(mInfo.position, 1.0);
-          vec3 lightPos = lightProj.xyz / lightProj.w;
-          float lightInten = 1.0;
-          if (abs(lightPos.x) < 1.0 && abs(lightPos.y) < 1.0) {
-            lightPos = lightPos * 0.5 + 0.5;
-            vec2 lightUV = lightPos.xy;
-            lightUV = shadowUV.xy + lightUV * shadowUV.zw;
-            vec2 moments = texture2D(uDirectionalShadowMap, lightUV).rg;
-            if (lightPos.z > moments.x) {
-              float variance = max(moments.y - moments.x * moments.x, 0.00025);
-              float d = lightPos.z - moments.x;
-              float pMax = variance / (variance + d * d);
-              lightInten = mix(0.0, 1.0, pMax);
+          for (int j = 0; j < NUM_DIRECTIONAL_SHADOW_CASCADES; j += 1) {
+            if (j != cascadeId) {
+              continue;
             }
+            vec4 shadowUV = uDirectionalShadowUV[i * NUM_DIRECTIONAL_SHADOW_CASCADES + j];
+            mat4 shadowMatrix = uDirectionalShadowMatrix[i * NUM_DIRECTIONAL_SHADOW_CASCADES + j];
+            vec4 lightProj = shadowMatrix * vec4(mInfo.position, 1.0);
+            vec3 lightPos = lightProj.xyz / lightProj.w;
+            float lightInten = 1.0;
+            if (abs(lightPos.x) < 1.0 && abs(lightPos.y) < 1.0) {
+              lightPos = lightPos * 0.5 + 0.5;
+              vec2 lightUV = lightPos.xy;
+              lightUV = shadowUV.xy + lightUV * shadowUV.zw;
+              vec2 moments = texture2D(uDirectionalShadowMap, lightUV).rg;
+              if (lightPos.z > moments.x) {
+                float variance = max(moments.y - moments.x * moments.x, 0.00025);
+                float d = lightPos.z - moments.x;
+                float pMax = variance / (variance + d * d);
+                lightInten = mix(0.0, 1.0, pMax);
+              }
+            }
+            result += lightInten * calcDirectional(viewPos, mInfo, light);
           }
-          result += lightInten * calcDirectional(viewPos, mInfo, light);
         }
       `,
     };

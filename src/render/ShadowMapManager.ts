@@ -71,21 +71,23 @@ export class ShadowMapManager {
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
+    const {glRenderer} = renderer;
+    const {capabilities} = glRenderer;
     this.tempDepth1 = new GLRenderBuffer({
       width: 1024,
       height: 1024,
-      format: 'depthComponent24',
-      samples: 4,
+      format: capabilities.isWebGL2 ? 'depthComponent24' : 'depthComponent16',
+      samples: capabilities.isWebGL2 ? 4 : 0,
     });
     this.tempBuffer1 = new GLRenderBuffer({
       width: 1024,
       height: 1024,
-      format: 'rgba32f',
+      format: 'rgba16f',
       samples: 4,
     });
     this.tempTexture2 = new GLTexture2D({
       format: 'rgba',
-      type: 'float',
+      type: 'halfFloat',
       width: 1024,
       height: 1024,
       magFilter: 'linear',
@@ -96,7 +98,7 @@ export class ShadowMapManager {
     });
     this.tempTexture3 = new GLTexture2D({
       format: 'rgba',
-      type: 'float',
+      type: 'halfFloat',
       width: 1024,
       height: 1024,
       magFilter: 'linear',
@@ -105,12 +107,21 @@ export class ShadowMapManager {
       wrapT: 'clampToEdge',
       mipmap: false,
     });
-    this.tempFrame1 = new GLFrameBuffer({
-      width: 1024,
-      height: 1024,
-      depth: this.tempDepth1,
-      color: this.tempBuffer1,
-    });
+    if (capabilities.isWebGL2) {
+      this.tempFrame1 = new GLFrameBuffer({
+        width: 1024,
+        height: 1024,
+        depth: this.tempDepth1,
+        color: this.tempBuffer1,
+      });
+    } else {
+      this.tempFrame1 = new GLFrameBuffer({
+        width: 1024,
+        height: 1024,
+        depth: this.tempDepth1,
+        color: this.tempTexture2,
+      });
+    }
     this.tempFrame2 = new GLFrameBuffer({
       width: 1024,
       height: 1024,
@@ -123,7 +134,7 @@ export class ShadowMapManager {
     });
     this.texture = new GLTexture2D({
       format: 'rgba',
-      type: 'float',
+      type: 'halfFloat',
       width: 4096,
       height: 4096,
       magFilter: 'linear',
@@ -167,13 +178,15 @@ export class ShadowMapManager {
 
   finalizeRender(handle: ShadowMapHandle): void {
     const {glRenderer} = this.renderer;
-    const {gl} = glRenderer;
-    // Rendered mesh -> tempTexture2
-    glRenderer.blit(
-      this.tempFrame1,
-      this.tempFrame2,
-      gl.COLOR_BUFFER_BIT,
-    );
+    const {gl, capabilities} = glRenderer;
+    if (capabilities.isWebGL2) {
+      // Rendered mesh -> tempTexture2
+      glRenderer.blit(
+        this.tempFrame1,
+        this.tempFrame2,
+        gl.COLOR_BUFFER_BIT,
+      );
+    }
     // tempTexture2 -> tempTexture3 (X)
     glRenderer.draw({
       frameBuffer: this.tempFrame3,

@@ -12,6 +12,7 @@ export interface GLRenderBufferOptions {
     | 'depthComponent24'
     | 'depthComponent32f'
     | 'stencilIndex8'
+    | 'depthStencil'
     | 'depth24stencil8'
     | 'depth32fstencil8'
     | 'r8'

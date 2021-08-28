@@ -242,7 +242,7 @@ export class SSAO {
           for (int i = 0; i < KERNEL_SIZE; ++i) {
             for (int j = 0; j < KERNEL_SIZE; ++j) {
               vec2 offset = (hlim + vec2(float(i), float(j))) * texelSize;
-              result += texture(uAOBuffer, vPosition + offset).r;
+              result += texture2D(uAOBuffer, vPosition + offset).r;
             }
           }
         

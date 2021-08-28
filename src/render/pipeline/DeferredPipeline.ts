@@ -289,7 +289,7 @@ export class DeferredPipeline implements Pipeline {
           void main() {
             vec2 uv = vPosition * 0.5 + 0.5;
             gl_FragColor = vec4(tonemap(fxaa(uBuffer, uv, uResolution).xyz), 1.0);
-            gl_FragDepth = texture2D(uDepthBuffer, uv).x;
+            // gl_FragDepth = texture2D(uDepthBuffer, uv).x;
           }
         `,
       );

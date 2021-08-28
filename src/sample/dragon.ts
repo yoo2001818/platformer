@@ -106,7 +106,7 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  store.createEntities(parseGLTF(require('./models/dragon.gltf')).entities);
+  store.createEntities(parseGLTF(require('./models/cat.gltf')).entities);
 
   store.create({
     name: 'floor',
@@ -179,7 +179,7 @@ function main() {
     canvas,
     document.body,
     cameraEntity,
-    10,
+    3,
   );
 
   renderer.setCamera(cameraEntity);

@@ -49,9 +49,9 @@ export class StandardMaterial implements Material {
     featureBits |= INSTANCING_BIT;
     const shader = pipeline.getShadowShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
-        ${featureBits & INSTANCING_BIT ? '#define USE_INSTANCING' : ''}
         #version 100
         precision highp float;
+        ${featureBits & INSTANCING_BIT ? '#define USE_INSTANCING' : ''}
 
         attribute vec3 aPosition;
         attribute vec3 aNormal;
@@ -154,12 +154,12 @@ export class StandardMaterial implements Material {
 
     const shader = pipeline.getDeferredShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
+        #version 100
+        precision highp float;
         ${featureBits & NORMAL_BIT ? '#define USE_NORMAL_MAP' : ''}
         ${featureBits & INSTANCING_BIT ? '#define USE_INSTANCING' : ''}
         ${featureBits & ARMATURE_BIT ? '#define USE_ARMATURE' : ''}
         ${featureBits & ARMATURE2_BIT ? '#define USE_ARMATURE2' : ''}
-        #version 100
-        precision highp float;
 
         attribute vec3 aPosition;
         attribute vec3 aNormal;
