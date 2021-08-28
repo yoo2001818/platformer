@@ -1,6 +1,7 @@
 import {Transform} from '../3d/Transform';
 import {AnimationClip, AnimationTargetWithFuture} from '../anim/Animation';
 import {EntityFuture} from '../core/EntityFuture';
+import {ArmatureWithFuture} from '../render/Armature';
 import {Geometry} from '../render/Geometry';
 import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
 import {GLElementArrayBuffer} from '../render/gl/GLElementArrayBuffer';
@@ -373,6 +374,26 @@ export function parseGLTF(input: any): GLTFResult {
         }
         childNode.parent = new EntityFuture(index);
       });
+    }
+    if ('skin' in node) {
+      const skin = input.skins[node.skin];
+      if (skin == null) {
+        throw new Error('Invalid skin reference');
+      }
+      if (skin.inverseBindMatrices == null) {
+        throw new Error('inverse bind matrix must be provided ... for now');
+      }
+      const armature: ArmatureWithFuture = {
+        inverseBindMatrices: getAccessorFloat32Array(
+          skin.inverseBindMatrices,
+          false,
+        ),
+        skeleton: skin.skeleton != null
+          ? new EntityFuture(skin.skeleton)
+          : null,
+        joints: skin.joints.map((joint: number) => new EntityFuture(joint)),
+      };
+      nodes[index].armature = armature;
     }
   });
   // Set up animation controller node if any animation is specified

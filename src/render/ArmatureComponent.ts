@@ -10,7 +10,9 @@ export class ArmatureComponent extends ObjectFutureComponent<
     super((value, getFuture) => ({
       ...value,
       joints: value.joints.map(getFuture),
-      skeleton: getFuture(value.skeleton),
+      skeleton: value.skeleton != null
+        ? getFuture(value.skeleton)
+        : null,
     }));
   }
 }

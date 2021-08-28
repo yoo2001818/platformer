@@ -28,6 +28,7 @@ import {ParentComponent} from '../3d/ParentComponent';
 import {parseGLTF} from '../loader/gltf';
 import {AnimationComponent} from '../anim/AnimationComponent';
 import {updateAnimation} from '../anim/updateAnimation';
+import {ArmatureComponent} from '../render/ArmatureComponent';
 // import { PointLight } from '../render/light/PointLight';
 
 const store = new EntityStore();
@@ -40,6 +41,7 @@ const lightComp = new ObjectComponent<Light>();
 const meshComp = new MeshComponent();
 const parentComp = new ParentComponent();
 const animationComp = new AnimationComponent();
+const armatureComp = new ArmatureComponent();
 
 store.registerComponents({
   name: nameComp,
@@ -50,6 +52,7 @@ store.registerComponents({
   light: lightComp,
   parent: parentComp,
   animation: animationComp,
+  armature: armatureComp,
 });
 
 function main() {
