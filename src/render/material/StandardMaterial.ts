@@ -21,6 +21,7 @@ const METALIC_BIT = 2;
 const ROUGHNESS_BIT = 4;
 const NORMAL_BIT = 8;
 const INSTANCING_BIT = 16;
+const ARMATURE_BIT = 32;
 
 export class StandardMaterial implements Material {
   id: number;
@@ -158,6 +159,10 @@ export class StandardMaterial implements Material {
         #endif
         #ifdef USE_INSTANCING
         attribute mat4 aModel;
+        #endif
+        #ifdef USE_ARMATURE
+        attribute ivec4 aSkinJoints;
+        attribute vec4 aSkinWeights;
         #endif
 
         uniform mat4 uView;

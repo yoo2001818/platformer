@@ -5,7 +5,10 @@ import {EntityStore} from '../EntityStore';
 import {Component} from './Component';
 
 export interface ObjectFutureDeserializer<TReadValue, TWriteValue> {
-  (value: TWriteValue, getFuture: (future: EntityFuture) => Entity): TReadValue;
+  (
+    value: TWriteValue,
+    getFuture: (future: EntityFuture | Entity) => Entity,
+  ): TReadValue;
 }
 
 // FIXME: This is an escape hatch for resolving components with "Future" objects
@@ -58,6 +61,9 @@ export class ObjectFutureComponent<
 
   set(entity: Entity, value: TWriteValue): void {
     const mapped = this._deserialize(value, (future) => {
+      if (future instanceof Entity) {
+        return future;
+      }
       if (this.entityStore?.futureResolver == null) {
         throw new Error('FutureResolver must be defined first before setting');
       }
