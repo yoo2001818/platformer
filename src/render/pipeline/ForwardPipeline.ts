@@ -197,7 +197,9 @@ export class ForwardPipeline implements Pipeline {
   }
 
   render(): void {
-    const {entityStore, camera} = this.renderer;
+    const {entityStore, camera, glRenderer} = this.renderer;
+
+    glRenderer.clear();
 
     if (camera == null) {
       throw new Error('Camera is not specified');

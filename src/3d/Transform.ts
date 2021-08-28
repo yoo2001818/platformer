@@ -2,6 +2,8 @@ import {mat4, vec3, quat} from 'gl-matrix';
 
 import {Entity} from '../core/Entity';
 
+import {TransformComponent} from './TransformComponent';
+
 export class Transform {
   position: Float32Array;
   scale: Float32Array;
@@ -10,9 +12,11 @@ export class Transform {
   _matrixVersion: number;
   _componentVersion: number;
   worldMatrix: Float32Array;
-  _worldVersion: number;
+  _parentVersion: number;
+  _globalVersion: number;
   _parentId: number;
   entity: Entity | null = null;
+  component: TransformComponent | null = null;
 
   constructor() {
     this.position = new Float32Array([0, 0, 0]);
@@ -22,7 +26,8 @@ export class Transform {
     this.worldMatrix = mat4.create() as Float32Array;
     this._matrixVersion = 0;
     this._componentVersion = 0;
-    this._worldVersion = 0;
+    this._parentVersion = 0;
+    this._globalVersion = 0;
     this._parentId = -1;
   }
 
@@ -48,33 +53,38 @@ export class Transform {
   }
 
   _updateWorldMatrix(): void {
+    if (this.component!.globalVersion === this._globalVersion) {
+      return;
+    }
     this._updateMatrix();
     const parent = this.entity?.get<Entity | null>('parent');
     if (parent != null) {
       const parentTransform = parent.get<Transform>('transform')!;
       const parentMat = parentTransform.getMatrixWorld();
       const targetId = parent.handle.id;
-      const targetVersion = this._matrixVersion + parentTransform._worldVersion;
+      const targetVersion = this._matrixVersion + parentTransform._parentVersion;
       if (
         this._parentId !== targetId ||
-        this._worldVersion !== targetVersion
+        this._parentVersion !== targetVersion
       ) {
         mat4.mul(this.worldMatrix, parentMat, this.matrix);
         this._parentId = targetId;
-        this._worldVersion = targetVersion;
+        this._parentVersion = targetVersion;
       }
     } else if (
       this._parentId !== -1 ||
-      this._worldVersion !== this._matrixVersion
+      this._parentVersion !== this._matrixVersion
     ) {
       mat4.copy(this.worldMatrix, this.matrix);
       this._parentId = -1;
-      this._worldVersion = this._matrixVersion;
+      this._parentVersion = this._matrixVersion;
     }
+    this._globalVersion = this.component!.globalVersion;
   }
 
-  register(entity: Entity): void {
+  register(entity: Entity, component: TransformComponent): void {
     this.entity = entity;
+    this.component = component;
   }
 
   unregister(): void {
@@ -123,10 +133,12 @@ export class Transform {
 
   markChanged(): void {
     this._componentVersion += 1;
+    this.component?.markGlobalDirty();
   }
 
   markMatrixChanged(): void {
     this._matrixVersion += 1;
+    this.component?.markGlobalDirty();
   }
 
   setPosition(position: vec3): this {

@@ -8,6 +8,7 @@ export class GLCapabilities {
   uintExt: OES_element_index_uint | null = null;
   lodExt: EXT_shader_texture_lod | null = null;
   anisotropicExt: EXT_texture_filter_anisotropic | null = null;
+  maxAnisotropy = 1;
   depthTexExt: WEBGL_depth_texture | null = null;
   floatTexExt: OES_texture_float | null = null;
   floatTexLinearExt: OES_texture_float_linear | null = null;
@@ -33,6 +34,11 @@ export class GLCapabilities {
     this.uintExt = gl.getExtension('OES_element_index_uint');
     this.lodExt = gl.getExtension('EXT_shader_texture_lod');
     this.anisotropicExt = gl.getExtension('EXT_texture_filter_anisotropic');
+    if (this.anisotropicExt != null) {
+      this.maxAnisotropy = gl.getParameter(
+        this.anisotropicExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT,
+      );
+    }
     gl.getExtension('EXT_shader_texture_lod');
     this.depthTexExt = gl.getExtension('WEBGL_depth_texture');
     this.floatTexExt = gl.getExtension('OES_texture_float');

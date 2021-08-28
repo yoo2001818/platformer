@@ -24,6 +24,8 @@ export class Armature {
   matrixData: Float32Array;
   texture: GLTexture2D;
   entityStore: EntityStore | null;
+  _matrixVersion = -1;
+  _textureVersion = -1;
 
   constructor(options: ArmatureOptions) {
     this.options = options;
@@ -52,6 +54,9 @@ export class Armature {
     }
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform');
+    if (transformComp.globalVersion === this._matrixVersion) {
+      return matrixData;
+    }
     // Loop all entities and multiply with inverse bind matrices
     for (let i = 0; i < joints.length; i += 1) {
       const target = matrixData.subarray(i * 16, (i + 1) * 16);
@@ -60,10 +65,20 @@ export class Armature {
       const transform = transformComp.get(entity)!;
       mat4.multiply(target, transform.getMatrixWorld(), invMatrix);
     }
+    this._matrixVersion = transformComp.globalVersion;
     return matrixData;
   }
 
   getTexture(): GLTexture2D {
+    const {entityStore} = this;
+    if (entityStore == null) {
+      throw new Error('EntityStore is not bound');
+    }
+    const transformComp =
+      entityStore.getComponent<TransformComponent>('transform');
+    if (transformComp.globalVersion === this._textureVersion) {
+      return this.texture;
+    }
     const matrix = this.getMatrix();
     this.texture.setOptions({
       format: 'rgba',
@@ -76,6 +91,7 @@ export class Armature {
       width: matrix.length / 4,
       height: 1,
     });
+    this._textureVersion = transformComp.globalVersion;
     return this.texture;
   }
 }

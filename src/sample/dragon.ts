@@ -192,11 +192,10 @@ function main() {
 
     store.sort();
 
-    gl!.clearColor(0, 0, 0, 255);
-    gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
+    // gl!.clearColor(0, 0, 0, 255);
+    // gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
     orbitController.update(delta);
     renderer.render();
-    // renderer.renderGizmos();
 
     updateAnimation(store, delta / 1000);
 

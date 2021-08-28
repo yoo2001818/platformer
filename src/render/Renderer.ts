@@ -2,6 +2,7 @@ import {mat4} from 'gl-matrix';
 
 import {Camera} from '../3d/Camera';
 import {Transform} from '../3d/Transform';
+import {TransformComponent} from '../3d/TransformComponent';
 import {Entity} from '../core/Entity';
 import {EntityStore} from '../core/EntityStore';
 import {box} from '../geom/box';
@@ -49,6 +50,7 @@ export class Renderer {
   resources: Map<string | number, unknown>;
   shadowMapManager: ShadowMapManager;
   frameId: number;
+  frameVersion = -1;
 
   constructor(
     glRenderer: GLRenderer,
@@ -85,15 +87,27 @@ export class Renderer {
 
   setCamera(camera: Entity): void {
     this.camera = camera;
+    this.frameVersion = -1;
   }
 
   render(): void {
-    const {camera, pipeline} = this;
+    const {camera, pipeline, entityStore} = this;
     if (camera == null) {
       return;
     }
+    const transformComp =
+      entityStore.getComponent<TransformComponent>('transform')!;
+
+    // Skip render if it's not needed
+    /*
+    if (transformComp.globalVersion === this.frameVersion) {
+      return;
+    }
+    */
     this.frameId += 1;
+    this.frameVersion = transformComp.globalVersion;
     pipeline.render();
+    // this.renderGizmos();
   }
 
   renderGizmos(): void {

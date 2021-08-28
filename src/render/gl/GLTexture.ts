@@ -164,7 +164,7 @@ export class GLTexture {
       return;
     }
     this._active();
-    const {gl, capabilities: {anisotropicExt}} = renderer;
+    const {gl, capabilities: {anisotropicExt, maxAnisotropy}} = renderer;
     gl.texParameteri(
       target,
       gl.TEXTURE_MAG_FILTER,
@@ -186,15 +186,13 @@ export class GLTexture {
       TEXTURE_PARAM_MAP[params.wrapT ?? 'repeat'],
     );
     if (anisotropicExt) {
-      const max =
-        gl.getParameter(anisotropicExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
       let anistropicValue = 1;
       if (params.anistropic === 'max') {
-        anistropicValue = max;
+        anistropicValue = maxAnisotropy;
       } else if (params.minFilter === 'nearest') {
         anistropicValue = 1;
       } else {
-        anistropicValue = max;
+        anistropicValue = maxAnisotropy;
       }
       gl.texParameterf(
         target,
