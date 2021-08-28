@@ -59,7 +59,13 @@ export class Renderer {
     this.glRenderer = glRenderer;
     this.entityStore = entityStore;
     const {capabilities} = glRenderer;
-    if (capabilities.hasDrawBuffers() && capabilities.hasHalfFloatBuffer()) {
+    if (
+      capabilities.hasFragDepth() &&
+      capabilities.hasDrawBuffers() &&
+      capabilities.hasHalfFloatBuffer() &&
+      capabilities.hasFloatBlend() &&
+      capabilities.maxDrawBuffers >= 2
+    ) {
       this.pipeline = new DeferredPipeline(this);
     } else {
       this.pipeline = new ForwardPipeline(this);

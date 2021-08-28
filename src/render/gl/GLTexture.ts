@@ -245,8 +245,7 @@ export class GLTexture {
     } else if (
       source instanceof HTMLElement ||
       source instanceof ImageData ||
-      // TODO: IE doesn't support ImageBitmap. Oh well.
-      source instanceof ImageBitmap
+      typeof ImageBitmap !== 'undefined' && source instanceof ImageBitmap
     ) {
       this._active();
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
@@ -264,6 +263,7 @@ export class GLTexture {
         throw new Error('Texture with array-based source requires width ' +
           'and height');
       }
+      const sourceArr = source as ArrayBufferView;
       this._active();
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
       gl.texImage2D(
@@ -275,7 +275,7 @@ export class GLTexture {
         0,
         TEXTURE_FORMAT_MAP[format ?? 'rgb'],
         attributeMap[type ?? 'unsignedByte'],
-        source ?? null,
+        sourceArr ?? null,
       );
     }
     return 2;

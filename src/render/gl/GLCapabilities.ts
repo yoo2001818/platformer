@@ -1,5 +1,7 @@
 import type {GLRenderer} from './GLRenderer';
 
+const MAX_DRAW_BUFFERS = 0x8824;
+
 export class GLCapabilities {
   renderer: GLRenderer;
   isWebGL2 = false;
@@ -18,7 +20,9 @@ export class GLCapabilities {
   halfFloatTexLinearExt: OES_texture_half_float_linear | null = null;
   halfFloatBufferExt: unknown | null = null;
   fboRenderMipmapExt: unknown | null = null;
+  fragDepthExt: EXT_frag_depth | null = null;
   drawBuffersExt: WEBGL_draw_buffers | null = null;
+  maxDrawBuffers = 1;
 
   constructor(renderer: GLRenderer) {
     this.renderer = renderer;
@@ -41,7 +45,7 @@ export class GLCapabilities {
     }
     gl.getExtension('EXT_shader_texture_lod');
     gl.getExtension('OES_standard_derivatives');
-    gl.getExtension('EXT_frag_depth');
+    this.fragDepthExt = gl.getExtension('EXT_frag_depth');
     this.depthTexExt = gl.getExtension('WEBGL_depth_texture');
     this.floatTexExt = gl.getExtension('OES_texture_float');
     this.floatTexLinearExt = gl.getExtension('OES_texture_float_linear');
@@ -56,6 +60,9 @@ export class GLCapabilities {
       gl.getExtension('EXT_color_buffer_half_float');
     this.fboRenderMipmapExt = gl.getExtension('OES_fbo_render_mipmap');
     this.drawBuffersExt = gl.getExtension('WEBGL_draw_buffers');
+    if (this.isWebGL2 || this.drawBuffersExt != null) {
+      this.maxDrawBuffers = gl.getParameter(MAX_DRAW_BUFFERS);
+    }
   }
 
   hasLOD(): boolean {
@@ -94,5 +101,9 @@ export class GLCapabilities {
 
   hasDrawBuffers(): boolean {
     return this.isWebGL2 || this.drawBuffersExt != null;
+  }
+
+  hasFragDepth(): boolean {
+    return this.isWebGL2 || this.fragDepthExt != null;
   }
 }
