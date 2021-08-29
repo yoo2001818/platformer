@@ -1,11 +1,13 @@
-import {GLGeometry, GLGeometryOptions} from './gl/GLGeometry';
+import {GeometryOptions} from '../geom/types';
+
+import {GLGeometry} from './gl/GLGeometry';
 import {Renderer} from './Renderer';
 import {createId} from './utils/createId';
 
 export class Geometry {
   id: number;
-  options: GLGeometryOptions;
-  constructor(options: GLGeometryOptions) {
+  options: GeometryOptions;
+  constructor(options: GeometryOptions) {
     this.id = createId();
     this.options = options;
   }

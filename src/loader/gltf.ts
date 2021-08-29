@@ -1,12 +1,11 @@
 import {Transform} from '../3d/Transform';
 import {AnimationClip, AnimationTargetWithFuture} from '../anim/Animation';
 import {EntityFuture} from '../core/EntityFuture';
+import {GeometryAttribute} from '../geom/types';
 import {ArmatureOptionsWithFuture} from '../render/Armature';
 import {Geometry} from '../render/Geometry';
-import {GLArrayBuffer} from '../render/gl/GLArrayBuffer';
-import {GLElementArrayBuffer} from '../render/gl/GLElementArrayBuffer';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
-import {AttributeOptions, GLAttributeType} from '../render/gl/types';
+import {GLAttributeType} from '../render/gl/types';
 import {TEXTURE_PARAM_MAP, TYPE_LENGTHS} from '../render/gl/utils';
 import {Material} from '../render/Material';
 import {StandardMaterial, StandardMaterialOptions} from '../render/material/StandardMaterial';
@@ -189,86 +188,6 @@ export function parseGLTF(input: any): GLTFResult {
     roughness: 0.5,
   });
 
-  // These are populated by the accessors.
-  const glArrayBuffers: GLArrayBuffer[] = [];
-  const glElementArrayBuffers: GLElementArrayBuffer[] = [];
-
-  const getAttribute = (
-    index: number,
-    normalized: boolean,
-  ): {attribute: AttributeOptions; count: number;} => {
-    const accessor = input.accessors[index];
-    if (accessor == null) {
-      throw new Error('Invalid accessor reference');
-    }
-    if (accessor.sparse != null) {
-      // FIXME
-      throw new Error('Sparse accessor is not supported yet');
-    }
-    const bufferView = bufferViews[accessor.bufferView];
-    if (bufferView == null) {
-      throw new Error('Invalid bufferView reference');
-    }
-    let glArrayBuffer = glArrayBuffers[accessor.bufferView];
-    if (glArrayBuffer == null) {
-      glArrayBuffer = new GLArrayBuffer(bufferView.buffer.slice(
-        bufferView.byteOffset,
-        bufferView.byteOffset + bufferView.byteLength,
-      ));
-      glArrayBuffers[accessor.bufferView] = glArrayBuffer;
-    }
-    const type = COMPONENT_TYPE_MAP[accessor.componentType];
-    const size = TYPE_SIZE_MAP[accessor.type];
-    return {
-      attribute: {
-        buffer: glArrayBuffer,
-        size,
-        type,
-        offset: accessor.byteOffset ?? 0,
-        normalized: false,
-      },
-      count: accessor.count,
-    };
-  };
-  const getIndices = (index: number): GLElementArrayBuffer => {
-    const accessor = input.accessors[index];
-    if (accessor == null) {
-      throw new Error('Invalid accessor reference');
-    }
-    if (accessor.sparse != null) {
-      // FIXME
-      throw new Error('Sparse accessor is not supported yet');
-    }
-    const bufferView = bufferViews[accessor.bufferView];
-    if (bufferView == null) {
-      throw new Error('Invalid bufferView reference');
-    }
-    const byteOffset = accessor.byteOffset ?? 0;
-    let glElementArrayBuffer = glElementArrayBuffers[accessor.bufferView];
-    if (glElementArrayBuffer == null) {
-      const sliced =
-        bufferView.buffer.slice(
-          bufferView.byteOffset + byteOffset,
-          bufferView.byteOffset + bufferView.byteLength - byteOffset,
-        );
-      let array;
-      switch (COMPONENT_TYPE_MAP[accessor.componentType]) {
-        case 'unsignedByte':
-          array = new Uint8Array(sliced);
-          break;
-        case 'unsignedShort':
-          array = new Uint16Array(sliced);
-          break;
-        case 'unsignedInt':
-          array = new Uint32Array(sliced);
-          break;
-        default:
-      }
-      glElementArrayBuffer = new GLElementArrayBuffer(array);
-      glElementArrayBuffers[accessor.bufferView] = glElementArrayBuffer;
-    }
-    return glElementArrayBuffer;
-  };
   const getAccessorFloat32Array = (
     index: number,
     normalized: boolean,
@@ -296,6 +215,60 @@ export function parseGLTF(input: any): GLTFResult {
       bufferView.byteOffset + (accessor.byteOffset ?? 0) + byteSize,
     ));
   };
+  const getAttribute = (
+    index: number,
+    normalized: boolean,
+  ): {attribute: GeometryAttribute; count: number;} => {
+    const accessor = input.accessors[index];
+    if (accessor == null) {
+      throw new Error('Invalid accessor reference');
+    }
+    const size = TYPE_SIZE_MAP[accessor.type];
+    return {
+      attribute: {
+        data: getAccessorFloat32Array(index, false),
+        size,
+      },
+      count: accessor.count,
+    };
+  };
+  const getIndices = (
+    index: number,
+  ): Uint8Array | Uint16Array | Uint32Array => {
+    const accessor = input.accessors[index];
+    if (accessor == null) {
+      throw new Error('Invalid accessor reference');
+    }
+    if (accessor.sparse != null) {
+      // FIXME
+      throw new Error('Sparse accessor is not supported yet');
+    }
+    const bufferView = bufferViews[accessor.bufferView];
+    if (bufferView == null) {
+      throw new Error('Invalid bufferView reference');
+    }
+    const byteOffset = accessor.byteOffset ?? 0;
+    const sliced =
+      bufferView.buffer.slice(
+        bufferView.byteOffset + byteOffset,
+        bufferView.byteOffset + bufferView.byteLength - byteOffset,
+      );
+    let array;
+    switch (COMPONENT_TYPE_MAP[accessor.componentType]) {
+      case 'unsignedByte':
+        array = new Uint8Array(sliced);
+        break;
+      case 'unsignedShort':
+        array = new Uint16Array(sliced);
+        break;
+      case 'unsignedInt':
+        array = new Uint32Array(sliced);
+        break;
+      default:
+        throw new Error('Unsupported indices componentType');
+    }
+    return array;
+  };
   const getAccessorBounds = (index: number): {min: number[];max: number[];} => {
     const accessor = input.accessors[index];
     if (accessor == null) {
@@ -308,7 +281,7 @@ export function parseGLTF(input: any): GLTFResult {
     const geometries: Geometry[] = [];
     const outMaterials: Material[] = [];
     mesh.primitives.map((primitive: any) => {
-      const attributes: {[key: string]: AttributeOptions;} = {};
+      const attributes: {[key: string]: GeometryAttribute;} = {};
       let count = 0;
       Object.keys(primitive.attributes).forEach((key) => {
         const name = ATTRIBUTE_MAP[key];

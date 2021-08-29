@@ -5,6 +5,7 @@ export interface GeometryAttribute {
 
 export interface GeometryOptions {
   attributes: {[key: string]: GeometryAttribute;};
-  indices?: number[];
+  indices?: number[] | Uint8Array | Uint16Array | Uint32Array;
   mode?: number;
+  count?: number;
 }
