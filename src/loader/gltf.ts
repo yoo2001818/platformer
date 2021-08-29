@@ -190,7 +190,6 @@ export function parseGLTF(input: any): GLTFResult {
 
   const getAccessorFloat32Array = (
     index: number,
-    normalized: boolean,
   ): Float32Array => {
     const accessor = input.accessors[index];
     if (accessor == null) {
@@ -205,15 +204,88 @@ export function parseGLTF(input: any): GLTFResult {
       throw new Error('Invalid bufferView reference');
     }
     const type = COMPONENT_TYPE_MAP[accessor.componentType];
-    if (type !== 'float') {
-      throw new Error('Component type must be float for now');
-    }
     const size = TYPE_SIZE_MAP[accessor.type];
-    const byteSize = size * TYPE_LENGTHS[type] * accessor.count;
-    return new Float32Array(bufferView.buffer.slice(
-      bufferView.byteOffset + (accessor.byteOffset ?? 0),
-      bufferView.byteOffset + (accessor.byteOffset ?? 0) + byteSize,
-    ));
+    // const byteSize = size * TYPE_LENGTHS[type] * accessor.count;
+    const buffer = bufferView.buffer;
+    const offset = bufferView.byteOffset + (accessor.byteOffset ?? 0);
+    const length = size * accessor.count;
+    const normalized = accessor.normalized ?? true;
+    switch (type) {
+      case 'float':
+        return new Float32Array(buffer, offset, length);
+      case 'byte': {
+        const src = new Int8Array(buffer, offset, length);
+        const out = new Float32Array(length);
+        if (normalized) {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = Math.max(src[i] / 127, -1);
+          }
+        } else {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = src[i];
+          }
+        }
+        return out;
+      }
+      case 'short': {
+        const src = new Int16Array(buffer, offset, length);
+        const out = new Float32Array(length);
+        if (normalized) {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = Math.max(src[i] / 32767, -1);
+          }
+        } else {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = src[i];
+          }
+        }
+        return out;
+      }
+      case 'unsignedByte': {
+        const src = new Uint8Array(buffer, offset, length);
+        const out = new Float32Array(length);
+        if (normalized) {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = src[i] / 255;
+          }
+        } else {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = src[i];
+          }
+        }
+        return out;
+      }
+      case 'unsignedShort': {
+        const src = new Uint16Array(buffer, offset, length);
+        const out = new Float32Array(length);
+        if (normalized) {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = src[i] / 65535;
+          }
+        } else {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = src[i];
+          }
+        }
+        return out;
+      }
+      case 'unsignedInt': {
+        const src = new Uint32Array(buffer, offset, length);
+        const out = new Float32Array(length);
+        if (normalized) {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = src[i] / 2147483647;
+          }
+        } else {
+          for (let i = 0; i < length; i += 1) {
+            out[i] = src[i];
+          }
+        }
+        return out;
+      }
+      default:
+        throw new Error('Invalid data type');
+    }
   };
   const getAttribute = (
     index: number,
@@ -226,7 +298,7 @@ export function parseGLTF(input: any): GLTFResult {
     const size = TYPE_SIZE_MAP[accessor.type];
     return {
       attribute: {
-        data: getAccessorFloat32Array(index, false),
+        data: getAccessorFloat32Array(index, normalized),
         size,
       },
       count: accessor.count,
@@ -248,21 +320,19 @@ export function parseGLTF(input: any): GLTFResult {
       throw new Error('Invalid bufferView reference');
     }
     const byteOffset = accessor.byteOffset ?? 0;
-    const sliced =
-      bufferView.buffer.slice(
-        bufferView.byteOffset + byteOffset,
-        bufferView.byteOffset + bufferView.byteLength - byteOffset,
-      );
+    const buffer = bufferView.buffer;
+    const offset = bufferView.byteOffset + byteOffset;
+    const byteLength = bufferView.byteLength;
     let array;
     switch (COMPONENT_TYPE_MAP[accessor.componentType]) {
       case 'unsignedByte':
-        array = new Uint8Array(sliced);
+        array = new Uint8Array(buffer, offset, byteLength);
         break;
       case 'unsignedShort':
-        array = new Uint16Array(sliced);
+        array = new Uint16Array(buffer, offset, byteLength / 2);
         break;
       case 'unsignedInt':
-        array = new Uint32Array(sliced);
+        array = new Uint32Array(buffer, offset, byteLength / 4);
         break;
       default:
         throw new Error('Unsupported indices componentType');
