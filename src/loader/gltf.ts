@@ -6,7 +6,7 @@ import {ArmatureOptionsWithFuture} from '../render/Armature';
 import {Geometry} from '../render/Geometry';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {GLAttributeType} from '../render/gl/types';
-import {TEXTURE_PARAM_MAP, TYPE_LENGTHS} from '../render/gl/utils';
+import {TEXTURE_PARAM_MAP} from '../render/gl/utils';
 import {Material} from '../render/Material';
 import {StandardMaterial, StandardMaterialOptions} from '../render/material/StandardMaterial';
 import {Mesh} from '../render/Mesh';
@@ -54,9 +54,6 @@ const ATTRIBUTE_MAP: {[key: string]: string;} = {
   WEIGHTS_0: 'aSkinWeights',
   JOINTS_1: 'aSkinJoints2',
   WEIGHTS_1: 'aSkinWeights2',
-};
-const ATTRIBUTE_NOT_NORMALIZED_MAP: {[key: string]: boolean;} = {
-  JOINTS_0: true,
 };
 const INV_TEXTURE_PARAM_MAP: {
   [key: number]: keyof typeof TEXTURE_PARAM_MAP;
@@ -209,7 +206,7 @@ export function parseGLTF(input: any): GLTFResult {
     const buffer = bufferView.buffer;
     const offset = bufferView.byteOffset + (accessor.byteOffset ?? 0);
     const length = size * accessor.count;
-    const normalized = accessor.normalized ?? true;
+    const normalized = accessor.normalized ?? false;
     switch (type) {
       case 'float':
         return new Float32Array(buffer, offset, length);
@@ -289,7 +286,6 @@ export function parseGLTF(input: any): GLTFResult {
   };
   const getAttribute = (
     index: number,
-    normalized: boolean,
   ): {attribute: GeometryAttribute; count: number;} => {
     const accessor = input.accessors[index];
     if (accessor == null) {
@@ -298,7 +294,7 @@ export function parseGLTF(input: any): GLTFResult {
     const size = TYPE_SIZE_MAP[accessor.type];
     return {
       attribute: {
-        data: getAccessorFloat32Array(index, normalized),
+        data: getAccessorFloat32Array(index),
         size,
       },
       count: accessor.count,
@@ -359,8 +355,7 @@ export function parseGLTF(input: any): GLTFResult {
           // Ignore invalid attribute
           return;
         }
-        const normalized = !ATTRIBUTE_NOT_NORMALIZED_MAP[key];
-        const result = getAttribute(primitive.attributes[key], normalized);
+        const result = getAttribute(primitive.attributes[key]);
         attributes[name] = result.attribute;
         count = result.count;
       });
@@ -429,7 +424,6 @@ export function parseGLTF(input: any): GLTFResult {
       const armature: ArmatureOptionsWithFuture = {
         inverseBindMatrices: getAccessorFloat32Array(
           skin.inverseBindMatrices,
-          false,
         ),
         skeleton: skin.skeleton != null
           ? new EntityFuture(skin.skeleton)
@@ -466,8 +460,8 @@ export function parseGLTF(input: any): GLTFResult {
         if (sampler == null) {
           throw new Error('Invalid sampler reference');
         }
-        const input = getAccessorFloat32Array(sampler.input, true);
-        const output = getAccessorFloat32Array(sampler.output, true);
+        const input = getAccessorFloat32Array(sampler.input);
+        const output = getAccessorFloat32Array(sampler.output);
         duration = getAccessorBounds(sampler.input).max[0];
         return {
           target: targetId,
