@@ -91,7 +91,7 @@ function main() {
     camera: new Camera({
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
-      far: 100,
+      far: 1000,
       near: 0.3,
     }),
   });
@@ -123,6 +123,9 @@ function main() {
         texScale: [20, 20],
       }),
       new Geometry(calcTangents(calcNormals(quad()))),
+      {
+        castShadow: false,
+      },
     ),
   });
 

@@ -73,23 +73,26 @@ export class ShadowMapManager {
     this.renderer = renderer;
     const {glRenderer} = renderer;
     const {capabilities} = glRenderer;
+    const useFloat =
+      capabilities.hasFloatBuffer() &&
+      capabilities.hasFloatTextureLinear();
     this.tempDepth1 = new GLRenderBuffer({
-      width: 1024,
-      height: 1024,
+      width: 512,
+      height: 512,
       format: capabilities.isWebGL2 ? 'depthComponent24' : 'depthComponent16',
       samples: capabilities.isWebGL2 ? 4 : 0,
     });
     this.tempBuffer1 = new GLRenderBuffer({
-      width: 1024,
-      height: 1024,
-      format: 'rgba16f',
+      width: 512,
+      height: 512,
+      format: useFloat ? 'rgba32f' : 'rgba16f',
       samples: 4,
     });
     this.tempTexture2 = new GLTexture2D({
       format: 'rgba',
-      type: 'halfFloat',
-      width: 1024,
-      height: 1024,
+      type: useFloat ? 'float' : 'halfFloat',
+      width: 512,
+      height: 512,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -98,9 +101,9 @@ export class ShadowMapManager {
     });
     this.tempTexture3 = new GLTexture2D({
       format: 'rgba',
-      type: 'halfFloat',
-      width: 1024,
-      height: 1024,
+      type: useFloat ? 'float' : 'halfFloat',
+      width: 512,
+      height: 512,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -109,34 +112,34 @@ export class ShadowMapManager {
     });
     if (capabilities.isWebGL2) {
       this.tempFrame1 = new GLFrameBuffer({
-        width: 1024,
-        height: 1024,
+        width: 512,
+        height: 512,
         depth: this.tempDepth1,
         color: this.tempBuffer1,
       });
     } else {
       this.tempFrame1 = new GLFrameBuffer({
-        width: 1024,
-        height: 1024,
+        width: 512,
+        height: 512,
         depth: this.tempDepth1,
         color: this.tempTexture2,
       });
     }
     this.tempFrame2 = new GLFrameBuffer({
-      width: 1024,
-      height: 1024,
+      width: 512,
+      height: 512,
       color: this.tempTexture2,
     });
     this.tempFrame3 = new GLFrameBuffer({
-      width: 1024,
-      height: 1024,
+      width: 512,
+      height: 512,
       color: this.tempTexture3,
     });
     this.texture = new GLTexture2D({
       format: 'rgba',
-      type: 'halfFloat',
-      width: 4096,
-      height: 4096,
+      type: useFloat ? 'float' : 'halfFloat',
+      width: 2048,
+      height: 2048,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -144,12 +147,12 @@ export class ShadowMapManager {
       mipmap: false,
     });
     this.frameBuffer = new GLFrameBuffer({
-      width: 4096,
-      height: 4096,
+      width: 2048,
+      height: 2048,
       color: this.texture,
     });
-    this.width = 4096;
-    this.height = 4096;
+    this.width = 2048;
+    this.height = 2048;
     this.id = 0;
   }
 
@@ -160,7 +163,7 @@ export class ShadowMapManager {
     // TODO Actually implement logic
     const result: ShadowMapHandle = {
       id: this.id,
-      bounds: [this.id * 1024, 0, 1024, 1024],
+      bounds: [this.id * 512, 0, 512, 512],
     };
     this.id += 1;
     return result;
@@ -171,6 +174,11 @@ export class ShadowMapManager {
   }
 
   beginRender(handle: ShadowMapHandle): PipelineShadowOptions {
+    const {glRenderer} = this.renderer;
+    const {gl} = glRenderer;
+    gl.clearColor(1, 1, 0, 0);
+    glRenderer.clear(this.tempFrame1);
+    gl.clearColor(0, 0, 0, 0);
     return {
       frameBuffer: this.tempFrame1,
     };

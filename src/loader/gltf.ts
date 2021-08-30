@@ -3,7 +3,7 @@ import {AnimationClip, AnimationTargetWithFuture} from '../anim/Animation';
 import {EntityFuture} from '../core/EntityFuture';
 import {GeometryAttribute} from '../geom/types';
 import {ArmatureOptionsWithFuture} from '../render/Armature';
-import {Geometry} from '../render/Geometry';
+import {Geometry, GeometryBounds} from '../render/Geometry';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {GLAttributeType} from '../render/gl/types';
 import {TEXTURE_PARAM_MAP} from '../render/gl/utils';
@@ -335,12 +335,17 @@ export function parseGLTF(input: any): GLTFResult {
     }
     return array;
   };
-  const getAccessorBounds = (index: number): {min: number[];max: number[];} => {
+  const getAccessorBounds = (
+    index: number,
+  ): {min: number[];max: number[];} | null => {
     const accessor = input.accessors[index];
     if (accessor == null) {
       throw new Error('Invalid accessor reference');
     }
-    return {min: accessor.min, max: accessor.max};
+    if (accessor.min != null && accessor.max != null) {
+      return {min: accessor.min, max: accessor.max};
+    }
+    return null;
   };
 
   const meshes: Mesh[] = input.meshes.map((mesh: any) => {
@@ -349,6 +354,7 @@ export function parseGLTF(input: any): GLTFResult {
     mesh.primitives.map((primitive: any) => {
       const attributes: {[key: string]: GeometryAttribute;} = {};
       let count = 0;
+      let bounds: GeometryBounds | null = null;
       Object.keys(primitive.attributes).forEach((key) => {
         const name = ATTRIBUTE_MAP[key];
         if (name == null) {
@@ -358,6 +364,9 @@ export function parseGLTF(input: any): GLTFResult {
         const result = getAttribute(primitive.attributes[key]);
         attributes[name] = result.attribute;
         count = result.count;
+        if (name === 'aPosition') {
+          bounds = getAccessorBounds(primitive.attributes[key]);
+        }
       });
       const indices = primitive.indices != null
         ? getIndices(primitive.indices)
@@ -367,7 +376,7 @@ export function parseGLTF(input: any): GLTFResult {
         indices,
         mode: primitive.mode,
         count: indices == null ? count : undefined,
-      }));
+      }, bounds));
       outMaterials.push(materials[primitive.material] ?? defaultMaterial);
     });
     return new Mesh(outMaterials, geometries);
@@ -462,7 +471,7 @@ export function parseGLTF(input: any): GLTFResult {
         }
         const input = getAccessorFloat32Array(sampler.input);
         const output = getAccessorFloat32Array(sampler.output);
-        duration = getAccessorBounds(sampler.input).max[0];
+        duration = getAccessorBounds(sampler.input)?.max[0] ?? 0;
         return {
           target: targetId,
           input,

@@ -8,6 +8,7 @@ import {GLTexture} from '../gl/GLTexture';
 import {PipelineShadowOptions} from '../pipeline/Pipeline';
 import {GLArrayBuffer} from '../gl/GLArrayBuffer';
 import {Armature} from '../Armature';
+import {ARMATURE} from '../shader/armature';
 
 export interface StandardMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
@@ -46,18 +47,35 @@ export class StandardMaterial implements Material {
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
     let featureBits = 0;
-    featureBits |= INSTANCING_BIT;
+    if (chunk.has('armature')) {
+      featureBits |= ARMATURE_BIT;
+      if (geometry.options.attributes.aSkinJoints2) {
+        featureBits |= ARMATURE2_BIT;
+      }
+    } else {
+      featureBits |= INSTANCING_BIT;
+    }
     const shader = pipeline.getShadowShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
         #version 100
         precision highp float;
         ${featureBits & INSTANCING_BIT ? '#define USE_INSTANCING' : ''}
+        ${featureBits & ARMATURE_BIT ? '#define USE_ARMATURE' : ''}
+        ${featureBits & ARMATURE2_BIT ? '#define USE_ARMATURE2' : ''}
 
         attribute vec3 aPosition;
         attribute vec3 aNormal;
         attribute vec2 aTexCoord;
         #ifdef USE_INSTANCING
         attribute mat4 aModel;
+        #endif
+        #ifdef USE_ARMATURE
+        attribute vec4 aSkinJoints;
+        attribute vec4 aSkinWeights;
+        #endif
+        #ifdef USE_ARMATURE2
+        attribute vec4 aSkinJoints2;
+        attribute vec4 aSkinWeights2;
         #endif
 
         uniform mat4 uView;
@@ -66,16 +84,30 @@ export class StandardMaterial implements Material {
         uniform mat4 uModel;
         #endif
         uniform vec2 uTexScale;
+        #ifdef USE_ARMATURE
+        uniform sampler2D uArmatureMap;
+        uniform vec2 uArmatureMapSize;
+        #endif
 
         varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec2 vTexCoord;
+
+        ${ARMATURE}
 
         void main() {
           #ifdef USE_INSTANCING
           mat4 model = aModel;
           #else
           mat4 model = uModel;
+          #endif
+          #ifdef USE_ARMATURE
+          mat4 armatureMat = mat4(0.0);
+          fetchArmature(armatureMat, aSkinJoints, aSkinWeights, uArmatureMap, 1.0 / uArmatureMapSize);
+          #ifdef USE_ARMATURE2
+          fetchArmature(armatureMat, aSkinJoints2, aSkinWeights2, uArmatureMap, 1.0 / uArmatureMapSize);
+          #endif
+          model = model * armatureMat;
           #endif
           vec4 pos = model * vec4(aPosition, 1.0);
           gl_Position = uProjection * uView * pos;
@@ -86,29 +118,53 @@ export class StandardMaterial implements Material {
         } 
       `,
     }));
-    const buffer = new Float32Array(chunk.size * 16);
-    let index = 0;
-    chunk.forEach((entity) => {
-      const transform = entity.get(transformComp);
-      buffer.set(transform!.getMatrixWorld(), index * 16);
-      index += 1;
-    });
-    // Pass instanced buffer to GPU
-    this.instancedBuffer.set(buffer);
-    // Bind the shader and bind aModel attribute
-    shader.bind(glRenderer);
-    geometry.bind(glRenderer, shader);
-    shader.setAttribute('aModel', {
-      buffer: this.instancedBuffer,
-      divisor: 1,
-    });
-    pipeline.drawShadow({
-      ...options,
-      shader,
-      geometry,
-      uniforms: options.uniforms,
-      primCount: chunk.size,
-    });
+
+    if (chunk.has('armature')) {
+      // Draw each armature separately;
+      chunk.forEach((entity) => {
+        const transform = entity.get(transformComp)!;
+        const armature = entity.get<Armature>('armature')!;
+        const armatureMap = armature.getTexture();
+        pipeline.drawShadow({
+          ...options,
+          shader,
+          geometry,
+          uniforms: {
+            ...options.uniforms,
+            uModel: transform.getMatrixWorld(),
+            uArmatureMap: armatureMap,
+            uArmatureMapSize: [
+              armatureMap.getWidth(),
+              armatureMap.getHeight(),
+            ],
+          },
+        });
+      });
+    } else {
+      const buffer = new Float32Array(chunk.size * 16);
+      let index = 0;
+      chunk.forEach((entity) => {
+        const transform = entity.get(transformComp);
+        buffer.set(transform!.getMatrixWorld(), index * 16);
+        index += 1;
+      });
+      // Pass instanced buffer to GPU
+      this.instancedBuffer.set(buffer);
+      // Bind the shader and bind aModel attribute
+      shader.bind(glRenderer);
+      geometry.bind(glRenderer, shader);
+      shader.setAttribute('aModel', {
+        buffer: this.instancedBuffer,
+        divisor: 1,
+      });
+      pipeline.drawShadow({
+        ...options,
+        shader,
+        geometry,
+        uniforms: options.uniforms,
+        primCount: chunk.size,
+      });
+    }
   }
 
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void {
@@ -197,21 +253,7 @@ export class StandardMaterial implements Material {
         varying vec4 vTangent;
         #endif
 
-        #ifdef USE_ARMATURE
-        void fetchArmature(inout mat4 mat, int index, float weight) {
-          if (weight > 0.0) {
-            vec2 texelSize = 1.0 / uArmatureMapSize;
-            vec2 coord = vec2((float(index * 4) + 0.5) * texelSize.x, 0.5);
-            mat4 outMat = mat4(
-              vec4(texture2D(uArmatureMap, coord)),
-              vec4(texture2D(uArmatureMap, coord + vec2(1.0, 0.0) * texelSize)),
-              vec4(texture2D(uArmatureMap, coord + vec2(2.0, 0.0) * texelSize)),
-              vec4(texture2D(uArmatureMap, coord + vec2(3.0, 0.0) * texelSize))
-            );
-            mat += weight * outMat;
-          }
-        }
-        #endif
+        ${ARMATURE}
 
         void main() {
           #ifdef USE_INSTANCING
@@ -221,13 +263,9 @@ export class StandardMaterial implements Material {
           #endif
           #ifdef USE_ARMATURE
           mat4 armatureMat = mat4(0.0);
-          for (int i = 0; i < 4; ++i) {
-            fetchArmature(armatureMat, int(aSkinJoints[i]), aSkinWeights[i]);
-          }
+          fetchArmature(armatureMat, aSkinJoints, aSkinWeights, uArmatureMap, 1.0 / uArmatureMapSize);
           #ifdef USE_ARMATURE2
-          for (int i = 0; i < 4; ++i) {
-            fetchArmature(armatureMat, int(aSkinJoints2[i]), aSkinWeights2[i]);
-          }
+          fetchArmature(armatureMat, aSkinJoints2, aSkinWeights2, uArmatureMap, 1.0 / uArmatureMapSize);
           #endif
           model = model * armatureMat;
           #endif

@@ -3,6 +3,7 @@ import {mat4, vec3, vec4} from 'gl-matrix';
 import {Camera} from '../../3d/Camera';
 import {Transform} from '../../3d/Transform';
 import {Entity} from '../../core/Entity';
+import {Mesh} from '../Mesh';
 import {Renderer} from '../Renderer';
 import {DIRECTIONAL_LIGHT} from '../shader/light';
 import {ShadowMapHandle} from '../ShadowMapManager';
@@ -10,7 +11,7 @@ import {ShadowMapHandle} from '../ShadowMapManager';
 import {Light, LightShaderBlock} from './Light';
 
 const NUM_CASCADES = 3;
-const CASCADE_BREAKPOINTS = [0, 0.05, 0.15, 1];
+const CASCADE_BREAKPOINTS = [-1, 0.05, 0.15, 1];
 
 export interface DirectionalShadowLightOptions {
   color: string | number[];
@@ -70,9 +71,10 @@ export class DirectionalShadowLight implements Light {
               vec2 lightUV = lightPos.xy;
               lightUV = shadowUV.xy + lightUV * shadowUV.zw;
               vec2 moments = texture2D(uDirectionalShadowMap, lightUV).rg;
-              if (lightPos.z > moments.x) {
+              float targetZ = min(lightPos.z, 1.0);
+              if (targetZ > moments.x) {
                 float variance = max(moments.y - moments.x * moments.x, 0.00025);
-                float d = lightPos.z - moments.x;
+                float d = targetZ - moments.x;
                 float pMax = variance / (variance + d * d);
                 lightInten = mix(0.0, 1.0, pMax);
               }
@@ -130,7 +132,7 @@ export class DirectionalShadowLight implements Light {
   }
 
   prepare(entities: Entity[], renderer: Renderer): void {
-    const {shadowMapManager, camera, pipeline} = renderer;
+    const {shadowMapManager, camera, pipeline, entityStore} = renderer;
 
     const cameraData = camera!.get<Camera>('camera')!;
     const {near, far} = cameraData.options;
@@ -150,6 +152,36 @@ export class DirectionalShadowLight implements Light {
       const lightModel = transform.getMatrixWorld();
       const lightView = mat4.create();
       mat4.invert(lightView, lightModel);
+
+      // Retrieve boundary for all objects
+      // Boundary in **light view** space
+      const worldMin = vec3.create();
+      const worldMax = vec3.create();
+      let worldInitialized = false;
+      entityStore.forEachWith(['transform', 'mesh'], (entity) => {
+        const transform = entity.get<Transform>('transform')!;
+        const mesh = entity.get<Mesh>('mesh')!;
+        const transformMat = transform.getMatrixWorld();
+        const out = vec3.create();
+        if (!mesh.shouldCastShadow()) {
+          return;
+        }
+        mesh.getBoundPoints().forEach((point) => {
+          vec3.transformMat4(out, point as vec3, transformMat);
+          vec3.transformMat4(out, out, lightView);
+          if (!worldInitialized) {
+            vec3.copy(worldMin, out);
+            vec3.copy(worldMax, out);
+            worldInitialized = true;
+          } else {
+            vec3.min(worldMin, worldMin, out);
+            vec3.max(worldMax, worldMax, out);
+          }
+        });
+      });
+      // Give a small amount of margin
+      vec3.add(worldMin, worldMin, [-0.01, -0.01, -0.01]);
+      vec3.add(worldMax, worldMax, [0.01, 0.01, 0.01]);
 
       for (let i = 0; i < NUM_CASCADES; i += 1) {
         const atlas = shadowMapManager.get(light.atlases[i]);
@@ -199,6 +231,13 @@ export class DirectionalShadowLight implements Light {
             vec3.max(maxVec, maxVec, pos);
           }
         });
+        // Intersect with world boundary
+        vec3.max(minVec, minVec, worldMin);
+        vec3.min(maxVec, maxVec, worldMax);
+        const isValid =
+          minVec[0] < maxVec[0] &&
+          minVec[1] < maxVec[1] &&
+          minVec[2] < maxVec[2];
         // Construct light projection matrix
         const lightProj = mat4.create();
         mat4.ortho(
@@ -208,15 +247,17 @@ export class DirectionalShadowLight implements Light {
           -maxVec[2], -minVec[2],
         );
         mat4.mul(light.viewProjections[i], lightProj, lightView);
-        // Construct shadow map
-        pipeline.renderShadow({
-          ...shadowMapManager.beginRender(atlas),
-          uniforms: {
-            uProjection: lightProj,
-            uView: lightView,
-          },
-        });
-        shadowMapManager.finalizeRender(atlas);
+        if (isValid) {
+          // Construct shadow map
+          pipeline.renderShadow({
+            ...shadowMapManager.beginRender(atlas),
+            uniforms: {
+              uProjection: lightProj,
+              uView: lightView,
+            },
+          });
+          shadowMapManager.finalizeRender(atlas);
+        }
       }
     });
   }
