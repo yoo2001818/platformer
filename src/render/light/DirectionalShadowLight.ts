@@ -70,6 +70,12 @@ export class DirectionalShadowLight implements Light {
               lightPos = lightPos * 0.5 + 0.5;
               vec2 lightUV = lightPos.xy;
               lightUV = shadowUV.xy + lightUV * shadowUV.zw;
+              // ESM
+              float occluder = texture2D(uDirectionalShadowMap, lightUV).r;
+              float receiver = (min(lightPos.z, 1.0) + 1.0) / 2.0;
+              lightInten = pow(min(1.0, max(0.0, exp(-2.0 * (receiver - occluder)))), 20.0);
+              // VSM
+              /*
               vec2 moments = texture2D(uDirectionalShadowMap, lightUV).rg;
               float targetZ = min(lightPos.z, 1.0);
               if (targetZ > moments.x) {
@@ -78,6 +84,7 @@ export class DirectionalShadowLight implements Light {
                 float pMax = variance / (variance + d * d);
                 lightInten = mix(0.0, 1.0, pMax);
               }
+              */
             }
             result += lightInten * calcDirectional(viewPos, mInfo, light);
           }

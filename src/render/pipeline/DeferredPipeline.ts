@@ -311,11 +311,15 @@ export class DeferredPipeline implements Pipeline {
           varying vec3 vNormal;
 
           void main() {
+            /*
             float intensity = gl_FragCoord.z;
             float dx = dFdx(intensity);
             float dy = dFdy(intensity);
             float moment = intensity * intensity + 0.25 * (dx * dx + dy * dy);
             gl_FragColor = vec4(intensity, moment, 0.0, 1.0);
+            */
+            float depthDivisor = gl_FragCoord.z * 0.5 + 0.5;
+            gl_FragColor = vec4(depthDivisor, 0.0, 0.0, 0.0);
           }
         `,
       );

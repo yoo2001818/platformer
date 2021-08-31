@@ -176,7 +176,7 @@ export class ShadowMapManager {
   beginRender(handle: ShadowMapHandle): PipelineShadowOptions {
     const {glRenderer} = this.renderer;
     const {gl} = glRenderer;
-    gl.clearColor(1, 1, 0, 0);
+    gl.clearColor(1, 0, 0, 0);
     glRenderer.clear(this.tempFrame1);
     gl.clearColor(0, 0, 0, 0);
     return {
