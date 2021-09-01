@@ -1,5 +1,4 @@
 import {EntityStore} from '../core/EntityStore';
-import {Float32ArrayComponent, ObjectComponent} from '../core/components';
 import {calcNormals} from '../geom/calcNormals';
 import {box} from '../geom/box';
 // import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
@@ -8,34 +7,26 @@ import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
 import {StandardMaterial} from '../render/material/StandardMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
-import {TransformComponent} from '../3d/TransformComponent';
 import {Transform} from '../3d/Transform';
 import {Camera} from '../3d/Camera';
-import {MeshComponent} from '../render/MeshComponent';
 import {Mesh} from '../render/Mesh';
-import {Light} from '../render/light/Light';
 import {PointLight} from '../render/light/PointLight';
 import {createImage} from '../render/utils/createImage';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {OrbitCameraController} from '../input/OrbitCameraController';
+import {create3DComponents} from '../3d/create3DComponents';
+import {Float32ArrayComponent} from '../core/components';
 
 import logo from './logo.png';
 
 const store = new EntityStore();
 
-const posComp = new TransformComponent();
 const velComp = new Float32ArrayComponent(4);
-const cameraComp = new ObjectComponent<Camera>();
-const lightComp = new ObjectComponent<Light>();
-const meshComp = new MeshComponent();
 
 store.registerComponents({
-  transform: posComp,
   vel: velComp,
-  camera: cameraComp,
-  mesh: meshComp,
-  light: lightComp,
 });
+store.registerComponents(create3DComponents());
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -118,8 +109,8 @@ function main() {
       entity.set('mesh', new Mesh(material, geometry));
     }
 
-    store.forEachWith([posComp, velComp], (entity) => {
-      const pos = posComp.get(entity)!;
+    store.forEachWith(['transform', velComp], (entity) => {
+      const pos = entity.get<Transform>('transform')!;
       const vel = velComp.get(entity)!;
       pos.translate([
         vel[0] * delta / 1000,
@@ -137,13 +128,13 @@ function main() {
       }
     });
 
-    lightEntity.get(posComp)!.setPosition([
+    lightEntity.get<Transform>('transform')!.setPosition([
       Math.cos(time / 1000) * 30,
       Math.sin(time / 1000) * 30,
       0,
     ]);
 
-    lightBox.get(posComp)!.setPosition([
+    lightBox.get<Transform>('transform')!.setPosition([
       Math.cos(time / 1000) * 30,
       Math.sin(time / 1000) * 30,
       0,

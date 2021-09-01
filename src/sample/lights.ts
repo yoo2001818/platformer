@@ -1,5 +1,4 @@
 import {EntityStore} from '../core/EntityStore';
-import {Float32ArrayComponent, ObjectComponent} from '../core/components';
 import {bakeChannelGeom} from '../geom/channelGeom/bakeChannelGeom';
 import {parseObj} from '../geom/loader/obj';
 import {Renderer} from '../render/Renderer';
@@ -8,12 +7,9 @@ import {StandardMaterial} from '../render/material/StandardMaterial';
 import {GLRenderer} from '../render/gl/GLRenderer';
 import {calcNormals} from '../geom/calcNormals';
 import {quad} from '../geom/quad';
-import {TransformComponent} from '../3d/TransformComponent';
 import {Transform} from '../3d/Transform';
 import {Camera} from '../3d/Camera';
-import {MeshComponent} from '../render/MeshComponent';
 import {Mesh} from '../render/Mesh';
-import {Light} from '../render/light/Light';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {createImage} from '../render/utils/createImage';
 import {OrbitCameraController} from '../input/OrbitCameraController';
@@ -25,27 +21,11 @@ import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
 import {PointLight} from '../render/light/PointLight';
 import {EnvironmentLight} from '../render/light/EnvironmentLight';
 import {DirectionalShadowLight} from '../render/light/DirectionalShadowLight';
-import {ParentComponent} from '../3d/ParentComponent';
+import {create3DComponents} from '../3d/create3DComponents';
 
 const store = new EntityStore();
 
-const nameComp = new ObjectComponent<string>();
-const posComp = new TransformComponent();
-const velComp = new Float32ArrayComponent(4);
-const cameraComp = new ObjectComponent<Camera>();
-const lightComp = new ObjectComponent<Light>();
-const meshComp = new MeshComponent();
-const parentComp = new ParentComponent();
-
-store.registerComponents({
-  name: nameComp,
-  transform: posComp,
-  vel: velComp,
-  camera: cameraComp,
-  mesh: meshComp,
-  light: lightComp,
-  parent: parentComp,
-});
+store.registerComponents(create3DComponents());
 
 function main() {
   const canvas = document.createElement('canvas');
