@@ -17,6 +17,7 @@ import {getHDRType} from '../render/hdr/utils';
 import {generateCubePackEquirectangular} from '../render/map/generateCubePack';
 import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
 import {create3DComponents} from '../3d/create3DComponents';
+import {EnvironmentLight} from '../render/light/EnvironmentLight';
 
 const store = new EntityStore();
 
@@ -86,6 +87,12 @@ function main() {
       }),
       new Geometry(quad()),
     ),
+  });
+
+  store.create({
+    name: 'envLight',
+    transform: new Transform(),
+    light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
 
   for (let y = 0; y < 10; y += 1) {

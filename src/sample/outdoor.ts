@@ -132,6 +132,7 @@ function main() {
         texScale: [100, 100],
       }),
       new Geometry(calcTangents(calcNormals(quad()))),
+      {castShadow: false},
     ),
   });
 
