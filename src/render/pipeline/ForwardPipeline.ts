@@ -100,6 +100,7 @@ export class ForwardPipeline implements Pipeline {
 
             MaterialInfo mInfo;
             material(mInfo);
+            mInfo.depth = gl_FragCoord.z;
 
             ${this.lights.map((light) => light.shaderBlock.body).join('\n')}
             
@@ -139,7 +140,8 @@ export class ForwardPipeline implements Pipeline {
           #version 100
           precision highp float;
           void main() {
-            gl_FragColor = vec4(0.0);
+            float depthDivisor = gl_FragCoord.z * 0.5 + 0.5;
+            gl_FragColor = vec4(depthDivisor, 0.0, 0.0, 1.0);
           }
         `,
       );
@@ -177,9 +179,8 @@ export class ForwardPipeline implements Pipeline {
   }
 
   renderShadow(options: DrawOptions): void {
-    const {entityStore, glRenderer} = this.renderer;
+    const {entityStore} = this.renderer;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
-    glRenderer.clear(options.frameBuffer);
     entityStore.forEachChunkWith([meshComp], (chunk) => {
       const mesh = meshComp.getChunk(chunk, 0);
       if (mesh != null) {

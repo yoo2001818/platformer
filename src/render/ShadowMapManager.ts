@@ -73,9 +73,7 @@ export class ShadowMapManager {
     this.renderer = renderer;
     const {glRenderer} = renderer;
     const {capabilities} = glRenderer;
-    const useFloat =
-      capabilities.hasFloatBuffer() &&
-      capabilities.hasFloatTextureLinear();
+    const useFloat = false;
     this.tempDepth1 = new GLRenderBuffer({
       width: 512,
       height: 512,
@@ -98,6 +96,7 @@ export class ShadowMapManager {
       wrapS: 'clampToEdge',
       wrapT: 'clampToEdge',
       mipmap: false,
+      anistropic: 1,
     });
     this.tempTexture3 = new GLTexture2D({
       format: 'rgba',
@@ -109,6 +108,7 @@ export class ShadowMapManager {
       wrapS: 'clampToEdge',
       wrapT: 'clampToEdge',
       mipmap: false,
+      anistropic: 1,
     });
     if (capabilities.isWebGL2) {
       this.tempFrame1 = new GLFrameBuffer({
@@ -145,6 +145,7 @@ export class ShadowMapManager {
       wrapS: 'clampToEdge',
       wrapT: 'clampToEdge',
       mipmap: false,
+      anistropic: 1,
     });
     this.frameBuffer = new GLFrameBuffer({
       width: 2048,
