@@ -142,7 +142,13 @@ export const CUBE_PACK = /* glsl */`
     vec2 boxSize = vec2(0.5, 0.25);
     vec2 lookupUV = boxSize * (uv + vec2(mod(face, 2.0), floor(face / 2.0)));
     lookupUV = lookupUV * mipBounds + mipStart;
-    return texture2D(smp, lookupUV);
+    #ifdef GL_EXT_shader_texture_lod
+      return texture2DLodEXT(smp, lookupUV, 0.0);
+    #elif defined(WEBGL2)
+      return texture2DLodEXT(smp, lookupUV, 0.0);
+    #else
+      return texture2D(smp, lookupUV);
+    #endif
   }
 
   vec4 cubePackReverseFace(vec2 uv) {

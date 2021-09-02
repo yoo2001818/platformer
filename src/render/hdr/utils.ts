@@ -32,7 +32,7 @@ export function getHDROptions(type: HDRType): GLTextureOptions {
     mipmap: false,
     wrapS: 'clampToEdge',
     wrapT: 'clampToEdge',
-    anistropic: 0,
+    anistropic: 1,
   };
   switch (type) {
     case 'halfFloat':

@@ -192,7 +192,7 @@ export class GLTexture {
       } else if (params.minFilter === 'nearest') {
         anistropicValue = 1;
       } else {
-        anistropicValue = maxAnisotropy;
+        anistropicValue = params.anistropic ?? maxAnisotropy;
       }
       gl.texParameterf(
         target,
