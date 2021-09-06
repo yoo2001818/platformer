@@ -33,6 +33,7 @@ export interface GLTextureFormat {
   format?:
     | 'rgba'
     | 'rgb'
+    | 'rg'
     | 'luminanceAlpha'
     | 'luminance'
     | 'alpha'
