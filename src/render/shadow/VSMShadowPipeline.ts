@@ -8,6 +8,7 @@ import {quad} from '../../geom/quad';
 import {PipelineShadowShaderBlock} from '../pipeline/Pipeline';
 import {Renderer} from '../Renderer';
 import {ShadowMapHandle} from '../ShadowMapManager';
+import {BAKE_VSM} from '../shader/shadow';
 
 import {ShadowPipeline} from './ShadowPipeline';
 
@@ -146,12 +147,11 @@ export class VSMShadowPipeline implements ShadowPipeline {
 
           varying vec3 vNormal;
 
+          ${BAKE_VSM}
+
           void main() {
             float intensity = gl_FragCoord.z;
-            float dx = dFdx(intensity);
-            float dy = dFdy(intensity);
-            float moment = intensity * intensity + 0.25 * (dx * dx + dy * dy);
-            gl_FragColor = vec4(intensity, moment, 0.0, 1.0);
+            gl_FragColor = bakeVSM(intensity);
           }
         `,
       );

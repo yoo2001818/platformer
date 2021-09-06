@@ -3,12 +3,12 @@ import {EntityChunk} from '../../core/EntityChunk';
 import {GLGeometry} from '../gl/GLGeometry';
 import {Material} from '../Material';
 import {Renderer} from '../Renderer';
+import {ShadowPipeline} from '../shadow/ShadowPipeline';
 import {createId} from '../utils/createId';
 import {GLTexture} from '../gl/GLTexture';
 import {GLArrayBuffer} from '../gl/GLArrayBuffer';
 import {Armature} from '../Armature';
 import {ARMATURE} from '../shader/armature';
-import {ShadowPipeline} from '../shadow/ShadowPipeline';
 
 export interface StandardMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
