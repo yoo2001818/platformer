@@ -5,10 +5,10 @@ import {Material} from '../Material';
 import {Renderer} from '../Renderer';
 import {createId} from '../utils/createId';
 import {GLTexture} from '../gl/GLTexture';
-import {PipelineShadowOptions} from '../pipeline/Pipeline';
 import {GLArrayBuffer} from '../gl/GLArrayBuffer';
 import {Armature} from '../Armature';
 import {ARMATURE} from '../shader/armature';
+import {ShadowPipeline} from '../shadow/ShadowPipeline';
 
 export interface StandardMaterialOptions {
   albedo: string | Float32Array | number[] | GLTexture | null;
@@ -41,9 +41,9 @@ export class StandardMaterial implements Material {
     chunk: EntityChunk,
     geometry: GLGeometry,
     renderer: Renderer,
-    options: PipelineShadowOptions,
+    shadowPipeline: ShadowPipeline,
   ): void {
-    const {entityStore, pipeline, glRenderer} = renderer;
+    const {entityStore, glRenderer} = renderer;
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
     let featureBits = 0;
@@ -55,7 +55,7 @@ export class StandardMaterial implements Material {
     } else {
       featureBits |= INSTANCING_BIT;
     }
-    const shader = pipeline.getShadowShader(`basic-${featureBits}`, () => ({
+    const shader = shadowPipeline.getShader(`basic-${featureBits}`, () => ({
       vert: /* glsl */`
         #version 100
         precision highp float;
@@ -125,12 +125,10 @@ export class StandardMaterial implements Material {
         const transform = entity.get(transformComp)!;
         const armature = entity.get<Armature>('armature')!;
         const armatureMap = armature.getTexture();
-        pipeline.drawShadow({
-          ...options,
+        shadowPipeline.draw({
           shader,
           geometry,
           uniforms: {
-            ...options.uniforms,
             uModel: transform.getMatrixWorld(),
             uArmatureMap: armatureMap,
             uArmatureMapSize: [
@@ -157,11 +155,10 @@ export class StandardMaterial implements Material {
         buffer: this.instancedBuffer,
         divisor: 1,
       });
-      pipeline.drawShadow({
-        ...options,
+      shadowPipeline.draw({
         shader,
         geometry,
-        uniforms: options.uniforms,
+        uniforms: {},
         primCount: chunk.size,
       });
     }

@@ -50,6 +50,11 @@ const BLUR_SHADER = new GLShader(
 export class VSMShadowPipeline implements ShadowPipeline {
   type = 'vsm';
   renderer: Renderer;
+  // The shadow is baked by following:
+  // 1. (A) Render mesh to renderbuffer
+  // 2. (A->B) Blit renderbuffer to texture
+  // 3. (B->C) Blur pass 1
+  // 4. (C->final) Blur pass 2
   tempDepth1: GLRenderBuffer;
   tempBuffer1: GLRenderBuffer;
   tempTexture2: GLTexture2D;
@@ -58,6 +63,7 @@ export class VSMShadowPipeline implements ShadowPipeline {
   tempFrame2: GLFrameBuffer;
   tempFrame3: GLFrameBuffer;
   currentHandle: ShadowMapHandle | null = null;
+  currentUniforms: {[key: string]: unknown;} = {};
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
@@ -152,8 +158,9 @@ export class VSMShadowPipeline implements ShadowPipeline {
     });
   }
 
-  begin(handle: ShadowMapHandle): void {
+  begin(handle: ShadowMapHandle, uniforms: {[key: string]: unknown;}): void {
     this.currentHandle = handle;
+    this.currentUniforms = uniforms;
     const {glRenderer} = this.renderer;
     const {gl} = glRenderer;
     gl.clearColor(1, 0, 0, 0);
@@ -166,6 +173,10 @@ export class VSMShadowPipeline implements ShadowPipeline {
     glRenderer.draw({
       ...options,
       frameBuffer: this.tempFrame1,
+      uniforms: {
+        ...options.uniforms,
+        ...this.currentUniforms,
+      },
     });
   }
 

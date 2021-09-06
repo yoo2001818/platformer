@@ -6,7 +6,7 @@ import {ShadowMapHandle} from '../ShadowMapManager';
 export interface ShadowPipeline {
   type: string;
   getShader(id: string, onCreate: () => PipelineShadowShaderBlock): GLShader;
-  begin(handle: ShadowMapHandle): void;
+  begin(handle: ShadowMapHandle, uniforms: {[key: string]: unknown;}): void;
   draw(options: DrawOptions): void;
   finalize(): void;
 }

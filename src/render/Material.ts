@@ -1,8 +1,8 @@
 import {EntityChunk} from '../core/EntityChunk';
 
 import {GLGeometry} from './gl/GLGeometry';
-import {PipelineShadowOptions} from './pipeline/Pipeline';
 import {Renderer} from './Renderer';
+import {ShadowPipeline} from './shadow/ShadowPipeline';
 
 export interface Material {
   id: number;
@@ -11,7 +11,7 @@ export interface Material {
     chunk: EntityChunk,
     geometry: GLGeometry,
     renderer: Renderer,
-    options: PipelineShadowOptions,
+    shadowPipeline: ShadowPipeline,
   ): void;
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void;
   dispose(): void;

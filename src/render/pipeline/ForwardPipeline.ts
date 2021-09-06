@@ -6,11 +6,12 @@ import {DrawOptions} from '../gl/types';
 import {Light, LightShaderBlock} from '../light/Light';
 import {MeshComponent} from '../MeshComponent';
 import {Renderer} from '../Renderer';
+import {ShadowPipeline} from '../shadow/ShadowPipeline';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
 
-import {Pipeline, PipelineShaderBlock, PipelineShadowShaderBlock} from './Pipeline';
+import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
 interface LightConfig {
   type: string;
@@ -130,24 +131,6 @@ export class ForwardPipeline implements Pipeline {
     });
   }
 
-  getShadowShader(id: string, onCreate: () => PipelineShadowShaderBlock): GLShader {
-    const {renderer} = this;
-    return renderer.getResource(`shadow~${id}`, () => {
-      const block = onCreate();
-      return new GLShader(
-        block.vert,
-        /* glsl */`
-          #version 100
-          precision highp float;
-          void main() {
-            float depthDivisor = gl_FragCoord.z * 0.5 + 0.5;
-            gl_FragColor = vec4(depthDivisor, 0.0, 0.0, 1.0);
-          }
-        `,
-      );
-    });
-  }
-
   drawDeferred(options: DrawOptions): void {
     const {renderer: {glRenderer}} = this;
     glRenderer.draw({
@@ -171,14 +154,7 @@ export class ForwardPipeline implements Pipeline {
     });
   }
 
-  drawShadow(options: DrawOptions): void {
-    const {renderer: {glRenderer}} = this;
-    glRenderer.draw({
-      ...options,
-    });
-  }
-
-  renderShadow(options: DrawOptions): void {
+  renderShadow(shadowPipeline: ShadowPipeline): void {
     const {entityStore} = this.renderer;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     entityStore.forEachChunkWith([meshComp], (chunk) => {
@@ -191,7 +167,7 @@ export class ForwardPipeline implements Pipeline {
             throw new Error('Geometry is null');
           }
           const glGeometry = geometry.getGLGeometry(this.renderer);
-          material.renderShadow?.(chunk, glGeometry, this.renderer, options);
+          material.renderShadow?.(chunk, glGeometry, this.renderer, shadowPipeline);
         });
       }
     });

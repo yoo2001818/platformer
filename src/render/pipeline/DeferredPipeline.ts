@@ -14,8 +14,9 @@ import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
 import {FXAA} from '../shader/fxaa';
+import {ShadowPipeline} from '../shadow/ShadowPipeline';
 
-import {Pipeline, PipelineShaderBlock, PipelineShadowShaderBlock} from './Pipeline';
+import {Pipeline, PipelineShaderBlock} from './Pipeline';
 import {SSAO} from './ssao';
 
 interface FallbackLightConfig {
@@ -297,35 +298,6 @@ export class DeferredPipeline implements Pipeline {
     });
   }
 
-  getShadowShader(id: string, onCreate: () => PipelineShadowShaderBlock): GLShader {
-    const {renderer} = this;
-    return renderer.getResource(`shadow~${id}`, () => {
-      const block = onCreate();
-      return new GLShader(
-        block.vert,
-        /* glsl */`
-          #version 100
-          #extension GL_OES_standard_derivatives : enable
-          precision highp float;
-
-          varying vec3 vNormal;
-
-          void main() {
-            /*
-            float intensity = gl_FragCoord.z;
-            float dx = dFdx(intensity);
-            float dy = dFdy(intensity);
-            float moment = intensity * intensity + 0.25 * (dx * dx + dy * dy);
-            gl_FragColor = vec4(intensity, moment, 0.0, 1.0);
-            */
-            float depthDivisor = gl_FragCoord.z * 0.5 + 0.5;
-            gl_FragColor = vec4(depthDivisor, 0.0, 0.0, 0.0);
-          }
-        `,
-      );
-    });
-  }
-
   drawDeferred(options: DrawOptions): void {
     const {renderer: {glRenderer}} = this;
     glRenderer.draw({
@@ -347,13 +319,6 @@ export class DeferredPipeline implements Pipeline {
         ...this.cameraUniforms,
         ...options.uniforms,
       },
-    });
-  }
-
-  drawShadow(options: DrawOptions): void {
-    const {renderer: {glRenderer}} = this;
-    glRenderer.draw({
-      ...options,
     });
   }
 
@@ -448,7 +413,7 @@ export class DeferredPipeline implements Pipeline {
     }
   }
 
-  renderShadow(options: DrawOptions): void {
+  renderShadow(shadowPipeline: ShadowPipeline): void {
     const {entityStore} = this.renderer;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     entityStore.forEachChunkWith([meshComp], (chunk) => {
@@ -461,7 +426,7 @@ export class DeferredPipeline implements Pipeline {
             throw new Error('Geometry is null');
           }
           const glGeometry = geometry.getGLGeometry(this.renderer);
-          material.renderShadow?.(chunk, glGeometry, this.renderer, options);
+          material.renderShadow?.(chunk, glGeometry, this.renderer, shadowPipeline);
         });
       }
     });

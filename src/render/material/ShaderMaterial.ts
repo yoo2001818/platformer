@@ -5,8 +5,8 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {Material} from '../Material';
 import {Renderer} from '../Renderer';
+import {ShadowPipeline} from '../shadow/ShadowPipeline';
 import {createId} from '../utils/createId';
-import {PipelineShadowOptions} from '../pipeline/Pipeline';
 
 export type ShaderMaterialUniformSetter =
 | {[key: string]: unknown;}
@@ -36,12 +36,12 @@ export class ShaderMaterial implements Material {
     chunk: EntityChunk,
     geometry: GLGeometry,
     renderer: Renderer,
-    options: PipelineShadowOptions,
+    shadowPipeline: ShadowPipeline,
   ): void {
-    const {entityStore, pipeline} = renderer;
+    const {entityStore} = renderer;
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
-    const shader = pipeline.getShadowShader(`shader-${this.id}`, () => ({
+    const shader = shadowPipeline.getShader(`shader-${this.id}`, () => ({
       vert: this.vert,
     }));
     chunk.forEach((entity) => {
@@ -49,12 +49,10 @@ export class ShaderMaterial implements Material {
       if (transform == null) {
         return;
       }
-      pipeline.drawShadow({
-        ...options,
+      shadowPipeline.draw({
         shader,
         geometry,
         uniforms: {
-          ...options.uniforms,
           uModel: transform.getMatrixWorld(),
         },
       });

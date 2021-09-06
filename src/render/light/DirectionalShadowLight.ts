@@ -6,6 +6,7 @@ import {Entity} from '../../core/Entity';
 import {Mesh} from '../Mesh';
 import {Renderer} from '../Renderer';
 import {DIRECTIONAL_LIGHT} from '../shader/light';
+import {VSMShadowPipeline} from '../shadow/VSMShadowPipeline';
 import {ShadowMapHandle} from '../ShadowMapManager';
 
 import {Light, LightShaderBlock} from './Light';
@@ -141,6 +142,11 @@ export class DirectionalShadowLight implements Light {
   prepare(entities: Entity[], renderer: Renderer): void {
     const {shadowMapManager, camera, pipeline, entityStore} = renderer;
 
+    const shadowPipeline = renderer.getResource(
+      'shadowPipeline~vsm',
+      () => new VSMShadowPipeline(renderer),
+    );
+
     const cameraData = camera!.get<Camera>('camera')!;
     const {near, far} = cameraData.options;
     const cameraProjection =
@@ -256,14 +262,12 @@ export class DirectionalShadowLight implements Light {
         mat4.mul(light.viewProjections[i], lightProj, lightView);
         if (isValid) {
           // Construct shadow map
-          pipeline.renderShadow({
-            ...shadowMapManager.beginRender(atlas),
-            uniforms: {
-              uProjection: lightProj,
-              uView: lightView,
-            },
+          shadowPipeline.begin(atlas, {
+            uProjection: lightProj,
+            uView: lightView,
           });
-          shadowMapManager.finalizeRender(atlas);
+          pipeline.renderShadow(shadowPipeline);
+          shadowPipeline.finalize();
         }
       }
     });
