@@ -22,7 +22,6 @@ import {GLTextureImage} from '../render/gl/GLTextureImage';
 import {parseGLTF} from '../loader/gltf';
 import {updateAnimation} from '../anim/updateAnimation';
 import {create3DComponents} from '../3d/create3DComponents';
-import {PointLight} from '../render/light/PointLight';
 
 const store = new EntityStore();
 
@@ -127,24 +126,6 @@ function main() {
       power: 10,
     }),
   });
-
-  for (let i = 0; i < 200; i += 1) {
-    store.create({
-      name: 'light',
-      transform: new Transform()
-        .translate([
-          Math.random() * 10 - 5,
-          Math.random() * 2 - 1,
-          Math.random() * 10 - 5,
-        ]),
-      light: new PointLight({
-        color: [Math.random(), Math.random(), Math.random()],
-        power: 5,
-        radius: 1,
-        range: 2,
-      }),
-    });
-  }
 
   const orbitController = new OrbitCameraController(
     canvas,

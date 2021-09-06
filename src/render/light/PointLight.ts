@@ -262,7 +262,7 @@ export class PointLight implements Light {
         shader: quadShader,
         uniforms: {},
         state: {
-          depth: false,
+          depth: 'greater',
           depthMask: false,
         },
         primCount: quadEntities.length,
