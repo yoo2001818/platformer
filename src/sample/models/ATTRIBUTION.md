@@ -1,3 +1,4 @@
 - Dragon.gltf - https://sketchfab.com/3d-models/black-dragon-with-idle-animation-fb0053a2e59b43868e934c239bf4eb36
 - axe - https://www.3dmodelscc0.com/
 - cone - https://www.3dmodelscc0.com/
+- bunny - http://graphics.stanford.edu/data/3Dscanrep/

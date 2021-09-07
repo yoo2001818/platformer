@@ -1,4 +1,4 @@
-import './sample/gi';
+import './sample/bvh';
 
 document.body.style.margin = '0';
 document.body.style.padding = '0';
