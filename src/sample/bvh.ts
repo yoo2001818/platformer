@@ -27,6 +27,7 @@ import {create3DComponents} from '../3d/create3DComponents';
 import {WorldBVH} from '../render/raytrace/WorldBVH';
 import {flattenBuffer} from '../render/gl/utils';
 import {box} from '../geom/box';
+import { BVHNode } from '../3d/BVH';
 // import {box} from '../geom/box';
 // import {BVH, BVHNode} from '../3d/BVH';
 
@@ -239,7 +240,7 @@ function main() {
         normal[3] = 0;
         vec4.transformMat4(normal as vec4, normal as vec4, mat);
         vec3.normalize(normal, normal);
-        vec3.scaleAndAdd(pos, pos, normal, 0.01);
+        vec3.scaleAndAdd(pos, pos, normal, 0.05);
         // vec3.scale(normal, normal, -1);
         // Trace ray...
         const result = worldBVH.intersectRay(pos, normal);
@@ -258,7 +259,7 @@ function main() {
     });
   });
   const end = performance.now();
-  console.log('Ray tracing took', end - start, counter, worldBVH.counter);
+  console.log('Ray tracing took', `${end - start}ms`, counter, worldBVH.counter);
 
   let lastTime = 0;
 
@@ -318,6 +319,37 @@ function main() {
         mesh: testMesh,
       });
     }
+
+    /*
+    worldBVH.metNodes.forEach((node) => {
+      const center: vec3 = [
+        (node.bounds[0] + node.bounds[3]) / 2,
+        (node.bounds[1] + node.bounds[4]) / 2,
+        (node.bounds[2] + node.bounds[5]) / 2,
+      ];
+      const size: vec3 = [
+        node.bounds[3] - center[0],
+        node.bounds[4] - center[1],
+        node.bounds[5] - center[2],
+      ];
+      store.create({
+        name: 'box',
+        transform: new Transform()
+          .setPosition(center)
+          .setScale(size),
+        mesh: new Mesh(
+          new StandardMaterial({
+            albedo: [Math.random(), Math.random(), Math.random()],
+            metalic: 0,
+            roughness: 0.4,
+          }),
+          new Geometry(calcNormals(box())),
+          {castShadow: false},
+        ),
+      });
+    });
+    worldBVH.metNodes = [];
+    */
   });
 }
 

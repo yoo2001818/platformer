@@ -2,73 +2,24 @@ import {vec3} from 'gl-matrix';
 
 const EPSILON = 0.0000001;
 
-// https://github.com/erich666/GraphicsGems/blob/master/gems/RayBox.c
 export function intersectRayAABB(
-  output: vec3,
-  bounds: Float32Array,
+  bounds: vec3,
   origin: vec3,
   dir: vec3,
 ): boolean {
-  let inside = true;
-  const quadrant = [0, 0, 0];
-  let plane = 0;
-  const maxT = [0, 0, 0];
-  const candidatePlane = [0, 0, 0];
-
-  /* Find candidate planes; this loop can be avoided if
-     rays cast all from the eye(assume perpsective view) */
-  for (let i = 0; i < 3; i += 1) {
-    if (origin[i] < bounds[i]) {
-      quadrant[i] = 0;
-      candidatePlane[i] = bounds[i];
-      inside = false;
-    } else if (origin[i] > bounds[i + 3]) {
-      quadrant[i] = 2;
-      candidatePlane[i] = bounds[i + 3];
-      inside = false;
-    } else {
-      quadrant[i] = 1;
-    }
-  }
-
-  /* Ray origin inside bounding box */
-  if (inside) {
-    vec3.copy(output, origin);
-    return true;
-  }
-
-  /* Calculate T distances to candidate planes */
-  for (let i = 0; i < 3; i += 1) {
-    if (quadrant[i] !== 1 && Math.abs(dir[i]) > EPSILON) {
-      maxT[i] = (candidatePlane[i] - origin[i]) / dir[i];
-    } else {
-      maxT[i] = -1;
-    }
-  }
-
-  /* Get largest of the maxT's for final choice of intersection */
-  for (let i = 1; i < 3; i += 1) {
-    if (maxT[plane] < maxT[i]) {
-      plane = i;
-    }
-  }
-
-  /* Check final candidate actually inside box */
-  if (maxT[plane] < 0) {
-    return false;
-  }
-  for (let i = 0; i < 3; i += 1) {
-    if (plane !== i) {
-      output[i] = origin[i] + maxT[plane + 3] * dir[i];
-      if (output[i] < bounds[i] || output[i] > bounds[i + 3]) {
-        return false;
-      }
-    } else {
-      output[i] = candidatePlane[i];
-    }
-  }
-
-  return true;
+  const tx1 = (bounds[0] - origin[0]) / dir[0];
+  const tx2 = (bounds[3] - origin[0]) / dir[0];
+  let tmin = Math.min(tx1, tx2);
+  let tmax = Math.max(tx1, tx2);
+  const ty1 = (bounds[1] - origin[1]) / dir[1];
+  const ty2 = (bounds[4] - origin[1]) / dir[1];
+  tmin = Math.max(tmin, Math.min(ty1, ty2));
+  tmax = Math.min(tmax, Math.max(ty1, ty2));
+  const tz1 = (bounds[2] - origin[2]) / dir[2];
+  const tz2 = (bounds[5] - origin[2]) / dir[2];
+  tmin = Math.max(tmin, Math.min(tz1, tz2));
+  tmax = Math.min(tmax, Math.max(tz1, tz2));
+  return tmax >= tmin;
 }
 
 export function intersectRayTriangle(

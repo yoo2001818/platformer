@@ -25,6 +25,7 @@ export class WorldBVH {
   entityStore: EntityStore;
   bvh: BVH | null = null;
   children: [Entity, number, Geometry, Float32Array][] | null = null;
+  metNodes: BVHNode[] = [];
   counter = 0;
 
   constructor(entityStore: EntityStore) {
@@ -127,6 +128,7 @@ export class WorldBVH {
     while (stack.length > 0) {
       const index = stack.length - 1;
       const item = stack[index];
+      // this.metNodes.push(item);
       let isPopping = false;
       if (index <= stackDivider && item.isLeaf) {
         // Top layer
@@ -146,7 +148,7 @@ export class WorldBVH {
           vec3.normalize(blDir, blDir);
           // Retrieve local BVH and check bounds
           blBVH = geometry.getBVH();
-          if (intersectRayAABB(tmp, blBVH.root.bounds, blOrigin, blDir)) {
+          if (intersectRayAABB(blBVH.root.bounds, blOrigin, blDir)) {
             tlLeafIndex = i + 1;
             hasChild = true;
             // Traverse down to the bottom layer.
@@ -202,9 +204,9 @@ export class WorldBVH {
         isPopping = true;
       } else {
         const leftIntersects =
-          intersectRayAABB(tmp, item.left.bounds, blOrigin, blDir);
+          intersectRayAABB(item.left.bounds, blOrigin, blDir);
         const rightIntersects =
-          intersectRayAABB(tmp, item.right.bounds, blOrigin, blDir);
+          intersectRayAABB(item.right.bounds, blOrigin, blDir);
         if (leftIntersects && rightIntersects) {
           stack[index] = item.right;
           stack.push(item.left);

@@ -1,5 +1,3 @@
-import {vec3} from 'gl-matrix';
-
 import {GeometryOptions} from '../geom/types';
 
 export interface BVHBaseNode {
@@ -21,6 +19,8 @@ export interface BVHLeafNode extends BVHBaseNode {
 
 export type BVHNode = BVHBranchNode | BVHLeafNode;
 
+const EPSILON = 0.000001;
+
 export interface BVH {
   root: BVHNode;
   indices: Uint32Array;
@@ -41,14 +41,17 @@ export function calcBounds(
     const addr = indices[i] * 6;
     if (initialized) {
       for (let j = 0; j < 3; j += 1) {
-        output[j] = Math.min(output[j], bounds[addr + j]);
+        output[j] = Math.min(output[j] - EPSILON, bounds[addr + j]);
       }
       for (let j = 3; j < 6; j += 1) {
-        output[j] = Math.max(output[j], bounds[addr + j]);
+        output[j] = Math.max(output[j] + EPSILON, bounds[addr + j]);
       }
     } else {
-      for (let j = 0; j < 6; j += 1) {
-        output[j] = bounds[addr + j];
+      for (let j = 0; j < 3; j += 1) {
+        output[j] = bounds[addr + j] - EPSILON;
+      }
+      for (let j = 3; j < 6; j += 1) {
+        output[j] = bounds[addr + j] + EPSILON;
       }
       initialized = true;
     }
