@@ -27,7 +27,7 @@ export class Transform {
     this._matrixVersion = 0;
     this._componentVersion = 0;
     this._parentVersion = 0;
-    this._globalVersion = 0;
+    this._globalVersion = -1;
     this._parentId = -1;
   }
 

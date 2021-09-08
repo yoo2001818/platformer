@@ -1,4 +1,4 @@
-// import {vec3} from 'gl-matrix';
+import {vec3, vec4} from 'gl-matrix';
 
 import {EntityStore} from '../core/EntityStore';
 import {Renderer} from '../render/Renderer';
@@ -25,6 +25,8 @@ import {parseGLTF} from '../loader/gltf';
 import {updateAnimation} from '../anim/updateAnimation';
 import {create3DComponents} from '../3d/create3DComponents';
 import {WorldBVH} from '../render/raytrace/WorldBVH';
+import {flattenBuffer} from '../render/gl/utils';
+import {box} from '../geom/box';
 // import {box} from '../geom/box';
 // import {BVH, BVHNode} from '../3d/BVH';
 
@@ -143,6 +145,22 @@ function main() {
   });
 
   store.create({
+    name: 'arrow',
+    transform: new Transform()
+      .setPosition([0, 0, 0])
+      .setScale([0.1, 0.1, 0.1]),
+    mesh: new Mesh(
+      new StandardMaterial({
+        albedo: '#ffffff',
+        metalic: 0,
+        roughness: 0.4,
+      }),
+      new Geometry(calcNormals(box())),
+      {castShadow: false},
+    ),
+  });
+
+  store.create({
     name: 'skybox',
     transform: new Transform(),
     mesh: new Mesh(
@@ -151,6 +169,7 @@ function main() {
         lod: 2,
       }),
       new Geometry(quad()),
+      {castRay: false},
     ),
   });
 
@@ -185,7 +204,61 @@ function main() {
 
   console.log(worldBVH);
 
-  console.log(worldBVH.intersectRay([-0.1, -0.1, -5], [0, 0, 1]));
+  const testMesh = new Mesh(
+    new StandardMaterial({
+      albedo: '#ffffff',
+      metalic: 0,
+      roughness: 0.4,
+    }),
+    new Geometry(calcNormals(box())),
+    {castShadow: false},
+  );
+
+  // Perform ray tracing for each vertex.
+  let counter = 0;
+  const start = performance.now();
+  store.forEachWith(['mesh', 'transform'], (entity) => {
+    const mesh = entity.get<Mesh>('mesh')!;
+    const transform = entity.get<Transform>('transform')!;
+    const mat = transform.getMatrixWorld();
+    const pos = vec3.create();
+    const normal = vec4.create() as vec3;
+    mesh.geometries.forEach((geometry) => {
+      const aPosition = geometry.options.attributes.aPosition;
+      const aNormal = geometry.options.attributes.aNormal;
+      const indices = geometry.options.indices;
+      if (aPosition == null || aNormal == null || indices == null) {
+        return;
+      }
+      const positions = flattenBuffer(aPosition.data) as Float32Array;
+      const normals = flattenBuffer(aNormal.data) as Float32Array;
+      const colors = new Float32Array(positions.length);
+      for (let i = 0; i < positions.length; i += 3) {
+        vec3.transformMat4(pos, positions.subarray(i, i + 3), mat);
+        vec3.copy(normal, normals.subarray(i, i + 3));
+        normal[3] = 0;
+        vec4.transformMat4(normal as vec4, normal as vec4, mat);
+        vec3.normalize(normal, normal);
+        vec3.scaleAndAdd(pos, pos, normal, 0.01);
+        // vec3.scale(normal, normal, -1);
+        // Trace ray...
+        const result = worldBVH.intersectRay(pos, normal);
+        counter += 1;
+        if (result == null) {
+          colors[i] = 0;
+          colors[i + 1] = 0;
+          colors[i + 2] = 0;
+        } else {
+          colors[i] = result.position[1];
+          colors[i + 1] = result.position[2];
+          colors[i + 2] = result.position[3];
+        }
+      }
+      geometry.options.attributes.aColor = {data: colors, size: 3};
+    });
+  });
+  const end = performance.now();
+  console.log('Ray tracing took', end - start, counter, worldBVH.counter);
 
   let lastTime = 0;
 
@@ -205,6 +278,47 @@ function main() {
 
   requestAnimationFrame(update);
   console.log(store);
+
+  window.addEventListener('click', (e) => {
+    const cameraEntity = renderer.camera;
+    const camera = cameraEntity!.get<Camera>('camera')!;
+    const transform = cameraEntity!.get<Transform>('transform')!;
+    const invProjection = camera.getInverseProjection(canvas.width / canvas.height);
+    const invView = camera.getInverseView(cameraEntity!);
+
+    const cameraPos = transform.getPositionWorld();
+    // Calculate NDC... I think
+    const viewPos = vec4.fromValues(
+      e.clientX / canvas.width * 2 - 1,
+      (canvas.height - e.clientY) / canvas.height * 2 - 1,
+      1,
+      1,
+    );
+    // Then convert to view pos
+    vec4.transformMat4(viewPos, viewPos, invProjection);
+    vec4.scale(viewPos, viewPos, 1 / viewPos[3]);
+    // Then convert to world pos
+    vec4.transformMat4(viewPos, viewPos, invView);
+    const cameraDir = vec3.create();
+    // Then create ray vector...
+    vec3.sub(cameraDir, viewPos as vec3, cameraPos);
+    vec3.normalize(cameraDir, cameraDir);
+
+    // Then cast ray
+    console.log(cameraPos, cameraDir);
+    const result = worldBVH.intersectRay(cameraPos, cameraDir);
+    console.log(result);
+    console.log(result?.position);
+    if (result != null) {
+      store.create({
+        name: 'arrow',
+        transform: new Transform()
+          .setPosition(result.position)
+          .setScale([0.1, 0.1, 0.1]),
+        mesh: testMesh,
+      });
+    }
+  });
 }
 
 main();

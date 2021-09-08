@@ -1,3 +1,5 @@
+import {vec3} from 'gl-matrix';
+
 import {GeometryOptions} from '../geom/types';
 
 export interface BVHBaseNode {

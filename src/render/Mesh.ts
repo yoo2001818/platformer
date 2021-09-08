@@ -3,6 +3,7 @@ import {Material} from './Material';
 
 export interface MeshOptions {
   castShadow?: boolean;
+  castRay?: boolean;
 }
 
 export class Mesh {

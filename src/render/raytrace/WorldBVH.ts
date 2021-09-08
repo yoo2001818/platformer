@@ -25,6 +25,7 @@ export class WorldBVH {
   entityStore: EntityStore;
   bvh: BVH | null = null;
   children: [Entity, number, Geometry, Float32Array][] | null = null;
+  counter = 0;
 
   constructor(entityStore: EntityStore) {
     this.entityStore = entityStore;
@@ -39,6 +40,9 @@ export class WorldBVH {
     const children: [Entity, number, Geometry, Float32Array][] = [];
     entityStore.forEachWith(['transform', 'mesh'], (entity) => {
       const mesh = entity.get(meshComp)!;
+      if (mesh.options.castRay === false) {
+        return;
+      }
       mesh.geometries.forEach((geom, i) => {
         const aPosition = geom.options.attributes.aPosition;
         if (aPosition == null) {
@@ -117,6 +121,9 @@ export class WorldBVH {
     const blResultUV = vec3.create();
     const tmp = vec3.create();
     const tmp2 = vec3.create();
+    const v0 = vec3.create();
+    const v1 = vec3.create();
+    const v2 = vec3.create();
     while (stack.length > 0) {
       const index = stack.length - 1;
       const item = stack[index];
@@ -129,7 +136,9 @@ export class WorldBVH {
           const [entity, geomId, geometry, positions] = children[childIndex];
           const transform = entity.get(transformComp)!;
           // Convert ray into local space
-          const mat = transform.getMatrixWorld();
+          // FIXME: Why is this here
+          const mat = mat4.create();
+          mat4.invert(mat, transform.getMatrixWorld());
           vec3.transformMat4(blOrigin, origin, mat);
           vec3.copy(blDir, dir);
           blDir[3] = 0;
@@ -165,9 +174,11 @@ export class WorldBVH {
           const v0Id = blIndices![faceId * 3];
           const v1Id = blIndices![faceId * 3 + 1];
           const v2Id = blIndices![faceId * 3 + 2];
-          const v0 = blPositions!.subarray(v0Id * 3, v0Id * 3 + 3);
-          const v1 = blPositions!.subarray(v1Id * 3, v1Id * 3 + 3);
-          const v2 = blPositions!.subarray(v2Id * 3, v2Id * 3 + 3);
+          for (let j = 0; j < 3; j += 1) {
+            v0[j] = blPositions![v0Id * 3 + j];
+            v1[j] = blPositions![v1Id * 3 + j];
+            v2[j] = blPositions![v2Id * 3 + j];
+          }
 
           const intersects = intersectRayTriangle(
             tmp,
@@ -186,6 +197,7 @@ export class WorldBVH {
             vec3.copy(blResultUV, tmp2);
           }
         }
+        this.counter += item.length;
         stack.pop();
         isPopping = true;
       } else {
@@ -208,15 +220,12 @@ export class WorldBVH {
           isPopping = true;
         }
       }
-      if (stackDivider === index && isPopping) {
+      if (stackDivider + 1 === index && isPopping) {
         if (blResultFaceId !== -1) {
           // Write back blResult to actual result, if it is good enough.
           const transform = blEntity!.get(transformComp)!;
           const mesh = blEntity!.get(meshComp)!;
-          // FIXME: Why is this here
-          const inverseMat = mat4.create();
-          mat4.invert(inverseMat, transform.getMatrixWorld());
-          vec3.transformMat4(tmp, blResultPos, inverseMat);
+          vec3.transformMat4(tmp, blResultPos, transform.getMatrixWorld());
           const t = vec3.dist(tmp, origin);
           if (result == null || t < result.t) {
             // Write back result!
