@@ -70,6 +70,7 @@ const ANIMATION_PATH_MAP: {[key: string]: string;} = {
 };
 
 export interface GLTFResult {
+  meshes: Mesh[];
   entities: {[key: string]: any;}[];
 }
 
@@ -495,5 +496,5 @@ export function parseGLTF(input: any): GLTFResult {
   }
   console.log(input);
   console.log(nodes);
-  return {entities: nodes};
+  return {meshes, entities: nodes};
 }

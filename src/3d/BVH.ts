@@ -6,11 +6,13 @@ export interface BVHBaseNode {
 }
 
 export interface BVHBranchNode extends BVHBaseNode {
-  left: BVHNode | null;
-  right: BVHNode | null;
+  isLeaf: false;
+  left: BVHNode;
+  right: BVHNode;
 }
 
 export interface BVHLeafNode extends BVHBaseNode {
+  isLeaf: true;
   offset: number;
   length: number;
 }
@@ -66,8 +68,9 @@ export function splitBVH(
   node: BVHLeafNode,
   bvh: BVH,
   workBuffer: Uint32Array,
+  depth = 0,
 ): BVHNode {
-  if (node.length < 8) {
+  if (node.length < 10) {
     return node;
   }
   // https://github.com/benraziel/bvh-tree
@@ -92,7 +95,7 @@ export function splitBVH(
       }
     }
     lengths[axis * 2] = leftPos - axis * length;
-    lengths[axis * 2 + 1] = (axis + 1) * length - rightPos + 1;
+    lengths[axis * 2 + 1] = (axis + 1) * length - 1 - rightPos;
   }
   // Determine the best axis
   let bestAxis = 0;
@@ -117,28 +120,28 @@ export function splitBVH(
   // fine as the BVH node doesn't care about that.
   const workOffset = bestAxis * length;
   indices.set(workBuffer.subarray(workOffset, workOffset + length), offset);
-  const left: BVHLeafNode = {
+  let left: BVHNode = {
     bounds: new Float32Array(6),
     isLeaf: true,
     offset,
     length: leftLength,
   };
-  const right: BVHLeafNode = {
+  let right: BVHNode = {
     bounds: new Float32Array(6),
     isLeaf: true,
     offset: offset + leftLength,
     length: rightLength,
   };
+  calcBounds(left.bounds, left, bvh);
+  calcBounds(right.bounds, right, bvh);
+  left = splitBVH(left, bvh, workBuffer, depth + 1);
+  right = splitBVH(right, bvh, workBuffer, depth + 1);
   const newParent: BVHBranchNode = {
     bounds: node.bounds,
     isLeaf: false,
     left,
     right,
   };
-  calcBounds(left.bounds, left, bvh);
-  calcBounds(right.bounds, right, bvh);
-  splitBVH(left, bvh, workBuffer);
-  splitBVH(right, bvh, workBuffer);
   return newParent;
 }
 
@@ -162,7 +165,7 @@ export function createBVH(bounds: Float32Array): BVH {
     centers: calcCenters(bounds),
   };
   calcBounds(root.bounds, root, bvh);
-  splitBVH(root, bvh, new Uint32Array(length * 3));
+  bvh.root = splitBVH(root, bvh, new Uint32Array(length * 3));
   return bvh;
 }
 
@@ -175,8 +178,8 @@ export function createBVHFromGeometry(geometry: GeometryOptions): BVH {
   if (indices == null) {
     throw new Error('Indices must be specified');
   }
-  const length = (indices.length / 6) | 0;
-  const bounds = new Float32Array(length * 2);
+  const length = (indices.length / 3) | 0;
+  const bounds = new Float32Array(length * 6);
   for (let faceId = 0; faceId < length; faceId += 1) {
     for (let triId = 0; triId < 3; triId += 1) {
       const id = indices[faceId * 3 + triId];
