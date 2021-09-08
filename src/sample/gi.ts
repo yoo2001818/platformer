@@ -75,7 +75,7 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  store.createEntities(parseGLTF(require('./models/gi.gltf')).entities);
+  store.createEntities(parseGLTF(require('./models/gitesthq.gltf')).entities);
 
   store.create({
     name: 'floor',

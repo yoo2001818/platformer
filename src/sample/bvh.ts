@@ -1,5 +1,3 @@
-import {vec3} from 'gl-matrix';
-
 import {EntityStore} from '../core/EntityStore';
 import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
@@ -24,8 +22,7 @@ import {GLTextureImage} from '../render/gl/GLTextureImage';
 import {parseGLTF} from '../loader/gltf';
 import {updateAnimation} from '../anim/updateAnimation';
 import {create3DComponents} from '../3d/create3DComponents';
-import {BVH, BVHNode, createBVHFromGeometry} from '../3d/BVH';
-import {box} from '../geom/box';
+import {WorldBVH} from '../render/raytrace/WorldBVH';
 
 const store = new EntityStore();
 
@@ -79,18 +76,15 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  const gltf = parseGLTF(require('./models/bunny.gltf'));
-  const bvh = createBVHFromGeometry(gltf.meshes[0].geometries[0].options);
+  const gltf = parseGLTF(require('./models/gitesthq.gltf'));
   store.createEntities(gltf.entities);
-
-  console.log(bvh);
 
   store.create({
     name: 'floor',
     transform: new Transform()
       .rotateX(-Math.PI / 2)
       .setScale([40, 40, 40])
-      .translate([0, 0, 0]),
+      .translate([0, -1, 0]),
     mesh: new Mesh(
       new StandardMaterial({
         albedo: new GLTextureImage(require('./textures/forestground01.albedo.jpg')),
@@ -143,6 +137,13 @@ function main() {
   );
 
   renderer.setCamera(cameraEntity);
+
+  const worldBVH = new WorldBVH(store);
+  worldBVH.update();
+
+  console.log(worldBVH);
+
+  console.log(worldBVH.intersectRay([0, 0, -5], [0, 0, 1]));
 
   let lastTime = 0;
 

@@ -14,6 +14,7 @@ export class Geometry {
   id: number;
   options: GeometryOptions;
   bounds: GeometryBounds | null = null;
+  boundPoints: number[][] | null = null;
   bvh: BVH | null = null;
   constructor(options: GeometryOptions, bounds: GeometryBounds | null = null) {
     this.id = createId();
@@ -47,6 +48,23 @@ export class Geometry {
       this.bounds = {min, max};
     }
     return this.bounds;
+  }
+
+  getBoundPoints(): number[][] {
+    if (this.boundPoints == null) {
+      const {min, max} = this.getBounds();
+      this.boundPoints = [
+        min,
+        [max[0], min[1], min[2]],
+        [min[0], max[1], min[2]],
+        [max[0], max[1], min[2]],
+        [min[0], min[1], max[2]],
+        [max[0], min[1], max[2]],
+        [min[0], max[1], max[2]],
+        max,
+      ];
+    }
+    return this.boundPoints;
   }
 
   getBVH(): BVH {
