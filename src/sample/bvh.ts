@@ -82,7 +82,7 @@ function main() {
     transform: new Transform()
       .rotateX(-Math.PI / 2)
       .setScale([40, 40, 40])
-      .translate([0, -1, 0]),
+      .translate([0, 0, 0]),
     mesh: new Mesh(
       new StandardMaterial({
         albedo: new GLTextureImage(require('./textures/forestground01.albedo.jpg')),
