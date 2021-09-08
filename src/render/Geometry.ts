@@ -1,3 +1,4 @@
+import {BVH, createBVHFromGeometry} from '../3d/BVH';
 import {GeometryOptions} from '../geom/types';
 
 import {GLGeometry} from './gl/GLGeometry';
@@ -13,6 +14,7 @@ export class Geometry {
   id: number;
   options: GeometryOptions;
   bounds: GeometryBounds | null = null;
+  bvh: BVH | null = null;
   constructor(options: GeometryOptions, bounds: GeometryBounds | null = null) {
     this.id = createId();
     this.options = options;
@@ -45,5 +47,12 @@ export class Geometry {
       this.bounds = {min, max};
     }
     return this.bounds;
+  }
+
+  getBVH(): BVH {
+    if (this.bvh == null) {
+      this.bvh = createBVHFromGeometry(this.options);
+    }
+    return this.bvh;
   }
 }

@@ -83,40 +83,7 @@ function main() {
   const bvh = createBVHFromGeometry(gltf.meshes[0].geometries[0].options);
   store.createEntities(gltf.entities);
 
-  const boxMesh = new Mesh(
-    new StandardMaterial({
-      albedo: '#ff8888',
-      metalic: 0,
-      roughness: 0.4,
-    }),
-    new Geometry(calcNormals(box())),
-    {castShadow: false},
-  );
-  function traverseBVH(bvh: BVH, node: BVHNode, depth = 0): void {
-    if (node.isLeaf) {
-      const center: vec3 = [
-        (node.bounds[0] + node.bounds[3]) / 2,
-        (node.bounds[1] + node.bounds[4]) / 2,
-        (node.bounds[2] + node.bounds[5]) / 2,
-      ];
-      const size: vec3 = [
-        node.bounds[3] - center[0],
-        node.bounds[4] - center[1],
-        node.bounds[5] - center[2],
-      ];
-      store.create({
-        name: 'box',
-        transform: new Transform()
-          .setPosition(center)
-          .setScale(size),
-        mesh: boxMesh,
-      });
-    } else {
-      traverseBVH(bvh, node.left, depth + 1);
-      traverseBVH(bvh, node.right, depth + 1);
-    }
-  }
-  traverseBVH(bvh, bvh.root);
+  console.log(bvh);
 
   store.create({
     name: 'floor',
