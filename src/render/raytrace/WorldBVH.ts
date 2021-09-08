@@ -117,18 +117,14 @@ export class WorldBVH {
     const blResultUV = vec3.create();
     const tmp = vec3.create();
     const tmp2 = vec3.create();
-    let counter = 0;
     while (stack.length > 0) {
-      counter += 1;
       const index = stack.length - 1;
       const item = stack[index];
-      // console.log(stackDivider, index, index <= stackDivider, item);
       let isPopping = false;
       if (index <= stackDivider && item.isLeaf) {
         // Top layer
         let hasChild = false;
         for (let i = tlLeafIndex; i < item.length; i += 1) {
-          console.log('ok', index, i, item);
           const childIndex = bvh.indices[item.offset + i];
           const [entity, geomId, geometry, positions] = children[childIndex];
           const transform = entity.get(transformComp)!;
@@ -142,7 +138,6 @@ export class WorldBVH {
           // Retrieve local BVH and check bounds
           blBVH = geometry.getBVH();
           if (intersectRayAABB(tmp, blBVH.root.bounds, blOrigin, blDir)) {
-            console.log('top descend', i);
             tlLeafIndex = i + 1;
             hasChild = true;
             // Traverse down to the bottom layer.
@@ -198,7 +193,6 @@ export class WorldBVH {
           intersectRayAABB(tmp, item.left.bounds, blOrigin, blDir);
         const rightIntersects =
           intersectRayAABB(tmp, item.right.bounds, blOrigin, blDir);
-        // console.log(leftIntersects, rightIntersects);
         if (leftIntersects && rightIntersects) {
           stack[index] = item.right;
           stack.push(item.left);
@@ -240,7 +234,7 @@ export class WorldBVH {
         }
       }
     }
-    console.log(counter);
+    // console.log(counter);
     return result;
   }
 }
