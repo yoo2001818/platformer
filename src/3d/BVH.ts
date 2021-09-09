@@ -76,7 +76,7 @@ export function splitBVH(
   workBuffer: Uint32Array,
   depth = 0,
 ): BVHNode {
-  if (node.length < 10) {
+  if (node.length < 4) {
     return node;
   }
   // https://github.com/benraziel/bvh-tree

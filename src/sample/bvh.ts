@@ -27,7 +27,8 @@ import {create3DComponents} from '../3d/create3DComponents';
 import {WorldBVH} from '../render/raytrace/WorldBVH';
 import {flattenBuffer} from '../render/gl/utils';
 import {box} from '../geom/box';
-import { BVHNode } from '../3d/BVH';
+import {GLTexture} from '../render/gl/GLTexture';
+import {convertFloatArray} from '../render/gl/uniform/utils';
 // import {box} from '../geom/box';
 // import {BVH, BVHNode} from '../3d/BVH';
 
@@ -224,6 +225,11 @@ function main() {
     const mat = transform.getMatrixWorld();
     const pos = vec3.create();
     const normal = vec4.create() as vec3;
+    const up = vec3.fromValues(0, 1, 0);
+    const right = vec3.create();
+    const sample = vec3.create();
+    const sampleDir = vec3.create();
+    const irradiance = vec3.create();
     mesh.geometries.forEach((geometry) => {
       const aPosition = geometry.options.attributes.aPosition;
       const aNormal = geometry.options.attributes.aNormal;
@@ -240,20 +246,48 @@ function main() {
         normal[3] = 0;
         vec4.transformMat4(normal as vec4, normal as vec4, mat);
         vec3.normalize(normal, normal);
-        vec3.scaleAndAdd(pos, pos, normal, 0.05);
-        // vec3.scale(normal, normal, -1);
-        // Trace ray...
-        const result = worldBVH.intersectRay(pos, normal);
-        counter += 1;
-        if (result == null) {
-          colors[i] = 0;
-          colors[i + 1] = 0;
-          colors[i + 2] = 0;
-        } else {
-          colors[i] = result.position[1];
-          colors[i + 1] = result.position[2];
-          colors[i + 2] = result.position[3];
+        vec3.scaleAndAdd(pos, pos, normal, 0.01);
+        vec3.set(up, 0, 1, 0);
+        vec3.cross(right, up, normal);
+        vec3.normalize(right, right);
+        vec3.cross(up, normal, right);
+        vec3.normalize(up, up);
+        vec3.zero(irradiance);
+        let samples = 0;
+        for (let phiI = 0; phiI < 8; phiI += 1) {
+          const phi = phiI / 8 * 2 * Math.PI;
+          for (let thetaI = 0; thetaI < 4; thetaI += 1) {
+            const theta = thetaI / 4 * 0.5 * Math.PI;
+            sample[0] = Math.sin(theta) * Math.cos(phi);
+            sample[1] = Math.sin(theta) * Math.sin(phi);
+            sample[2] = Math.cos(theta);
+            vec3.scale(sampleDir, right, sample[0]);
+            vec3.scaleAndAdd(sampleDir, sampleDir, up, sample[1]);
+            vec3.scaleAndAdd(sampleDir, sampleDir, normal, sample[2]);
+            vec3.normalize(sampleDir, sampleDir);
+            // Trace ray...
+            const result = worldBVH.intersectRay(pos, sampleDir);
+            if (result != null) {
+              const dotNH = Math.cos(theta);
+              const {mesh, geometryId} = result;
+              const material = mesh.materials[geometryId];
+              if (material instanceof StandardMaterial) {
+                let color;
+                if (material.options.albedo instanceof GLTexture) {
+                  color = [1, 1, 1];
+                } else {
+                  color = convertFloatArray(material.options.albedo, 3);
+                }
+                vec3.scaleAndAdd(irradiance, irradiance, color as vec3, dotNH);
+              }
+              samples += 1;
+            }
+            counter += 1;
+          }
         }
+        colors[i] = irradiance[0] / samples;
+        colors[i + 1] = irradiance[1] / samples;
+        colors[i + 2] = irradiance[2] / samples;
       }
       geometry.options.attributes.aColor = {data: colors, size: 3};
     });
