@@ -12,9 +12,11 @@ export class Transform {
   _matrixVersion: number;
   _componentVersion: number;
   worldMatrix: Float32Array;
+  worldInverseMatrix: Float32Array;
   _parentVersion: number;
   _globalVersion: number;
   _parentId: number;
+  _inverseVersion: number;
   entity: Entity | null = null;
   component: TransformComponent | null = null;
 
@@ -24,11 +26,13 @@ export class Transform {
     this.rotation = quat.create() as Float32Array;
     this.matrix = mat4.create() as Float32Array;
     this.worldMatrix = mat4.create() as Float32Array;
+    this.worldInverseMatrix = mat4.create() as Float32Array;
     this._matrixVersion = 0;
     this._componentVersion = 0;
     this._parentVersion = 0;
     this._globalVersion = -1;
     this._parentId = -1;
+    this._inverseVersion = -1;
   }
 
   _updateComponents(): void {
@@ -70,6 +74,7 @@ export class Transform {
         mat4.mul(this.worldMatrix, parentMat, this.matrix);
         this._parentId = targetId;
         this._parentVersion = targetVersion;
+        this._inverseVersion = -1;
       }
     } else if (
       this._parentId !== -1 ||
@@ -78,8 +83,20 @@ export class Transform {
       mat4.copy(this.worldMatrix, this.matrix);
       this._parentId = -1;
       this._parentVersion = this._matrixVersion;
+      this._inverseVersion = -1;
     }
     this._globalVersion = this.component!.globalVersion;
+  }
+
+  _updateWorldInverseMatrix(): void {
+    if (this.component!.globalVersion === this._inverseVersion) {
+      return;
+    }
+    this._updateWorldMatrix();
+    if (this._inverseVersion === -1) {
+      mat4.invert(this.worldInverseMatrix, this.worldMatrix);
+      this._inverseVersion = this.component!.globalVersion;
+    }
   }
 
   register(entity: Entity, component: TransformComponent): void {
@@ -129,6 +146,11 @@ export class Transform {
   getRotationWorld(): Float32Array {
     this._updateWorldMatrix();
     return mat4.getRotation(quat.create(), this.worldMatrix) as Float32Array;
+  }
+
+  getMatrixInverseWorld(): Float32Array {
+    this._updateWorldInverseMatrix();
+    return this.worldInverseMatrix;
   }
 
   markChanged(): void {

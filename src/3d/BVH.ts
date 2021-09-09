@@ -82,7 +82,21 @@ export function splitBVH(
   // https://github.com/benraziel/bvh-tree
   const {indices, centers} = bvh;
   const {offset, length} = node;
+  // center method
   const center = calcCenters(node.bounds);
+  // average method
+  /*
+  const center = new Float32Array(3);
+  for (let i = offset; i < offset + length; i += 1) {
+    const index = indices[i];
+    for (let j = 0; j < 3; j += 1) {
+      center[j] += centers[index * 3 + j];
+    }
+  }
+  for (let j = 0; j < 3; j += 1) {
+    center[j] /= length;
+  }
+  */
   // Try to separate by each axis.
   const lengths = new Uint32Array(6);
   for (let axis = 0; axis < 3; axis += 1) {

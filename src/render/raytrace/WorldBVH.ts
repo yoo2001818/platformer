@@ -1,4 +1,4 @@
-import {mat4, vec2, vec3, vec4} from 'gl-matrix';
+import {vec2, vec3, vec4} from 'gl-matrix';
 
 import {BVH, BVHNode, createBVH} from '../../3d/BVH';
 import {intersectRayAABB, intersectRayTriangle} from '../../3d/collision';
@@ -125,6 +125,7 @@ export class WorldBVH {
     const v0 = vec3.create();
     const v1 = vec3.create();
     const v2 = vec3.create();
+    const tlBounds = new Float32Array(6);
     while (stack.length > 0) {
       const index = stack.length - 1;
       const item = stack[index];
@@ -135,20 +136,21 @@ export class WorldBVH {
         let hasChild = false;
         for (let i = tlLeafIndex; i < item.length; i += 1) {
           const childIndex = bvh.indices[item.offset + i];
-          const [entity, geomId, geometry, positions] = children[childIndex];
-          const transform = entity.get(transformComp)!;
-          // Convert ray into local space
-          // FIXME: Why is this here
-          const mat = mat4.create();
-          mat4.invert(mat, transform.getMatrixWorld());
-          vec3.transformMat4(blOrigin, origin, mat);
-          vec3.copy(blDir, dir);
-          blDir[3] = 0;
-          vec4.transformMat4(blDir as vec4, blDir as vec4, mat);
-          vec3.normalize(blDir, blDir);
-          // Retrieve local BVH and check bounds
-          blBVH = geometry.getBVH();
-          if (intersectRayAABB(blBVH.root.bounds, blOrigin, blDir)) {
+          for (let j = 0; j < 6; j += 1) {
+            tlBounds[j] = bvh.bounds[childIndex * 6 + j];
+          }
+          if (intersectRayAABB(tlBounds, origin, dir)) {
+            const [entity, geomId, geometry, positions] = children[childIndex];
+            const transform = entity.get(transformComp)!;
+            // Convert ray into local space
+            const mat = transform.getMatrixInverseWorld();
+            vec3.transformMat4(blOrigin, origin, mat);
+            vec3.copy(blDir, dir);
+            blDir[3] = 0;
+            vec4.transformMat4(blDir as vec4, blDir as vec4, mat);
+            vec3.normalize(blDir, blDir);
+            // Retrieve local BVH and check bounds
+            blBVH = geometry.getBVH();
             tlLeafIndex = i + 1;
             hasChild = true;
             // Traverse down to the bottom layer.
