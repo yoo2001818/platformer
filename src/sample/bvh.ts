@@ -29,6 +29,7 @@ import {flattenBuffer} from '../render/gl/utils';
 import {box} from '../geom/box';
 import {GLTexture} from '../render/gl/GLTexture';
 import {convertFloatArray} from '../render/gl/uniform/utils';
+import {BVHTexture} from '../render/raytrace/BVHTexture';
 // import {box} from '../geom/box';
 // import {BVH, BVHNode} from '../3d/BVH';
 
@@ -204,7 +205,11 @@ function main() {
   const worldBVH = new WorldBVH(store);
   worldBVH.update();
 
+  const bvhTexture = new BVHTexture(store, worldBVH);
+  bvhTexture.update();
+
   console.log(worldBVH);
+  console.log(bvhTexture.bvhBuffer);
 
   const testMesh = new Mesh(
     new StandardMaterial({
@@ -217,6 +222,7 @@ function main() {
   );
 
   // Perform ray tracing for each vertex.
+  /*
   let counter = 0;
   const start = performance.now();
   store.forEachWith(['mesh', 'transform'], (entity) => {
@@ -298,6 +304,7 @@ function main() {
   });
   const end = performance.now();
   console.log('Ray tracing took', `${end - start}ms`, counter, worldBVH.counter);
+  */
 
   let lastTime = 0;
 

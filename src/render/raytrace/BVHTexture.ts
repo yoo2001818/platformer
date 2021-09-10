@@ -99,6 +99,11 @@ export class BVHTexture {
       tlasLeafCount * TLAS_SIZE +
       blasLeafCount * BLAS_SIZE;
 
+    console.log('BVH nodes', bvhNodeCount);
+    console.log('TLAS leaves', tlasLeafCount);
+    console.log('BLAS leaves', blasLeafCount);
+    console.log('required texels', requiredTexels);
+
     // Determine the width / height of the resulting texture. For simplicity,
     // we'll just use multiples of 1024.
     const width = 1024;
@@ -185,7 +190,7 @@ export class BVHTexture {
       const positions = geometry.options.attributes.aPosition!.data!;
       const normals = geometry.options.attributes.aNormal?.data;
       const texCoords = geometry.options.attributes.aTexCoord?.data;
-      const tangents = geometry.options.attributes.aTangents?.data;
+      const tangents = geometry.options.attributes.aTangent?.data;
       const indices = geometry.options.indices!;
       geomBVH.indices.forEach((faceId) => {
         const addr = blasLeafOffset * 4;
@@ -223,11 +228,15 @@ export class BVHTexture {
         // tangents. Since we know tangent is somewhat same for each face,
         // we can just probe v1.
         if (tangents != null) {
-          output[addr + 15] = tangents[v1Id * 4];
-          output[addr + 19] = tangents[v1Id * 4 + 1];
+          output[addr + 19] = tangents[v1Id * 4];
+          output[addr + 23] = tangents[v1Id * 4 + 1];
           output[addr + 30] = tangents[v1Id * 4 + 2];
           output[addr + 31] = tangents[v1Id * 4 + 3];
         }
+        output[addr + 19] = 1;
+        output[addr + 23] = 1;
+        output[addr + 30] = 1;
+        output[addr + 31] = 1;
         blasLeafOffset += BLAS_SIZE;
       });
     });
@@ -265,7 +274,7 @@ export function fillBVH(
     }
     offset += BVH_SIZE;
     if (node.isLeaf) {
-      output[nodeAddr + 3] = resolveLeafOffset(node);
+      output[nodeAddr + 3] = -resolveLeafOffset(node);
       output[nodeAddr + 7] = node.length;
     } else {
       const leftOffset = step(node.left);
