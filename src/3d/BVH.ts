@@ -27,6 +27,7 @@ export interface BVH {
   bounds: Float32Array;
   centers: Float32Array;
   depth: number;
+  nodeCount: number;
 }
 
 export function calcBounds(
@@ -163,6 +164,7 @@ export function splitBVH(
     right,
   };
   bvh.depth = Math.max(bvh.depth, depth + 1);
+  bvh.nodeCount += 2;
   return newParent;
 }
 
@@ -185,6 +187,7 @@ export function createBVH(bounds: Float32Array): BVH {
     indices,
     centers: calcCenters(bounds),
     depth: 1,
+    nodeCount: 1,
   };
   calcBounds(root.bounds, root, bvh);
   bvh.root = splitBVH(root, bvh, new Uint32Array(length * 3));
