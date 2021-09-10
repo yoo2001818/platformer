@@ -324,7 +324,7 @@ export class StandardMaterial implements Material {
           #else
             mInfo.albedo = uMaterial.albedo;
           #endif
-          mInfo.albedo = vColor;
+          mInfo.albedo = mix(mInfo.albedo, vColor, 0.5);
           // Tone mapping
 
           #ifdef USE_NORMAL_MAP

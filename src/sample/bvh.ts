@@ -249,6 +249,10 @@ function main() {
         vec3.scaleAndAdd(pos, pos, normal, 0.01);
         vec3.set(up, 0, 1, 0);
         vec3.cross(right, up, normal);
+        if (vec3.sqrLen(right) <= 0.001) {
+          vec3.set(up, 0, 0, 1);
+          vec3.cross(right, up, normal);
+        }
         vec3.normalize(right, right);
         vec3.cross(up, normal, right);
         vec3.normalize(up, up);
@@ -268,7 +272,7 @@ function main() {
             // Trace ray...
             const result = worldBVH.intersectRay(pos, sampleDir);
             if (result != null) {
-              const dotNH = Math.cos(theta);
+              const dotNH = Math.cos(theta) * Math.sin(theta);
               const {mesh, geometryId} = result;
               const material = mesh.materials[geometryId];
               if (material instanceof StandardMaterial) {
@@ -285,9 +289,9 @@ function main() {
             counter += 1;
           }
         }
-        colors[i] = irradiance[0] / samples;
-        colors[i + 1] = irradiance[1] / samples;
-        colors[i + 2] = irradiance[2] / samples;
+        colors[i] = irradiance[0] * Math.PI / samples;
+        colors[i + 1] = irradiance[1] * Math.PI / samples;
+        colors[i + 2] = irradiance[2] * Math.PI / samples;
       }
       geometry.options.attributes.aColor = {data: colors, size: 3};
     });
