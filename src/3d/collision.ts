@@ -3,7 +3,7 @@ import {vec3} from 'gl-matrix';
 const EPSILON = 0.0000001;
 
 export function intersectRayAABB(
-  bounds: vec3,
+  bounds: Float32Array,
   origin: vec3,
   dir: vec3,
 ): boolean {

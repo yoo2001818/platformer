@@ -205,10 +205,13 @@ export class WorldBVH {
         stack.pop();
         isPopping = true;
       } else {
+        const isTop = index <= stackDivider;
+        const currOrigin = isTop ? origin : blOrigin;
+        const currDir = isTop ? dir : blDir;
         const leftIntersects =
-          intersectRayAABB(item.left.bounds, blOrigin, blDir);
+          intersectRayAABB(item.left.bounds, currOrigin, currDir);
         const rightIntersects =
-          intersectRayAABB(item.right.bounds, blOrigin, blDir);
+          intersectRayAABB(item.right.bounds, currOrigin, currDir);
         if (leftIntersects && rightIntersects) {
           stack[index] = item.right;
           stack.push(item.left);

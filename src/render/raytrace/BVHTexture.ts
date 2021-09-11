@@ -148,7 +148,7 @@ export class BVHTexture {
       const invMatrix = transform.getMatrixInverseWorld();
 
       const addr = tlasLeafOffset * 4;
-      // |  min.x  |  min.y  |  min.z  |  matId  |
+      // |  min.x  |  min.y  |  min.z  | childId |
       // |  max.x  |  max.y  |  max.z  | blasAddr|
       // |  mat                                  |
       // |                                       |
@@ -163,8 +163,7 @@ export class BVHTexture {
         output[addr + i] = rootBVH.bounds[index * 6 + i];
         output[addr + 4 + i] = rootBVH.bounds[index * 6 + 3 + i];
       }
-      // TODO: matId
-      output[addr + 3] = 0;
+      output[addr + 3] = index;
       // blasAddr
       output[addr + 7] = geomBVHOffsets[geomId];
       for (let i = 0; i < 16; i += 1) {
@@ -233,10 +232,6 @@ export class BVHTexture {
           output[addr + 30] = tangents[v1Id * 4 + 2];
           output[addr + 31] = tangents[v1Id * 4 + 3];
         }
-        output[addr + 19] = 1;
-        output[addr + 23] = 1;
-        output[addr + 30] = 1;
-        output[addr + 31] = 1;
         blasLeafOffset += BLAS_SIZE;
       });
     });
