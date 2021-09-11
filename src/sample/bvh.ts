@@ -317,12 +317,26 @@ function main() {
                 }
                 // lighting
                 float lightIntensity = 0.0;
+                origin = bvhResult.position + normal * 0.01;
                 {
-                  vec3 L = normalize(vec3(0.0, 1.0, 0.0) - bvhResult.position);
-                  lightIntensity += max(dot(normal, L), 0.0);
+                  vec3 L = vec3(0.0, 1.0, 0.0) - origin;
+                  float lightDist = length(L);
+                  L /= lightDist;
+                  // Check occulsion
+                  BVHIntersectResult lightResult;
+                  bool isLightIntersecting = intersectBVH(
+                    lightResult,
+                    uBVHMap,
+                    uBVHMapSize, 1.0 / uBVHMapSize,
+                    0,
+                    origin,
+                    L
+                  );
+                  if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
+                    lightIntensity += max(dot(normal, L), 0.0);
+                  }
                 }
                 resultColor += lightIntensity * contribution * color;
-                origin = bvhResult.position + normal * 0.01;
                 mat3 basis = orthonormalBasis(-normal);
                 dir = basis *
                   sign(dot(normal, dir)) *
