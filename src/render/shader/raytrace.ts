@@ -64,6 +64,7 @@ export const INTERSECTION = /* glsl */`
 
   struct BVHIntersectResult {
     float childId;
+    mat4 matrix;
     int faceAddr;
     vec3 position;
     vec3 barycentric;
@@ -139,7 +140,7 @@ export const INTERSECTION = /* glsl */`
   }
 
   #define BVH_MAX_STACK 64
-  #define BVH_MAX_LOOP 400
+  #define BVH_MAX_LOOP 800
   #define BVH_NODE_SIZE 2
   #define BVH_TLAS_SIZE 10
   #define BVH_BLAS_SIZE 8
@@ -281,6 +282,7 @@ export const INTERSECTION = /* glsl */`
             outResult.position = resultPos;
             outResult.barycentric = blasResultBarycentric;
             outResult.rayDist = resultDist;
+            outResult.matrix = tlasLeaf.matrix;
           }
         }
       }

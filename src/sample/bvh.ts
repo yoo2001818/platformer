@@ -239,6 +239,7 @@ function main() {
           precision highp float;
 
           ${INTERSECTION}
+          #define PI 3.141592
 
           varying vec2 vPosition;
 
@@ -247,37 +248,93 @@ function main() {
           uniform sampler2D uBVHMap;
           uniform vec2 uBVHMapSize;
 
-          float PHI = 1.61803398874989484820459;
+          float rand(vec2 co){
+            return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+          }
 
-          float goldNoise(in vec2 xy, in float seed){
-                return fract(tan(distance(xy*PHI, xy)*seed)*xy.x);
+          // https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+          mat3 orthonormalBasis(vec3 n) {
+            float zsign = n.z >= 0.0 ? 1.0 : -1.0;
+            float a = -1.0 / (zsign + n.z);
+            float b = n.x * n.y * a;
+            vec3 s = vec3(1.0 + zsign * n.x * n.x * a, zsign * b, -zsign * n.x);
+            vec3 t = vec3(b, zsign + n.y * n.y * a, -n.y);
+            return mat3(s, t, n);
+          }
+
+          // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#SamplingaUnitDisk
+          vec2 sampleCircle(vec2 p) {
+            p = 2.0 * p - 1.0;
+
+            bool greater = abs(p.x) > abs(p.y);
+
+            float r = greater ? p.x : p.y;
+            float theta = greater ? 0.25 * PI * p.y / p.x : PI * (0.5 - 0.25 * p.x / p.y);
+
+            return r * vec2(cos(theta), sin(theta));
+          }
+
+          // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#Cosine-WeightedHemisphereSampling
+          vec3 cosineSampleHemisphere(vec2 p) {
+            vec2 h = sampleCircle(p);
+            float z = sqrt(max(0.0, 1.0 - h.x * h.x - h.y * h.y));
+            return vec3(h, z);
           }
 
           void main() {
             vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
             viewPos /= viewPos.w;
+            vec3 resultColor = vec3(0.0);
+            float contribution = 1.0;
+
             vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
             vec3 origin = uInverseView[3].xyz;
             BVHIntersectResult bvhResult;
-            bool isIntersecting = intersectBVH(
-              bvhResult,
-              uBVHMap,
-              uBVHMapSize, 1.0 / uBVHMapSize,
-              0,
-              origin,
-              dir
-            );
-            if (isIntersecting) {
-              float seed = float(bvhResult.faceAddr);
-              vec3 color = vec3(
-                goldNoise(vec2(0.0), seed),
-                goldNoise(vec2(0.5), seed),
-                goldNoise(vec2(1.0), seed)
+            for (int i = 0; i < 4; i += 1) {
+              bool isIntersecting = intersectBVH(
+                bvhResult,
+                uBVHMap,
+                uBVHMapSize, 1.0 / uBVHMapSize,
+                0,
+                origin,
+                dir
               );
-              gl_FragColor = vec4(color, 1.0);
-            } else {
-              gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+              if (isIntersecting) {
+                BVHBLASLeaf blas;
+                bvhBLASFetch(blas, bvhResult.faceAddr, uBVHMap, uBVHMapSize, 1.0 / uBVHMapSize);
+                vec3 normal = vec3(0.0);
+                normal += blas.normal[0] * bvhResult.barycentric.x;
+                normal += blas.normal[1] * bvhResult.barycentric.y;
+                normal += blas.normal[2] * bvhResult.barycentric.z;
+                normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
+                vec3 color = vec3(1.0);
+                if (bvhResult.childId == 2.0) {
+                  color = vec3(1.0, 0.0, 0.0);
+                } else if (bvhResult.childId == 1.0) {
+                  color = vec3(0.0, 1.0, 0.0);
+                } else if (bvhResult.childId == 5.0) {
+                  color = vec3(0.0, 0.0, 1.0);
+                }
+                // lighting
+                float lightIntensity = 0.0;
+                {
+                  vec3 L = normalize(vec3(0.0, 1.0, 0.0) - bvhResult.position);
+                  lightIntensity += max(dot(normal, L), 0.0);
+                }
+                resultColor += lightIntensity * contribution * color;
+                origin = bvhResult.position + normal * 0.01;
+                mat3 basis = orthonormalBasis(-normal);
+                dir = basis *
+                  sign(dot(normal, dir)) *
+                  cosineSampleHemisphere(vec2(
+                    rand(vPosition),
+                    rand(vPosition + vec2(1.0, 0.0))
+                  ));
+
+                contribution *= max(dot(normal, dir), 0.0);
+              }
             }
+            gl_FragColor = vec4(resultColor, 1.0);
           }
         `,
         {

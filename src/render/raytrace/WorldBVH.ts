@@ -10,7 +10,7 @@ import {flattenBuffer} from '../gl/utils';
 import {Mesh} from '../Mesh';
 import {MeshComponent} from '../MeshComponent';
 
-const EPSILON = 0.05;
+const EPSILON = 0.000001;
 
 export interface WorldBVHIntersectionResult {
   entity: Entity;
@@ -78,13 +78,13 @@ export class WorldBVH {
         // Then calculate the bounds.
         if (j === 0) {
           for (let k = 0; k < 3; k += 1) {
-            bounds[i * 6 + k] = point[k] - EPSILON;
-            bounds[i * 6 + 3 + k] = point[k] + EPSILON;
+            bounds[i * 6 + k] = tmp[k] - EPSILON;
+            bounds[i * 6 + 3 + k] = tmp[k] + EPSILON;
           }
         } else {
           for (let k = 0; k < 3; k += 1) {
-            bounds[i * 6 + k] = Math.min(point[k] - EPSILON, bounds[i * 6 + k]);
-            bounds[i * 6 + 3 + k] = Math.max(point[k] + EPSILON, bounds[i * 6 + 3 + k]);
+            bounds[i * 6 + k] = Math.min(tmp[k] - EPSILON, bounds[i * 6 + k]);
+            bounds[i * 6 + 3 + k] = Math.max(tmp[k] + EPSILON, bounds[i * 6 + 3 + k]);
           }
         }
       });
