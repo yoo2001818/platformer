@@ -30,6 +30,8 @@ import {box} from '../geom/box';
 import {GLTexture} from '../render/gl/GLTexture';
 import {convertFloatArray} from '../render/gl/uniform/utils';
 import {BVHTexture} from '../render/raytrace/BVHTexture';
+import {ShaderMaterial} from '../render/material/ShaderMaterial';
+import {INTERSECTION} from '../render/shader/raytrace';
 // import {box} from '../geom/box';
 // import {BVH, BVHNode} from '../3d/BVH';
 
@@ -85,7 +87,7 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  const gltf = parseGLTF(require('./models/gitesthq.gltf'));
+  const gltf = parseGLTF(require('./models/gitestlq.gltf'));
   store.createEntities(gltf.entities);
 
   /*
@@ -143,10 +145,12 @@ function main() {
       new Geometry(calcTangents(calcNormals(quad()))),
       {
         castShadow: false,
+        castRay: false,
       },
     ),
   });
 
+  /*
   store.create({
     name: 'arrow',
     transform: new Transform()
@@ -162,6 +166,7 @@ function main() {
       {castShadow: false},
     ),
   });
+  */
 
   store.create({
     name: 'skybox',
@@ -210,6 +215,83 @@ function main() {
 
   console.log(worldBVH);
   console.log(bvhTexture.bvhBuffer);
+
+  store.create({
+    name: 'raytrace',
+    transform: new Transform(),
+    mesh: new Mesh(
+      new ShaderMaterial(
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          attribute vec3 aPosition;
+
+          varying vec2 vPosition;
+
+          void main() {
+            vPosition = aPosition.xy;
+            gl_Position = vec4(aPosition.xy, -1.0, 1.0);
+          }
+        `,
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          ${INTERSECTION}
+
+          varying vec2 vPosition;
+
+          uniform mat4 uInverseView;
+          uniform mat4 uInverseProjection;
+          uniform sampler2D uBVHMap;
+          uniform vec2 uBVHMapSize;
+
+          float PHI = 1.61803398874989484820459;
+
+          float goldNoise(in vec2 xy, in float seed){
+                return fract(tan(distance(xy*PHI, xy)*seed)*xy.x);
+          }
+
+          void main() {
+            vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
+            viewPos /= viewPos.w;
+            vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
+            vec3 origin = uInverseView[3].xyz;
+            BVHIntersectResult bvhResult;
+            bool isIntersecting = intersectBVH(
+              bvhResult,
+              uBVHMap,
+              uBVHMapSize, 1.0 / uBVHMapSize,
+              0,
+              origin,
+              dir
+            );
+            if (isIntersecting) {
+              float seed = float(bvhResult.faceAddr);
+              vec3 color = vec3(
+                goldNoise(vec2(0.0), seed),
+                goldNoise(vec2(0.5), seed),
+                goldNoise(vec2(1.0), seed)
+              );
+              gl_FragColor = vec4(color, 1.0);
+            } else {
+              gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            }
+          }
+        `,
+        {
+          uBVHMap: bvhTexture.bvhTexture,
+          uBVHMapSize: [
+            bvhTexture.bvhTexture.getWidth(),
+            bvhTexture.bvhTexture.getHeight(),
+          ],
+        },
+      ),
+      new Geometry(quad()),
+      {castRay: false},
+    ),
+  });
 
   const testMesh = new Mesh(
     new StandardMaterial({

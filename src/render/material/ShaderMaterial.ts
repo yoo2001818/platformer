@@ -60,29 +60,16 @@ export class ShaderMaterial implements Material {
   }
 
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void {
-    const {glRenderer, entityStore, camera} = renderer;
+    const {pipeline, entityStore} = renderer;
 
-    // Prepare shader uniforms
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
-    const cameraData = camera!.get<Camera>('camera')!;
 
-    // Bind the shaders
-    this.glShader.bind(glRenderer);
-    geometry.bind(glRenderer, this.glShader);
-
-    // Set uniforms and issue draw call
-    this.glShader.setUniforms({
-      uView: cameraData.getView(camera!),
-      uProjection: cameraData.getProjection(renderer.getAspectRatio()),
-      uInverseView: () => cameraData.getInverseView(camera!),
-      uInverseProjection: () =>
-        cameraData.getInverseProjection(renderer.getAspectRatio()),
-    });
+    let uniforms: {[key: string]: unknown;};
     if (typeof this.uniforms === 'function') {
-      this.glShader.setUniforms(this.uniforms(renderer));
+      uniforms = this.uniforms(renderer);
     } else {
-      this.glShader.setUniforms(this.uniforms);
+      uniforms = this.uniforms;
     }
     chunk.forEach((entity) => {
       const transform = entity.get(transformComp);
@@ -90,10 +77,14 @@ export class ShaderMaterial implements Material {
         return;
       }
       // Set uniforms and draw the element
-      this.glShader.setUniforms({
-        uModel: transform.getMatrixWorld(),
+      pipeline.drawForward({
+        shader: this.glShader,
+        geometry,
+        uniforms: {
+          uModel: transform.getMatrixWorld(),
+          ...uniforms,
+        },
       });
-      geometry.draw();
     });
   }
 

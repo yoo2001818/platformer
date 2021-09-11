@@ -1,4 +1,4 @@
-const INTERSECTION = /* glsl */`
+export const INTERSECTION = /* glsl */`
   const float INTERSECT_EPSILON = 0.0000001;
 
   bool intersectRayAABB(
@@ -7,17 +7,18 @@ const INTERSECTION = /* glsl */`
     vec3 origin,
     vec3 dir
   ) {
-    vec3 t1 = (boxMin - origin) / dir;
-    vec3 t2 = (boxMax - origin) / dir;
-    vec3 tMin = min(tMin, tMax);
-    vec3 tMax = max(tMin, tMax);
-    float tNear = max(max(tMin.x, tMin.y), tMin.z);
-    float tFar = min(min(tMax.x, tMax.y), tMax.z);
-    return tFar >= tMin;
+    vec3 tbot = (boxMin - origin) / dir;
+    vec3 ttop = (boxMax - origin) / dir;
+    vec3 tmin = min(ttop, tbot);
+    vec3 tmax = max(ttop, tbot);
+    vec2 t = max(tmin.xx, tmin.yz);
+    float t0 = max(t.x, t.y);
+    t = min(tmax.xx, tmax.yz);
+    float t1 = min(t.x, t.y);
+    return t1 > max(t0, 0.0);
   }
 
   bool intersectRayTriangle(
-    out vec3 outPos,
     out vec3 outBarycentric,
     out float outDist,
     vec3 v0,
@@ -51,7 +52,7 @@ const INTERSECTION = /* glsl */`
         int(mod(addrFloat, bvhMapSize.x)),
         int(addrFloat * bvhMapSizeInv.x)
       );
-      return texelFetch(bvhMap, coord, 0.0);
+      return texelFetch(bvhMap, coord, 0);
     #else
       vec2 coord = vec2(
         mod(addrFloat, bvhMapSize.x) + 0.5,
@@ -66,8 +67,8 @@ const INTERSECTION = /* glsl */`
     int faceAddr;
     vec3 position;
     vec3 barycentric;
-    float rayDist,
-  }
+    float rayDist;
+  };
 
   struct BVHTLASLeaf {
     vec3 boxMin;
@@ -76,16 +77,16 @@ const INTERSECTION = /* glsl */`
     int blasAddr;
     mat4 matrix;
     mat4 invMatrix;
-  }
+  };
 
   struct BVHBLASLeaf {
-    vec3 id[3];
+    float id[3];
     vec3 position[3];
     vec3 normal[3];
     vec2 texCoord[3];
-    vec3 tangent;
+    vec4 tangent;
     float faceId;
-  }
+  };
 
   void bvhTLASFetch(
     out BVHTLASLeaf outResult,
@@ -109,11 +110,11 @@ const INTERSECTION = /* glsl */`
   }
 
   void bvhBLASFetch(
-    out BVHBLASLEaf outResult,
+    out BVHBLASLeaf outResult,
     int addr,
     sampler2D bvhMap,
-    vec2 bvhMapSize
-    vec2 bvhMapSizeInv,
+    vec2 bvhMapSize,
+    vec2 bvhMapSizeInv
   ) {
     for (int i = 0; i < 3; ++i) {
       vec4 texel = bvhTexelFetch(addr + i, bvhMap, bvhMapSize, bvhMapSizeInv);
@@ -138,30 +139,31 @@ const INTERSECTION = /* glsl */`
   }
 
   #define BVH_MAX_STACK 64
-  #define BVH_MAX_LOOP 1024
-  #define BVH_MAX_TLAS_LOOP 10
-  #define BVH_MAX_BLAS_LOOP 10
+  #define BVH_MAX_LOOP 400
   #define BVH_NODE_SIZE 2
   #define BVH_TLAS_SIZE 10
   #define BVH_BLAS_SIZE 8
+  #define BVH_MAX_DIST 1000000.0
 
   bool intersectBVH(
     out BVHIntersectResult outResult,
     sampler2D bvhMap,
     vec2 bvhMapSize,
+    vec2 bvhMapSizeInv,
     int rootAddr,
     vec3 origin,
-    vec3 dir,
+    vec3 dir
   ) {
     vec4 rootTexel0 = bvhTexelFetch(rootAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
     vec4 rootTexel1 = bvhTexelFetch(rootAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
-    outResult.rayDist = 1.0 / 0.0;
+    outResult.rayDist = BVH_MAX_DIST;
     // Stack contains: addr, left, right
-    ivec3 stack[BVH_MAX_RECURSION];
+    ivec3 stack[BVH_MAX_STACK];
     stack[0] = ivec3(rootAddr, int(rootTexel0.w), int(rootTexel1.w));
     int stackPos = 0;
     int stackDivider = 0;
     int tlasOffset = 0;
+    int blasOffset = 0;
     BVHTLASLeaf tlasLeaf;
     vec3 blasOrigin;
     vec3 blasDir;
@@ -178,67 +180,62 @@ const INTERSECTION = /* glsl */`
       if (isTLAS && current.y < 0) {
         int childLength = current.z;
         bool hasChild = false;
-        if (int j = 0; j < BVH_MAX_TLAS_LOOP; ++j) {
-          int offset = tlasOffset + j;
-          if (offset >= childLength) break;
-          int childAddr = -current.y + offset * BVH_TLAS_SIZE;
-          bvhTLASFetch(tlasLeaf, childAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
-          if (intersectRayAABB(tlasLeaf.boxMin, tlasLeaf.boxMax, origin, dir)) {
-            tlasOffset = j + 1;
-            hasChild = true;
-            blasOrigin = (tlasLeaf.invMatrix * vec4(origin, 1.0)).xyz;
-            blasDir = normalize((tlasLeaf.invMatrix * vec4(dir, 0.0)).xyz);
-            blasResultAddr = -1;
-            // Infinity
-            blasResultDist = 1.0 / 0.0;
-            // Retrieve blas root node
-            vec4 blasMin =
-              bvhTexelFetch(tlasLeaf.blasAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
-            vec4 blasMax =
-              bvhTexelFetch(tlasLeaf.blasAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
-            stack[stackPos + 1] = ivec3(tlasLeaf.blasAddr, int(blasMin.w), int(blasMax.w));
-            stackDivider = stackPos;
-            stackPos += 1;
-            break;
-          }
-        }
-        if (!hasChild) {
+        int childAddr = -current.y + tlasOffset * BVH_TLAS_SIZE;
+        bvhTLASFetch(tlasLeaf, childAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
+        tlasOffset += 1;
+        if (tlasOffset > childLength) {
           tlasOffset = 0;
           stackPos -= 1;
           isPopping = true;
+        } else if (intersectRayAABB(tlasLeaf.boxMin, tlasLeaf.boxMax, origin, dir)) {
+          hasChild = true;
+          blasOrigin = (tlasLeaf.invMatrix * vec4(origin, 1.0)).xyz;
+          blasDir = normalize((tlasLeaf.invMatrix * vec4(dir, 0.0)).xyz);
+          blasResultAddr = -1;
+          blasResultDist = BVH_MAX_DIST;
+          // Retrieve blas root node
+          vec4 blasMin =
+            bvhTexelFetch(tlasLeaf.blasAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
+          vec4 blasMax =
+            bvhTexelFetch(tlasLeaf.blasAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
+          stack[stackPos + 1] = ivec3(tlasLeaf.blasAddr, int(blasMin.w), int(blasMax.w));
+          stackDivider = stackPos;
+          stackPos += 1;
         }
       } else if (current.y < 0) {
         int childLength = current.z;
-        for (int j = 0; j < BVH_MAX_BLAS_LOOP; ++j) {
-          if (j >= childLength) break;
-          int childAddr = current.y + j * BVH_BLAS_SIZE;
-          // We only retrieve 3 texels at this point - more detailed
-          // data can be retrieved later
-          vec3 v0 = bvhTexelFetch(childAddr, bvhMap, bvhMapSize, bvhMapSizeInv).xyz;
-          vec3 v1 = bvhTexelFetch(childAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv).xyz;
-          vec3 v2 = bvhTexelFetch(childAddr + 2, bvhMap, bvhMapSize, bvhMapSizeInv).xyz;
-          vec3 resultPos;
-          vec3 resultBarycentric;
-          float resultDist;
-          bool isIntersecting = intersectRayTriangle
-            resultPos, resultBarycentric, resultDist,
-            v0, v1, v2,
-            blasOrigin,
-            blasDir
-          );
-          if (isIntersecting && resultDist < blasResultDist) {
-            blasResultAddr = childAddr;
-            blasResultPos = resultPos;
-            blasResultBarycentric = resultBarycentric;
-            blasResultDist = resultDist;
-          }
+        int childAddr = -current.y + blasOffset * BVH_BLAS_SIZE;
+        // We only retrieve 3 texels at this point - more detailed
+        // data can be retrieved later
+        vec3 v0 = bvhTexelFetch(childAddr, bvhMap, bvhMapSize, bvhMapSizeInv).xyz;
+        vec3 v1 = bvhTexelFetch(childAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv).xyz;
+        vec3 v2 = bvhTexelFetch(childAddr + 2, bvhMap, bvhMapSize, bvhMapSizeInv).xyz;
+        vec3 resultPos;
+        vec3 resultBarycentric;
+        float resultDist;
+        bool isIntersecting = intersectRayTriangle(
+          resultBarycentric, resultDist,
+          v0, v1, v2,
+          blasOrigin,
+          blasDir
+        );
+        if (isIntersecting && resultDist < blasResultDist) {
+          resultPos = blasOrigin + blasDir * resultDist;
+          blasResultAddr = childAddr;
+          blasResultPos = resultPos;
+          blasResultBarycentric = resultBarycentric;
+          blasResultDist = resultDist;
         }
-        stackPos -= 1;
-        isPopping = true;
+        blasOffset += 1;
+        if (blasOffset >= childLength) {
+          stackPos -= 1;
+          blasOffset = 0;
+          isPopping = true;
+        }
       } else {
         vec3 currOrigin;
         vec3 currDir;
-        if (iSTLAS) {
+        if (isTLAS) {
           currOrigin = origin;
           currDir = dir;
         } else {
@@ -273,17 +270,17 @@ const INTERSECTION = /* glsl */`
           isPopping = true;
         }
       }
-      if (stackPos == index && isPopping) {
+      if (stackPos == stackDivider && isPopping) {
         if (blasResultAddr != -1) {
           vec3 resultPos = (tlasLeaf.matrix * vec4(blasResultPos, 1.0)).xyz;
           float resultDist = distance(resultPos, origin);
           hasIntersection = true;
-          if (t < outResult.rayDist) {
+          if (resultDist < outResult.rayDist) {
             outResult.childId = tlasLeaf.childId;
             outResult.faceAddr = blasResultAddr;
             outResult.position = resultPos;
             outResult.barycentric = blasResultBarycentric;
-            outResult.rayDist = t;
+            outResult.rayDist = resultDist;
           }
         }
       }
