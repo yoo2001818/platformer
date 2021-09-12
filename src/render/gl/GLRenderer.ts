@@ -126,7 +126,15 @@ export class GLRenderer {
   }
 
   draw(options: DrawOptions): void {
-    const {frameBuffer, geometry, shader, uniforms, primCount, state} = options;
+    const {
+      frameBuffer,
+      geometry,
+      shader,
+      attributes,
+      uniforms,
+      primCount,
+      state,
+    } = options;
     shader.prepareUniformTextures(this, uniforms);
     if (frameBuffer != null) {
       frameBuffer.bind(this);
@@ -136,6 +144,11 @@ export class GLRenderer {
     this.setState(state);
     shader.bind(this);
     geometry.bind(this, shader);
+    if (attributes != null) {
+      Object.keys(attributes).forEach((key) => {
+        shader.setAttribute(key, attributes[key]);
+      });
+    }
     shader.setUniforms(uniforms);
     if (primCount != null) {
       geometry.drawInstanced(primCount);

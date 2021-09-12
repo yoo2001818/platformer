@@ -2,6 +2,7 @@ import {Camera} from '../../3d/Camera';
 import {Transform} from '../../3d/Transform';
 import {TransformComponent} from '../../3d/TransformComponent';
 import {quad} from '../../geom/quad';
+import {GLArrayBuffer} from '../gl/GLArrayBuffer';
 import {GLFrameBuffer} from '../gl/GLFrameBuffer';
 import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
@@ -24,6 +25,9 @@ export class RaytracedPipeline implements Pipeline {
   bvhTexture: BVHTexture;
   rayBuffer: GLTexture2D | null = null;
   rayFrameBuffer: GLFrameBuffer | null = null;
+  rayTilePos = 0;
+  rayTileFrame = 4;
+  rayTileBuffer: GLArrayBuffer = new GLArrayBuffer(undefined, 'stream');
   cameraUniforms: {[key: string]: unknown;} = {};
   worldVersion = -1;
 
@@ -66,12 +70,13 @@ export class RaytracedPipeline implements Pipeline {
           precision highp float;
 
           attribute vec3 aPosition;
+          attribute vec4 aScreenOffset;
 
           varying vec2 vPosition;
 
           void main() {
-            vPosition = aPosition.xy;
-            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
+            vPosition = aPosition.xy * aScreenOffset.xy + aScreenOffset.zw;
+            gl_Position = vec4(vPosition, 1.0, 1.0);
           }
         `,
         /* glsl */`
@@ -90,7 +95,8 @@ export class RaytracedPipeline implements Pipeline {
           uniform vec2 uBVHMapSize;
 
           float rand(vec2 co){
-            return fract(sin(dot(uSeed + co, vec2(12.9898, 78.233))) * 43758.5453);
+            return fract(dot(co, uSeed));
+            // fract(sin(dot(uSeed + co, vec2(12.9898, 78.233))) * 43758.5453);
           }
 
           // https://graphics.pixar.com/library/OrthonormalB/paper.pdf
@@ -297,12 +303,32 @@ export class RaytracedPipeline implements Pipeline {
       glRenderer.clear(this.rayFrameBuffer!);
 
       this.worldVersion = transformComp.globalVersion;
+      this.rayTilePos = 0;
     }
+
+    const tilePerFrame = this.rayTileFrame;
+    const tileData = new Float32Array(4 * tilePerFrame);
+    for (let i = 0; i < tilePerFrame; i += 1) {
+      const tilePos = this.rayTilePos + i;
+      tileData[i * 4] = 1 / 10;
+      tileData[i * 4 + 1] = 1 / 10;
+      tileData[i * 4 + 2] = ((tilePos % 10) + 0.5) / 10 * 2 - 1;
+      tileData[i * 4 + 3] =
+        ((Math.floor(tilePos / 10) % 10) + 0.5) / 10 * 2 - 1;
+    }
+    this.rayTileBuffer.set(tileData);
+    this.rayTilePos += tilePerFrame;
 
     // Perform ray tracing
     glRenderer.draw({
       frameBuffer: this.rayFrameBuffer,
       geometry: LIGHT_QUAD,
+      attributes: {
+        aScreenOffset: {
+          buffer: this.rayTileBuffer,
+          divisor: 1,
+        },
+      },
       shader: this.getRaytraceShader(),
       uniforms: {
         ...this.cameraUniforms,
@@ -320,6 +346,7 @@ export class RaytracedPipeline implements Pipeline {
         },
         depth: false,
       },
+      primCount: tilePerFrame,
     });
 
     // Output to screen

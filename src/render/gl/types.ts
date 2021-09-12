@@ -132,6 +132,7 @@ export interface GLStateOptions {
 
 export interface DrawOptions {
   frameBuffer?: GLFrameBuffer | null;
+  attributes?: {[key: string]: AttributeOptions;};
   geometry: GLGeometry;
   shader: GLShader;
   uniforms: {[key: string]: unknown;};
