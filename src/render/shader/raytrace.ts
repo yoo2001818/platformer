@@ -55,8 +55,8 @@ export const INTERSECTION = /* glsl */`
       return texelFetch(bvhMap, coord, 0);
     #else
       vec2 coord = vec2(
-        mod(addrFloat, bvhMapSize.x) + 0.5,
-        addrFloat * bvhMapSizeInv.x + 0.5
+        mod(addrFloat, bvhMapSize.x),
+        addrFloat * bvhMapSizeInv.x
       ) * bvhMapSizeInv;
       return texture2D(bvhMap, coord);
     #endif
@@ -146,6 +146,28 @@ export const INTERSECTION = /* glsl */`
   #define BVH_BLAS_SIZE 8
   #define BVH_MAX_DIST 1000000.0
 
+  #ifndef WEBGL2
+  // In WebGL 1, it's not possible to use array random access. Although 
+  // extremely slow, this makes it possible to implement this in GLSL ES 2.0...
+  void storeStackEntry(inout ivec3 stack[BVH_MAX_STACK], int stackPos, ivec3 current) {
+    for (int j = 0; j < BVH_MAX_STACK; j += 1) {
+      if (j == stackPos) {
+        stack[j] = current;
+        break;
+      }
+    }
+  }
+  
+  void loadStackEntry(inout ivec3 stack[BVH_MAX_STACK], int stackPos, out ivec3 current) {
+    for (int j = 0; j < BVH_MAX_STACK; j += 1) {
+      if (j == stackPos) {
+        current = stack[j];
+        break;
+      }
+    }
+  }
+  #endif
+
   bool intersectBVH(
     out BVHIntersectResult outResult,
     sampler2D bvhMap,
@@ -199,7 +221,11 @@ export const INTERSECTION = /* glsl */`
             bvhTexelFetch(tlasLeaf.blasAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
           vec4 blasMax =
             bvhTexelFetch(tlasLeaf.blasAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
+          #ifdef WEBGL2
           stack[stackPos] = current;
+          #else
+          storeStackEntry(stack, stackPos, current);
+          #endif
           current = ivec3(tlasLeaf.blasAddr, int(blasMin.w), int(blasMax.w));
           stackDivider = stackPos;
           stackPos += 1;
@@ -257,7 +283,11 @@ export const INTERSECTION = /* glsl */`
         bool rightIntersects =
           intersectRayAABB(rightMin.xyz, rightMax.xyz, currOrigin, currDir);
         if (leftIntersects && rightIntersects) {
+          #ifdef WEBGL2
           stack[stackPos] = ivec3(current.y, int(leftMin.w), int(leftMax.w));
+          #else
+          storeStackEntry(stack, stackPos, ivec3(current.y, int(leftMin.w), int(leftMax.w)));
+          #endif
           current = ivec3(current.z, int(rightMin.w), int(rightMax.w));
           stackPos += 1;
           if (isTLAS) {
@@ -273,7 +303,11 @@ export const INTERSECTION = /* glsl */`
         }
       }
       if (isPopping) {
+        #ifdef WEBGL2
         current = stack[stackPos];
+        #else
+        loadStackEntry(stack, stackPos, current);
+        #endif
         if (stackPos == stackDivider) {
           if (blasResultAddr != -1) {
             vec3 resultPos = (tlasLeaf.matrix * vec4(blasResultPos, 1.0)).xyz;

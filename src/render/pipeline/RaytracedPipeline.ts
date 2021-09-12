@@ -29,6 +29,8 @@ export class RaytracedPipeline implements Pipeline {
   rayTilePos = 0;
   rayTileFrame = 1;
   rayTileBuffer: GLArrayBuffer = new GLArrayBuffer(undefined, 'stream');
+  tileWidth = 1;
+  tileHeight = 1;
   randomMap: GLTexture2D | null = null;
   cameraUniforms: {[key: string]: unknown;} = {};
   worldVersion = -1;
@@ -76,16 +78,19 @@ export class RaytracedPipeline implements Pipeline {
 
           varying vec2 vTilePosition;
           varying vec2 vPosition;
+          uniform vec2 uScreenSize;
+          uniform vec2 uRandomMapSize;
 
           void main() {
-            vTilePosition = aPosition.xy * 0.5 + 0.5;
             vPosition = aPosition.xy * aScreenOffset.xy + aScreenOffset.zw;
+            vTilePosition = fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize);
             gl_Position = vec4(vPosition, 1.0, 1.0);
           }
         `,
         /* glsl */`
           #version 100
           precision highp float;
+          precision highp sampler2D;
 
           ${INTERSECTION}
           #define PI 3.141592
@@ -250,11 +255,8 @@ export class RaytracedPipeline implements Pipeline {
   }
 
   refreshRandomMap(): void {
-    const {glRenderer} = this.renderer;
-    const width = glRenderer.getWidth();
-    const height = glRenderer.getHeight();
-    const tileWidth = Math.ceil(width / 10);
-    const tileHeight = Math.ceil(height / 10);
+    const tileWidth = 256;
+    const tileHeight = 256;
     const opts: GLTexture2DOptions = {
       magFilter: 'nearest',
       minFilter: 'nearest',
@@ -284,9 +286,10 @@ export class RaytracedPipeline implements Pipeline {
 
   prepare(): void {
     const {glRenderer} = this.renderer;
-    const {capabilities} = glRenderer;
     const width = glRenderer.getWidth();
     const height = glRenderer.getHeight();
+    this.tileWidth = Math.floor(width / 64);
+    this.tileHeight = Math.floor(height / 64);
     const defaultOpts: GLTexture2DOptions = {
       width,
       height,
@@ -301,7 +304,7 @@ export class RaytracedPipeline implements Pipeline {
       this.rayBuffer = new GLTexture2D({
         ...defaultOpts,
         format: 'rgba',
-        type: capabilities.hasFloatBuffer() ? 'float' : 'halfFloat',
+        type: 'halfFloat',
       });
     }
     if (this.rayFrameBuffer == null) {
@@ -321,14 +324,6 @@ export class RaytracedPipeline implements Pipeline {
 
     if (camera == null) {
       throw new Error('Camera is not specified');
-    }
-
-    if (deltaTime != null) {
-      if (deltaTime >= TARGET_DELTA_TIME) {
-        this.rayTileFrame = Math.max(this.rayTileFrame - 1, 1);
-      } else {
-        this.rayTileFrame = Math.min(this.rayTileFrame + 1, 100);
-      }
     }
 
     const transformComp =
@@ -361,18 +356,28 @@ export class RaytracedPipeline implements Pipeline {
       this.rayTilePos = 0;
     }
 
+    const tw = this.tileWidth;
+    const th = this.tileHeight;
+    if (deltaTime != null) {
+      if (deltaTime >= TARGET_DELTA_TIME) {
+        this.rayTileFrame = Math.max(this.rayTileFrame - 1, 1);
+      } else {
+        this.rayTileFrame = Math.min(this.rayTileFrame + 1, tw * th);
+      }
+    }
+
     const tilePerFrame = this.rayTileFrame;
     const tileData = new Float32Array(4 * tilePerFrame);
     for (let i = 0; i < tilePerFrame; i += 1) {
       const tilePos = this.rayTilePos + i;
-      tileData[i * 4] = 1 / 10;
-      tileData[i * 4 + 1] = 1 / 10;
-      tileData[i * 4 + 2] = ((tilePos % 10) + 0.5) / 10 * 2 - 1;
+      tileData[i * 4] = 1 / tw;
+      tileData[i * 4 + 1] = 1 / th;
+      tileData[i * 4 + 2] = ((tilePos % tw) + 0.5) / tw * 2 - 1;
       tileData[i * 4 + 3] =
-        ((Math.floor(tilePos / 10) % 10) + 0.5) / 10 * 2 - 1;
+        ((Math.floor(tilePos / tw) % th) + 0.5) / th * 2 - 1;
     }
-    const prevScanId = Math.floor(this.rayTilePos / 100);
-    const nextScanId = Math.floor((this.rayTilePos + tilePerFrame) / 100);
+    const prevScanId = Math.floor(this.rayTilePos / (tw * th));
+    const nextScanId = Math.floor((this.rayTilePos + tilePerFrame) / (tw * th));
     if (prevScanId !== nextScanId) {
       this.refreshRandomMap();
     }
@@ -399,6 +404,10 @@ export class RaytracedPipeline implements Pipeline {
         ],
         uSeed: [Math.random(), Math.random()],
         uRandomMap: this.randomMap,
+        uRandomMapSize: [
+          this.randomMap!.getWidth(),
+          this.randomMap!.getHeight(),
+        ],
         uScreenSize: [
           this.rayBuffer!.getWidth(),
           this.rayBuffer!.getHeight(),

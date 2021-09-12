@@ -33,6 +33,7 @@ export class BVHTexture {
       type: 'float',
       width: 1,
       height: 1,
+      mipmap: false,
       source: null,
     });
   }
@@ -246,6 +247,7 @@ export class BVHTexture {
       type: 'float',
       width,
       height,
+      mipmap: false,
       source: output,
     });
   }

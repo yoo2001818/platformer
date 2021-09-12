@@ -224,6 +224,7 @@ export class GLTexture {
     const attributeMap = capabilities.isWebGL2
       ? ATTRIBUTE_TYPE_MAP
       : WEBGL1_ATTRIBUTE_TYPE_MAP;
+    console.log('upload', options);
     if (source instanceof HTMLImageElement && !source.complete) {
       if (fulfilled === 0) {
         // Perform loading routine

@@ -69,7 +69,9 @@ function main() {
   });
 
   const cameraEntity = store.create({
-    transform: new Transform().translate([0, 0, 40]),
+    transform: new Transform()
+      .rotateY(Math.PI / 2)
+      .translate([0, 0, 40]),
     camera: new Camera({
       type: 'perspective',
       fov: 70 / 180 * Math.PI,
