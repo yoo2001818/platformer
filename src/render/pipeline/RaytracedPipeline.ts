@@ -18,6 +18,7 @@ import {ShadowPipeline} from '../shadow/ShadowPipeline';
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
 const LIGHT_QUAD = new GLGeometry(quad());
+const TARGET_DELTA_TIME = 1 / 60;
 
 export class RaytracedPipeline implements Pipeline {
   renderer: Renderer;
@@ -26,8 +27,9 @@ export class RaytracedPipeline implements Pipeline {
   rayBuffer: GLTexture2D | null = null;
   rayFrameBuffer: GLFrameBuffer | null = null;
   rayTilePos = 0;
-  rayTileFrame = 4;
+  rayTileFrame = 1;
   rayTileBuffer: GLArrayBuffer = new GLArrayBuffer(undefined, 'stream');
+  randomMap: GLTexture2D | null = null;
   cameraUniforms: {[key: string]: unknown;} = {};
   worldVersion = -1;
 
@@ -72,9 +74,11 @@ export class RaytracedPipeline implements Pipeline {
           attribute vec3 aPosition;
           attribute vec4 aScreenOffset;
 
+          varying vec2 vTilePosition;
           varying vec2 vPosition;
 
           void main() {
+            vTilePosition = aPosition.xy * 0.5 + 0.5;
             vPosition = aPosition.xy * aScreenOffset.xy + aScreenOffset.zw;
             gl_Position = vec4(vPosition, 1.0, 1.0);
           }
@@ -86,17 +90,22 @@ export class RaytracedPipeline implements Pipeline {
           ${INTERSECTION}
           #define PI 3.141592
 
+          varying vec2 vTilePosition;
           varying vec2 vPosition;
 
-          uniform vec2 uSeed;
           uniform mat4 uInverseView;
           uniform mat4 uInverseProjection;
           uniform sampler2D uBVHMap;
           uniform vec2 uBVHMapSize;
+          uniform sampler2D uRandomMap;
+          uniform vec2 uSeed;
+          uniform vec2 uScreenSize;
 
-          float rand(vec2 co){
-            return fract(dot(co, uSeed));
-            // fract(sin(dot(uSeed + co, vec2(12.9898, 78.233))) * 43758.5453);
+          float vTilePos = 0.0;
+          float rand(){
+            float currentPos = vTilePos;
+            vTilePos += 0.1;
+            return texture2D(uRandomMap, uSeed + vTilePosition + vec2(currentPos, 0.0)).r;
           }
 
           // https://graphics.pixar.com/library/OrthonormalB/paper.pdf
@@ -129,7 +138,8 @@ export class RaytracedPipeline implements Pipeline {
           }
 
           void main() {
-            vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
+            vec2 ndcPos = vPosition.xy + (1.0 / uScreenSize) * (vec2(rand(), rand()) * 2.0 - 1.0);
+            vec4 viewPos = uInverseProjection * vec4(ndcPos, 1.0, 1.0);
             viewPos /= viewPos.w;
             vec3 resultColor = vec3(0.0);
             float contribution = 1.0;
@@ -188,8 +198,8 @@ export class RaytracedPipeline implements Pipeline {
                 dir = basis *
                   sign(dot(normal, dir)) *
                   cosineSampleHemisphere(vec2(
-                    rand(vPosition),
-                    rand(vPosition + vec2(1.0, 0.0))
+                    rand(),
+                    rand()
                   ));
 
                 contribution *= max(dot(normal, dir), 0.0);
@@ -239,8 +249,42 @@ export class RaytracedPipeline implements Pipeline {
     });
   }
 
+  refreshRandomMap(): void {
+    const {glRenderer} = this.renderer;
+    const width = glRenderer.getWidth();
+    const height = glRenderer.getHeight();
+    const tileWidth = Math.ceil(width / 10);
+    const tileHeight = Math.ceil(height / 10);
+    const opts: GLTexture2DOptions = {
+      magFilter: 'nearest',
+      minFilter: 'nearest',
+      wrapS: 'repeat',
+      wrapT: 'repeat',
+      format: 'luminance',
+      type: 'unsignedByte',
+      width: tileWidth,
+      height: tileHeight,
+      mipmap: false,
+    };
+    if (this.randomMap == null) {
+      this.randomMap = new GLTexture2D({
+        ...opts,
+        source: null,
+      });
+    }
+    const buffer = new Uint8Array(tileWidth * tileHeight);
+    for (let i = 0; i < tileWidth * tileHeight; i += 1) {
+      buffer[i] = Math.random() * 255 | 0;
+    }
+    this.randomMap.setOptions({
+      ...opts,
+      source: buffer,
+    });
+  }
+
   prepare(): void {
     const {glRenderer} = this.renderer;
+    const {capabilities} = glRenderer;
     const width = glRenderer.getWidth();
     const height = glRenderer.getHeight();
     const defaultOpts: GLTexture2DOptions = {
@@ -257,7 +301,7 @@ export class RaytracedPipeline implements Pipeline {
       this.rayBuffer = new GLTexture2D({
         ...defaultOpts,
         format: 'rgba',
-        type: 'halfFloat',
+        type: capabilities.hasFloatBuffer() ? 'float' : 'halfFloat',
       });
     }
     if (this.rayFrameBuffer == null) {
@@ -267,13 +311,24 @@ export class RaytracedPipeline implements Pipeline {
         color: this.rayBuffer!,
       });
     }
+    if (this.randomMap == null) {
+      this.refreshRandomMap();
+    }
   }
 
-  render(): void {
+  render(deltaTime?: number): void {
     const {entityStore, glRenderer, camera} = this.renderer;
 
     if (camera == null) {
       throw new Error('Camera is not specified');
+    }
+
+    if (deltaTime != null) {
+      if (deltaTime >= TARGET_DELTA_TIME) {
+        this.rayTileFrame = Math.max(this.rayTileFrame - 1, 1);
+      } else {
+        this.rayTileFrame = Math.min(this.rayTileFrame + 1, 100);
+      }
     }
 
     const transformComp =
@@ -316,6 +371,11 @@ export class RaytracedPipeline implements Pipeline {
       tileData[i * 4 + 3] =
         ((Math.floor(tilePos / 10) % 10) + 0.5) / 10 * 2 - 1;
     }
+    const prevScanId = Math.floor(this.rayTilePos / 100);
+    const nextScanId = Math.floor((this.rayTilePos + tilePerFrame) / 100);
+    if (prevScanId !== nextScanId) {
+      this.refreshRandomMap();
+    }
     this.rayTileBuffer.set(tileData);
     this.rayTilePos += tilePerFrame;
 
@@ -338,6 +398,11 @@ export class RaytracedPipeline implements Pipeline {
           this.bvhTexture.bvhTexture.getHeight(),
         ],
         uSeed: [Math.random(), Math.random()],
+        uRandomMap: this.randomMap,
+        uScreenSize: [
+          this.rayBuffer!.getWidth(),
+          this.rayBuffer!.getHeight(),
+        ],
       },
       state: {
         blend: {

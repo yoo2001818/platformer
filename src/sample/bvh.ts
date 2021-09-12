@@ -319,7 +319,7 @@ function main() {
     store.sort();
 
     orbitController.update(delta);
-    renderer.render();
+    renderer.render(delta / 1000);
 
     updateAnimation(store, delta / 1000);
 

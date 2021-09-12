@@ -100,7 +100,7 @@ export class Renderer {
     this.frameVersion = -1;
   }
 
-  render(): void {
+  render(deltaTime = 0.016): void {
     const {camera, pipeline, entityStore} = this;
     if (camera == null) {
       return;
@@ -116,7 +116,7 @@ export class Renderer {
     */
     this.frameId += 1;
     this.frameVersion = transformComp.globalVersion;
-    pipeline.render();
+    pipeline.render(deltaTime);
     // this.renderGizmos();
   }
 

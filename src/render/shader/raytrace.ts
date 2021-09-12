@@ -160,7 +160,8 @@ export const INTERSECTION = /* glsl */`
     outResult.rayDist = BVH_MAX_DIST;
     // Stack contains: addr, left, right
     ivec3 stack[BVH_MAX_STACK];
-    stack[0] = ivec3(rootAddr, int(rootTexel0.w), int(rootTexel1.w));
+    ivec3 current;
+    current = ivec3(rootAddr, int(rootTexel0.w), int(rootTexel1.w));
     int stackPos = 0;
     int stackDivider = 0;
     int tlasOffset = 0;
@@ -175,7 +176,6 @@ export const INTERSECTION = /* glsl */`
     bool hasIntersection = false;
     for (int i = 0; i < BVH_MAX_LOOP; ++i) {
       if (stackPos < 0) break;
-      ivec3 current = stack[stackPos];
       bool isTLAS = stackPos <= stackDivider;
       bool isPopping = false;
       if (isTLAS && current.y < 0) {
@@ -199,7 +199,8 @@ export const INTERSECTION = /* glsl */`
             bvhTexelFetch(tlasLeaf.blasAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
           vec4 blasMax =
             bvhTexelFetch(tlasLeaf.blasAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
-          stack[stackPos + 1] = ivec3(tlasLeaf.blasAddr, int(blasMin.w), int(blasMax.w));
+          stack[stackPos] = current;
+          current = ivec3(tlasLeaf.blasAddr, int(blasMin.w), int(blasMax.w));
           stackDivider = stackPos;
           stackPos += 1;
         }
@@ -257,32 +258,35 @@ export const INTERSECTION = /* glsl */`
           intersectRayAABB(rightMin.xyz, rightMax.xyz, currOrigin, currDir);
         if (leftIntersects && rightIntersects) {
           stack[stackPos] = ivec3(current.y, int(leftMin.w), int(leftMax.w));
-          stack[stackPos + 1] = ivec3(current.z, int(rightMin.w), int(rightMax.w));
+          current = ivec3(current.z, int(rightMin.w), int(rightMax.w));
           stackPos += 1;
           if (isTLAS) {
             stackDivider += 1;
           }
         } else if (leftIntersects) {
-          stack[stackPos] = ivec3(current.y, int(leftMin.w), int(leftMax.w));
+          current = ivec3(current.y, int(leftMin.w), int(leftMax.w));
         } else if (rightIntersects) {
-          stack[stackPos] = ivec3(current.z, int(rightMin.w), int(rightMax.w));
+          current = ivec3(current.z, int(rightMin.w), int(rightMax.w));
         } else {
           stackPos -= 1;
           isPopping = true;
         }
       }
-      if (stackPos == stackDivider && isPopping) {
-        if (blasResultAddr != -1) {
-          vec3 resultPos = (tlasLeaf.matrix * vec4(blasResultPos, 1.0)).xyz;
-          float resultDist = distance(resultPos, origin);
-          hasIntersection = true;
-          if (resultDist < outResult.rayDist) {
-            outResult.childId = tlasLeaf.childId;
-            outResult.faceAddr = blasResultAddr;
-            outResult.position = resultPos;
-            outResult.barycentric = blasResultBarycentric;
-            outResult.rayDist = resultDist;
-            outResult.matrix = tlasLeaf.matrix;
+      if (isPopping) {
+        current = stack[stackPos];
+        if (stackPos == stackDivider) {
+          if (blasResultAddr != -1) {
+            vec3 resultPos = (tlasLeaf.matrix * vec4(blasResultPos, 1.0)).xyz;
+            float resultDist = distance(resultPos, origin);
+            hasIntersection = true;
+            if (resultDist < outResult.rayDist) {
+              outResult.childId = tlasLeaf.childId;
+              outResult.faceAddr = blasResultAddr;
+              outResult.position = resultPos;
+              outResult.barycentric = blasResultBarycentric;
+              outResult.rayDist = resultDist;
+              outResult.matrix = tlasLeaf.matrix;
+            }
           }
         }
       }

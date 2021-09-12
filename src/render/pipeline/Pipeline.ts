@@ -20,5 +20,5 @@ export interface Pipeline {
   drawDeferred(options: DrawOptions): void;
   drawForward(options: DrawOptions): void;
   renderShadow(shadowPipeline: ShadowPipeline): void;
-  render(): void;
+  render(deltaTime?: number): void;
 }
