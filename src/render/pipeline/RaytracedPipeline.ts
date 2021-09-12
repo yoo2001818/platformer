@@ -144,13 +144,19 @@ export class RaytracedPipeline implements Pipeline {
 
           void main() {
             vec2 ndcPos = vPosition.xy + (1.0 / uScreenSize) * (vec2(rand(), rand()) * 2.0 - 1.0);
-            vec4 viewPos = uInverseProjection * vec4(ndcPos, 1.0, 1.0);
-            viewPos /= viewPos.w;
+            vec4 viewFarPos = uInverseProjection * vec4(ndcPos, 1.0, 1.0);
+            viewFarPos /= viewFarPos.w;
+            vec4 viewNearPos = uInverseProjection * vec4(ndcPos, -1.0, 1.0);
+            viewNearPos /= viewNearPos.w;
+
+            viewFarPos = uInverseView * viewFarPos;
+            viewNearPos = uInverseView * viewNearPos;
+
             vec3 resultColor = vec3(0.0);
             float contribution = 1.0;
 
-            vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
-            vec3 origin = uInverseView[3].xyz;
+            vec3 dir = normalize((viewFarPos - viewNearPos).xyz);
+            vec3 origin = viewNearPos.xyz;
             BVHIntersectResult bvhResult;
             for (int i = 0; i < 4; i += 1) {
               bool isIntersecting = intersectBVH(
