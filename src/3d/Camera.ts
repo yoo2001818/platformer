@@ -15,13 +15,11 @@ export class Camera {
   options: CameraOptions;
   projection: Float32Array;
   inverseProjection: Float32Array;
-  view: Float32Array;
 
   constructor(options: CameraOptions) {
     this.options = options;
     this.projection = mat4.create() as Float32Array;
     this.inverseProjection = mat4.create() as Float32Array;
-    this.view = mat4.create() as Float32Array;
   }
 
   setOptions(options: CameraOptions): void {
@@ -51,8 +49,7 @@ export class Camera {
 
   getView(entity: Entity): Float32Array {
     const transform = entity.get<Transform>('transform')!;
-    mat4.invert(this.view, transform.getMatrixWorld());
-    return this.view;
+    return transform.getMatrixInverseWorld();
   }
 
   getInverseProjection(aspect: number): Float32Array {

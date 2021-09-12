@@ -76,6 +76,10 @@ export class Renderer {
     this.frameId = 0;
   }
 
+  setPipeline(pipeline: Pipeline): void {
+    this.pipeline = pipeline;
+  }
+
   getAspectRatio(): number {
     return this.glRenderer.getAspectRatio();
   }
