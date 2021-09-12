@@ -331,7 +331,7 @@ function main() {
 
     renderer.render(delta / 1000);
 
-    // updateAnimation(store, delta / 1000);
+    updateAnimation(store, delta / 1000);
 
     requestAnimationFrame(update);
   }

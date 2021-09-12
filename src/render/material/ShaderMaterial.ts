@@ -1,4 +1,3 @@
-import {Camera} from '../../3d/Camera';
 import {TransformComponent} from '../../3d/TransformComponent';
 import {EntityChunk} from '../../core/EntityChunk';
 import {GLGeometry} from '../gl/GLGeometry';

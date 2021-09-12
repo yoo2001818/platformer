@@ -11,6 +11,9 @@ import {DrawOptions} from '../gl/types';
 import {BVHTexture} from '../raytrace/BVHTexture';
 import {WorldBVH} from '../raytrace/WorldBVH';
 import {Renderer} from '../Renderer';
+import {POINT_LIGHT} from '../shader/light';
+import {MATERIAL_INFO} from '../shader/material';
+import {PBR} from '../shader/pbr';
 import {INTERSECTION} from '../shader/raytrace';
 import {FILMIC} from '../shader/tonemap';
 import {ShadowPipeline} from '../shadow/ShadowPipeline';
@@ -93,6 +96,10 @@ export class RaytracedPipeline implements Pipeline {
           precision highp sampler2D;
 
           ${INTERSECTION}
+          ${PBR}
+          ${MATERIAL_INFO}
+          ${POINT_LIGHT}
+
           #define PI 3.141592
 
           varying vec2 vTilePosition;
@@ -106,11 +113,11 @@ export class RaytracedPipeline implements Pipeline {
           uniform vec2 uSeed;
           uniform vec2 uScreenSize;
 
-          float vTilePos = 0.0;
-          float rand(){
-            float currentPos = vTilePos;
-            vTilePos += 0.1;
-            return texture2D(uRandomMap, uSeed + vTilePosition + vec2(currentPos, 0.0)).r;
+          float randPos = 0.0;
+          float rand() {
+            float result = texture2D(uRandomMap, uSeed + vTilePosition + vec2(randPos, 0.0)).r;
+            randPos += result;
+            return result;
           }
 
           // https://graphics.pixar.com/library/OrthonormalB/paper.pdf
@@ -142,6 +149,14 @@ export class RaytracedPipeline implements Pipeline {
             return vec3(h, z);
           }
 
+          vec3 sampleSphere() {
+            return normalize(vec3(
+              rand(),
+              rand(),
+              rand()
+            ) * 2.0 - 1.0);
+          }
+
           void main() {
             vec2 ndcPos = vPosition.xy + (1.0 / uScreenSize) * (vec2(rand(), rand()) * 2.0 - 1.0);
             vec4 viewFarPos = uInverseProjection * vec4(ndcPos, 1.0, 1.0);
@@ -152,12 +167,18 @@ export class RaytracedPipeline implements Pipeline {
             viewFarPos = uInverseView * viewFarPos;
             viewNearPos = uInverseView * viewNearPos;
 
-            vec3 resultColor = vec3(0.0);
-            float contribution = 1.0;
-
             vec3 dir = normalize((viewFarPos - viewNearPos).xyz);
             vec3 origin = viewNearPos.xyz;
             BVHIntersectResult bvhResult;
+            MaterialInfo mInfo;
+            PointLight light;
+            light.position = vec3(0.0, 0.95, 0.0);
+            light.color = vec3(1.0);
+            light.intensity = vec3(PI * 4.0, 0.0, 100.0);
+
+            vec3 resultColor = vec3(0.0);
+            vec3 attenuation = vec3(1.0);
+
             for (int i = 0; i < 4; i += 1) {
               bool isIntersecting = intersectBVH(
                 bvhResult,
@@ -167,54 +188,102 @@ export class RaytracedPipeline implements Pipeline {
                 origin,
                 dir
               );
-              if (isIntersecting) {
-                BVHBLASLeaf blas;
-                bvhBLASFetch(blas, bvhResult.faceAddr, uBVHMap, uBVHMapSize, 1.0 / uBVHMapSize);
-                vec3 normal = vec3(0.0);
-                normal += blas.normal[0] * bvhResult.barycentric.x;
-                normal += blas.normal[1] * bvhResult.barycentric.y;
-                normal += blas.normal[2] * bvhResult.barycentric.z;
-                normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
-                vec3 color = vec3(1.0);
-                if (bvhResult.childId == 2.0) {
-                  color = vec3(1.0, 0.0, 0.0);
-                } else if (bvhResult.childId == 1.0) {
-                  color = vec3(0.0, 1.0, 0.0);
-                } else if (bvhResult.childId == 5.0) {
-                  color = vec3(0.0, 0.0, 1.0);
-                }
-                // lighting
-                float lightIntensity = 0.0;
-                origin = bvhResult.position + normal * 0.01;
-                {
-                  vec3 L = vec3(0.0, 1.0, 0.0) - origin;
-                  float lightDist = length(L);
-                  L /= lightDist;
-                  // Check occulsion
-                  BVHIntersectResult lightResult;
-                  bool isLightIntersecting = intersectBVH(
-                    lightResult,
-                    uBVHMap,
-                    uBVHMapSize, 1.0 / uBVHMapSize,
-                    0,
-                    origin,
-                    L
-                  );
-                  if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
-                    lightIntensity += max(dot(normal, L), 0.0);
+              if (!isIntersecting) {
+                break;
+              }
+              BVHBLASLeaf blas;
+              bvhBLASFetch(blas, bvhResult.faceAddr, uBVHMap, uBVHMapSize, 1.0 / uBVHMapSize);
+              vec3 normal = vec3(0.0);
+              normal += blas.normal[0] * bvhResult.barycentric.x;
+              normal += blas.normal[1] * bvhResult.barycentric.y;
+              normal += blas.normal[2] * bvhResult.barycentric.z;
+              normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
+              vec3 color = vec3(1.0);
+              if (bvhResult.childId == 2.0) {
+                color = vec3(1.0, 0.0, 0.0);
+              } else if (bvhResult.childId == 1.0) {
+                color = vec3(0.0, 1.0, 0.0);
+              } else if (bvhResult.childId == 5.0) {
+                color = vec3(0.0, 0.0, 1.0);
+              }
+              mInfo.albedo = color;
+              mInfo.normal = normal;
+              mInfo.position = bvhResult.position;
+              mInfo.metalic = 0.0;
+              mInfo.roughness = 0.5;
+              vec3 prevOrigin = origin;
+              origin = mInfo.position + mInfo.normal * 0.0001;
+              // lighting 
+              vec3 lightingColor = vec3(0.0);
+              {
+                vec3 L = light.position - mInfo.position;
+                float lightDist = length(L);
+                L /= lightDist;
+                // Check occulsion
+                BVHIntersectResult lightResult;
+                bool isLightIntersecting = intersectBVH(
+                  lightResult,
+                  uBVHMap,
+                  uBVHMapSize, 1.0 / uBVHMapSize,
+                  0,
+                  origin,
+                  L
+                );
+                if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
+                  if (i == 0) {
+                    lightingColor += calcPoint(prevOrigin, mInfo, light);
+                  } else {
+                    lightingColor += max(dot(mInfo.normal, L), 0.0) *
+                      light.color * mInfo.albedo * light.intensity.x / PI;
                   }
                 }
-                resultColor += lightIntensity * contribution * color;
-                mat3 basis = orthonormalBasis(-normal);
-                dir = basis *
-                  sign(dot(normal, dir)) *
-                  cosineSampleHemisphere(vec2(
-                    rand(),
-                    rand()
-                  ));
-
-                contribution *= max(dot(normal, dir), 0.0);
               }
+
+              resultColor += lightingColor * attenuation * 0.5;
+              // scattering
+              dir = normalize(mInfo.normal + sampleSphere());
+              /*mat3 basis = orthonormalBasis(-mInfo.normal);
+              dir = basis *
+                sign(dot(normal, dir)) *
+                cosineSampleHemisphere(vec2(
+                  rand(),
+                  rand()
+                ));*/
+              attenuation *= mInfo.albedo * 0.5;
+
+              /*
+              // lighting
+              float lightIntensity = 0.0;
+              origin = bvhResult.position + normal * 0.01;
+              {
+                vec3 L = vec3(0.0, 1.0, 0.0) - origin;
+                float lightDist = length(L);
+                L /= lightDist;
+                // Check occulsion
+                BVHIntersectResult lightResult;
+                bool isLightIntersecting = intersectBVH(
+                  lightResult,
+                  uBVHMap,
+                  uBVHMapSize, 1.0 / uBVHMapSize,
+                  0,
+                  origin,
+                  L
+                );
+                if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
+                  lightIntensity += max(dot(normal, L), 0.0);
+                }
+              }
+              resultColor += lightIntensity * contribution * color;
+              mat3 basis = orthonormalBasis(-normal);
+              dir = basis *
+                sign(dot(normal, dir)) *
+                cosineSampleHemisphere(vec2(
+                  rand(),
+                  rand()
+                ));
+
+              contribution *= max(dot(normal, dir), 0.0);
+              */
             }
             gl_FragColor = vec4(resultColor, 1.0);
           }
