@@ -25,14 +25,9 @@ import {parseGLTF} from '../loader/gltf';
 import {updateAnimation} from '../anim/updateAnimation';
 import {create3DComponents} from '../3d/create3DComponents';
 import {WorldBVH} from '../render/raytrace/WorldBVH';
-import {flattenBuffer} from '../render/gl/utils';
 import {box} from '../geom/box';
-import {GLTexture} from '../render/gl/GLTexture';
-import {convertFloatArray} from '../render/gl/uniform/utils';
-import {BVHTexture} from '../render/raytrace/BVHTexture';
-import {ShaderMaterial} from '../render/material/ShaderMaterial';
-import {INTERSECTION} from '../render/shader/raytrace';
-import { RaytracedPipeline } from '../render/pipeline/RaytracedPipeline';
+import {RaytracedPipeline} from '../render/pipeline/RaytracedPipeline';
+import {TransformComponent} from '../3d/TransformComponent';
 // import {box} from '../geom/box';
 // import {BVH, BVHNode} from '../3d/BVH';
 
@@ -148,7 +143,6 @@ function main() {
       new Geometry(calcTangents(calcNormals(quad()))),
       {
         castShadow: false,
-        castRay: false,
       },
     ),
   });
@@ -213,9 +207,8 @@ function main() {
   const worldBVH = new WorldBVH(store);
   worldBVH.update();
 
-  console.log(worldBVH);
-
-  renderer.setPipeline(new RaytracedPipeline(renderer, worldBVH));
+  const rasterPipeline = renderer.pipeline;
+  const rayPipeline = new RaytracedPipeline(renderer, worldBVH);
 
   const testMesh = new Mesh(
     new StandardMaterial({
@@ -313,6 +306,8 @@ function main() {
   */
 
   let lastTime = 0;
+  let lastMoveVersion = -1;
+  let lastMoveFrame = 0;
 
   function update(time: number) {
     const delta = time - lastTime;
@@ -321,9 +316,22 @@ function main() {
     store.sort();
 
     orbitController.update(delta);
+
+    lastMoveFrame += 1;
+    const transformComp = store.getComponent<TransformComponent>('transform')!;
+    if (lastMoveVersion !== transformComp.globalVersion) {
+      lastMoveVersion = transformComp.globalVersion;
+      lastMoveFrame = 0;
+    }
+    if (lastMoveFrame > 60) {
+      renderer.setPipeline(rayPipeline);
+    } else {
+      renderer.setPipeline(rasterPipeline);
+    }
+
     renderer.render(delta / 1000);
 
-    updateAnimation(store, delta / 1000);
+    // updateAnimation(store, delta / 1000);
 
     requestAnimationFrame(update);
   }

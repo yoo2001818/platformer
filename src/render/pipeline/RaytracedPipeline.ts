@@ -286,8 +286,17 @@ export class RaytracedPipeline implements Pipeline {
 
   prepare(): void {
     const {glRenderer} = this.renderer;
-    const width = glRenderer.getWidth();
-    const height = glRenderer.getHeight();
+    const {capabilities} = glRenderer;
+    const useFloat = capabilities.hasFloatBlend() &&
+      capabilities.hasFloatBuffer() &&
+      capabilities.hasFloatTextureLinear();
+    const isMobile = navigator.userAgent.match(/Android|iPhone|iPad|iPod/i);
+    let width = glRenderer.getWidth();
+    let height = glRenderer.getHeight();
+    if (isMobile) {
+      width = Math.floor(width / 3);
+      height = Math.floor(height / 3);
+    }
     this.tileWidth = Math.floor(width / 64);
     this.tileHeight = Math.floor(height / 64);
     const defaultOpts: GLTexture2DOptions = {
@@ -304,7 +313,7 @@ export class RaytracedPipeline implements Pipeline {
       this.rayBuffer = new GLTexture2D({
         ...defaultOpts,
         format: 'rgba',
-        type: 'halfFloat',
+        type: useFloat ? 'float' : 'halfFloat',
       });
     }
     if (this.rayFrameBuffer == null) {
