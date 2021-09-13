@@ -9,6 +9,7 @@ import {GLShader} from '../gl/GLShader';
 import {GLTexture2D, GLTexture2DOptions} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
 import {BVHTexture} from '../raytrace/BVHTexture';
+import {Sobol} from '../raytrace/Sobol';
 import {WorldBVH} from '../raytrace/WorldBVH';
 import {Renderer} from '../Renderer';
 import {POINT_LIGHT} from '../shader/light';
@@ -34,14 +35,17 @@ export class RaytracedPipeline implements Pipeline {
   rayTileBuffer: GLArrayBuffer = new GLArrayBuffer(undefined, 'stream');
   tileWidth = 1;
   tileHeight = 1;
+  randomPos: Float32Array = new Float32Array(2);
   randomMap: GLTexture2D | null = null;
   cameraUniforms: {[key: string]: unknown;} = {};
   worldVersion = -1;
+  sobol: Sobol;
 
   constructor(renderer: Renderer, worldBVH: WorldBVH) {
     this.renderer = renderer;
     this.worldBVH = worldBVH;
     this.bvhTexture = new BVHTexture(worldBVH.entityStore, worldBVH);
+    this.sobol = new Sobol(4);
   }
 
   dispose(): void {
@@ -79,14 +83,10 @@ export class RaytracedPipeline implements Pipeline {
           attribute vec3 aPosition;
           attribute vec4 aScreenOffset;
 
-          varying vec2 vTilePosition;
           varying vec2 vPosition;
-          uniform vec2 uScreenSize;
-          uniform vec2 uRandomMapSize;
 
           void main() {
             vPosition = aPosition.xy * aScreenOffset.xy + aScreenOffset.zw;
-            vTilePosition = fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize);
             gl_Position = vec4(vPosition, 1.0, 1.0);
           }
         `,
@@ -102,7 +102,6 @@ export class RaytracedPipeline implements Pipeline {
 
           #define PI 3.141592
 
-          varying vec2 vTilePosition;
           varying vec2 vPosition;
 
           uniform mat4 uInverseView;
@@ -112,11 +111,30 @@ export class RaytracedPipeline implements Pipeline {
           uniform sampler2D uRandomMap;
           uniform vec2 uSeed;
           uniform vec2 uScreenSize;
+          uniform vec2 uRandomMapSize;
 
-          float randPos = 0.0;
+          vec4 randTexel;
+          int randPtr = 0;
+          vec2 tilePosition;
           float rand() {
-            float result = texture2D(uRandomMap, uSeed + vTilePosition + vec2(randPos, 0.0)).r;
-            randPos += result;
+            if (randPtr == 0) {
+              randTexel = texture2D(uRandomMap, tilePosition);
+            }
+            float result;
+            if (randPtr == 0) {
+              result = randTexel.r;
+            } else if (randPtr == 1) {
+              result = randTexel.g;
+            } else if (randPtr == 2) {
+              result = randTexel.b;
+            } else if (randPtr == 3) {
+              result = randTexel.w;
+            }
+            randPtr += 1;
+            if (randPtr == 4) {
+              randPtr = 0;
+              tilePosition += uSeed;
+            }
             return result;
           }
 
@@ -158,6 +176,7 @@ export class RaytracedPipeline implements Pipeline {
           }
 
           void main() {
+            tilePosition = uSeed + fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize);
             vec2 ndcPos = vPosition.xy + (1.0 / uScreenSize) * (vec2(rand(), rand()) * 2.0 - 1.0);
             vec4 viewFarPos = uInverseProjection * vec4(ndcPos, 1.0, 1.0);
             viewFarPos /= viewFarPos.w;
@@ -198,6 +217,9 @@ export class RaytracedPipeline implements Pipeline {
               normal += blas.normal[1] * bvhResult.barycentric.y;
               normal += blas.normal[2] * bvhResult.barycentric.z;
               normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
+              if (dot(normal, dir) > 0.0) {
+                normal *= -1.0;
+              }
               vec3 color = vec3(1.0);
               if (bvhResult.childId == 2.0) {
                 color = vec3(1.0, 0.0, 0.0);
@@ -242,48 +264,8 @@ export class RaytracedPipeline implements Pipeline {
               resultColor += lightingColor * attenuation * 0.5;
               // scattering
               dir = normalize(mInfo.normal + sampleSphere());
-              /*mat3 basis = orthonormalBasis(-mInfo.normal);
-              dir = basis *
-                sign(dot(normal, dir)) *
-                cosineSampleHemisphere(vec2(
-                  rand(),
-                  rand()
-                ));*/
               attenuation *= mInfo.albedo * 0.5;
 
-              /*
-              // lighting
-              float lightIntensity = 0.0;
-              origin = bvhResult.position + normal * 0.01;
-              {
-                vec3 L = vec3(0.0, 1.0, 0.0) - origin;
-                float lightDist = length(L);
-                L /= lightDist;
-                // Check occulsion
-                BVHIntersectResult lightResult;
-                bool isLightIntersecting = intersectBVH(
-                  lightResult,
-                  uBVHMap,
-                  uBVHMapSize, 1.0 / uBVHMapSize,
-                  0,
-                  origin,
-                  L
-                );
-                if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
-                  lightIntensity += max(dot(normal, L), 0.0);
-                }
-              }
-              resultColor += lightIntensity * contribution * color;
-              mat3 basis = orthonormalBasis(-normal);
-              dir = basis *
-                sign(dot(normal, dir)) *
-                cosineSampleHemisphere(vec2(
-                  rand(),
-                  rand()
-                ));
-
-              contribution *= max(dot(normal, dir), 0.0);
-              */
             }
             gl_FragColor = vec4(resultColor, 1.0);
           }
@@ -337,8 +319,8 @@ export class RaytracedPipeline implements Pipeline {
       minFilter: 'nearest',
       wrapS: 'repeat',
       wrapT: 'repeat',
-      format: 'luminance',
-      type: 'unsignedByte',
+      format: 'rgba',
+      type: 'float',
       width: tileWidth,
       height: tileHeight,
       mipmap: false,
@@ -349,9 +331,9 @@ export class RaytracedPipeline implements Pipeline {
         source: null,
       });
     }
-    const buffer = new Uint8Array(tileWidth * tileHeight);
-    for (let i = 0; i < tileWidth * tileHeight; i += 1) {
-      buffer[i] = Math.random() * 255 | 0;
+    const buffer = new Float32Array(tileWidth * tileHeight * 4);
+    for (let i = 0; i < tileWidth * tileHeight * 4; i += 1) {
+      buffer[i] = Math.random();
     }
     this.randomMap.setOptions({
       ...opts,
@@ -372,6 +354,8 @@ export class RaytracedPipeline implements Pipeline {
       width = Math.floor(width / 3);
       height = Math.floor(height / 3);
     }
+    // width = 128;
+    // height = 128;
     this.tileWidth = Math.floor(width / 64);
     this.tileHeight = Math.floor(height / 64);
     const defaultOpts: GLTexture2DOptions = {
@@ -438,6 +422,7 @@ export class RaytracedPipeline implements Pipeline {
 
       this.worldVersion = transformComp.globalVersion;
       this.rayTilePos = 0;
+      this.sobol.reset();
     }
 
     const tw = this.tileWidth;
@@ -463,7 +448,9 @@ export class RaytracedPipeline implements Pipeline {
     const prevScanId = Math.floor(this.rayTilePos / (tw * th));
     const nextScanId = Math.floor((this.rayTilePos + tilePerFrame) / (tw * th));
     if (prevScanId !== nextScanId) {
-      this.refreshRandomMap();
+      const next = this.sobol.next();
+      this.randomPos[0] = next[0] * 255 / 256;
+      this.randomPos[1] = next[1] * 255 / 256;
     }
     this.rayTileBuffer.set(tileData);
     this.rayTilePos += tilePerFrame;
@@ -486,7 +473,7 @@ export class RaytracedPipeline implements Pipeline {
           this.bvhTexture.bvhTexture.getWidth(),
           this.bvhTexture.bvhTexture.getHeight(),
         ],
-        uSeed: [Math.random(), Math.random()],
+        uSeed: this.randomPos,
         uRandomMap: this.randomMap,
         uRandomMapSize: [
           this.randomMap!.getWidth(),
