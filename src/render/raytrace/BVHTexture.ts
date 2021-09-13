@@ -1,5 +1,6 @@
 import {BVHLeafNode, BVHNode} from '../../3d/BVH';
 import {Transform} from '../../3d/Transform';
+import {Entity} from '../../core/Entity';
 import {EntityStore} from '../../core/EntityStore';
 import {Geometry} from '../Geometry';
 import {GLTexture2D} from '../gl/GLTexture2D';
@@ -11,18 +12,39 @@ const BVH_SIZE = 2;
 const TLAS_SIZE = 10;
 const BLAS_SIZE = 8;
 
+export type BVHTextureChildSet = [Entity, number, Geometry, Float32Array];
+
+export interface BVHTextureChildInjectorResult {
+  texels: number;
+  getOffset(index: number, startOffset: number): number;
+  write(output: Float32Array, startOffset: number): void;
+}
+
+export interface BVHTextureChildInjector {
+  (children: BVHTextureChildSet[]): BVHTextureChildInjectorResult;
+}
+
+const DEFAULT_INJECTOR: BVHTextureChildInjector = (children) => ({
+  texels: 0,
+  getOffset: (index) => index,
+  write: () => {},
+});
+
 export class BVHTexture {
   entityStore: EntityStore;
   worldBVH: WorldBVH;
+  childInjector: BVHTextureChildInjector;
   bvhBuffer: Float32Array | null;
   bvhTexture: GLTexture2D;
 
   constructor(
     entityStore: EntityStore,
     worldBVH: WorldBVH,
+    injector: BVHTextureChildInjector = DEFAULT_INJECTOR,
   ) {
     this.entityStore = entityStore;
     this.worldBVH = worldBVH;
+    this.childInjector = injector;
     this.bvhBuffer = null;
     this.bvhTexture = new GLTexture2D({
       minFilter: 'nearest',
@@ -75,6 +97,8 @@ export class BVHTexture {
     const {worldBVH} = this;
     const rootBVH = worldBVH.bvh!;
     const children = worldBVH.children!;
+    // Retrieve child injector's result.
+    const childInjectorResult = this.childInjector(children);
     // Determine the set of geometries used in the world.
     const geometries: Geometry[] = [];
     const childrenGeomIds = children.map((child) => {
@@ -98,7 +122,8 @@ export class BVHTexture {
     const requiredTexels =
       bvhNodeCount * BVH_SIZE +
       tlasLeafCount * TLAS_SIZE +
-      blasLeafCount * BLAS_SIZE;
+      blasLeafCount * BLAS_SIZE +
+      childInjectorResult.texels;
 
     console.log('BVH nodes', bvhNodeCount);
     console.log('TLAS leaves', tlasLeafCount);
@@ -136,6 +161,10 @@ export class BVHTexture {
       blasLeafOffset += geomBVH.indices.length * BLAS_SIZE;
       return bvhStartOffset;
     });
+    const childInjectorOffset =
+      bvhNodeCount * BVH_SIZE +
+      tlasLeafCount * TLAS_SIZE +
+      blasLeafCount * BLAS_SIZE;
     // Fill in TLAS data. The original BVH structure only moves around indices
     // array to preserve 'ID's of the objects, however this is not necessary
     // since we're just recopying everything - we can just reshuffle the output
@@ -164,7 +193,8 @@ export class BVHTexture {
         output[addr + i] = rootBVH.bounds[index * 6 + i];
         output[addr + 4 + i] = rootBVH.bounds[index * 6 + 3 + i];
       }
-      output[addr + 3] = index;
+      output[addr + 3] =
+        childInjectorResult.getOffset(index, childInjectorOffset);
       // blasAddr
       output[addr + 7] = geomBVHOffsets[geomId];
       for (let i = 0; i < 16; i += 1) {
@@ -236,6 +266,8 @@ export class BVHTexture {
         blasLeafOffset += BLAS_SIZE;
       });
     });
+    // Write child injector result at the end of array
+    childInjectorResult.write(output, childInjectorOffset);
     // Everything is generated at this point. Now, upload the buffer to GPU.
     this.bvhBuffer = output;
     this.bvhTexture.setOptions({
