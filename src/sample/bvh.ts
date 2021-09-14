@@ -85,7 +85,7 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  const gltf = parseGLTF(require('./models/gitestlq.gltf'));
+  const gltf = parseGLTF(require('./models/livingroom.gltf'));
   store.createEntities(gltf.entities);
 
   /*

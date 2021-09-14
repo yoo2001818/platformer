@@ -45,6 +45,9 @@ export function inferBufferType(data: unknown): GLAttributeType {
   if (data instanceof Uint16Array) {
     return 'unsignedShort';
   }
+  if (data instanceof Uint32Array) {
+    return 'unsignedInt';
+  }
   // Assume float
   return 'float';
 }

@@ -5,7 +5,8 @@ export const INTERSECTION = /* glsl */`
     vec3 boxMin,
     vec3 boxMax,
     vec3 origin,
-    vec3 dir
+    vec3 dir,
+    out float nearDist
   ) {
     vec3 tbot = (boxMin - origin) / dir;
     vec3 ttop = (boxMax - origin) / dir;
@@ -195,6 +196,7 @@ export const INTERSECTION = /* glsl */`
     vec3 blasResultPos;
     vec3 blasResultBarycentric;
     float blasResultDist;
+    float tlasNearDist;
     bool hasIntersection = false;
     for (int i = 0; i < BVH_MAX_LOOP; ++i) {
       if (stackPos < 0) break;
@@ -210,25 +212,30 @@ export const INTERSECTION = /* glsl */`
           tlasOffset = 0;
           stackPos -= 1;
           isPopping = true;
-        } else if (intersectRayAABB(tlasLeaf.boxMin, tlasLeaf.boxMax, origin, dir)) {
-          hasChild = true;
-          blasOrigin = (tlasLeaf.invMatrix * vec4(origin, 1.0)).xyz;
-          blasDir = normalize((tlasLeaf.invMatrix * vec4(dir, 0.0)).xyz);
-          blasResultAddr = -1;
-          blasResultDist = BVH_MAX_DIST;
-          // Retrieve blas root node
-          vec4 blasMin =
-            bvhTexelFetch(tlasLeaf.blasAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
-          vec4 blasMax =
-            bvhTexelFetch(tlasLeaf.blasAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
-          #ifdef WEBGL2
-          stack[stackPos] = current;
-          #else
-          storeStackEntry(stack, stackPos, current);
-          #endif
-          current = ivec3(tlasLeaf.blasAddr, int(blasMin.w), int(blasMax.w));
-          stackDivider = stackPos;
-          stackPos += 1;
+        } else {
+          bool isIntersecting = intersectRayAABB(
+            tlasLeaf.boxMin, tlasLeaf.boxMax, origin, dir, tlasNearDist
+          );
+          if (isIntersecting && tlasNearDist < outResult.rayDist) {
+            hasChild = true;
+            blasOrigin = (tlasLeaf.invMatrix * vec4(origin, 1.0)).xyz;
+            blasDir = normalize((tlasLeaf.invMatrix * vec4(dir, 0.0)).xyz);
+            blasResultAddr = -1;
+            blasResultDist = BVH_MAX_DIST;
+            // Retrieve blas root node
+            vec4 blasMin =
+              bvhTexelFetch(tlasLeaf.blasAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
+            vec4 blasMax =
+              bvhTexelFetch(tlasLeaf.blasAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
+            #ifdef WEBGL2
+            stack[stackPos] = current;
+            #else
+            storeStackEntry(stack, stackPos, current);
+            #endif
+            current = ivec3(tlasLeaf.blasAddr, int(blasMin.w), int(blasMax.w));
+            stackDivider = stackPos;
+            stackPos += 1;
+          }
         }
       } else if (current.y < 0) {
         int childLength = current.z;
@@ -279,9 +286,9 @@ export const INTERSECTION = /* glsl */`
         vec4 rightMax =
           bvhTexelFetch(current.z + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
         bool leftIntersects =
-          intersectRayAABB(leftMin.xyz, leftMax.xyz, currOrigin, currDir);
+          intersectRayAABB(leftMin.xyz, leftMax.xyz, currOrigin, currDir, tlasNearDist);
         bool rightIntersects =
-          intersectRayAABB(rightMin.xyz, rightMax.xyz, currOrigin, currDir);
+          intersectRayAABB(rightMin.xyz, rightMax.xyz, currOrigin, currDir, tlasNearDist);
         if (leftIntersects && rightIntersects) {
           #ifdef WEBGL2
           stack[stackPos] = ivec3(current.y, int(leftMin.w), int(leftMax.w));

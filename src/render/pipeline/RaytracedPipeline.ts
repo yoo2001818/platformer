@@ -199,7 +199,7 @@ export class RaytracedPipeline implements Pipeline {
             BVHIntersectResult bvhResult;
             MaterialInfo mInfo;
             PointLight light;
-            light.position = vec3(2.4, 2.39, -1.3);
+            light.position = vec3(0.46, 2.12, 2.83);
             light.color = vec3(1.0);
             light.intensity = vec3(PI * 6.0, 0.0, 100.0);
 

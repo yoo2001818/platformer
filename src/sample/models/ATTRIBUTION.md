@@ -2,3 +2,4 @@
 - axe - https://www.3dmodelscc0.com/
 - cone - https://www.3dmodelscc0.com/
 - bunny - http://graphics.stanford.edu/data/3Dscanrep/
+- livingroom - Morgan McGuire, Computer Graphics Archive, July 2017 (https://casual-effects.com/data)
