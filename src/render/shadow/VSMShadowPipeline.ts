@@ -7,8 +7,8 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {quad} from '../../geom/quad';
 import {PipelineShadowShaderBlock} from '../pipeline/Pipeline';
 import {Renderer} from '../Renderer';
-import {ShadowMapHandle} from '../ShadowMapManager';
 import {BAKE_VSM} from '../shader/shadow';
+import {AtlasItem} from '../Atlas';
 
 import {ShadowPipeline} from './ShadowPipeline';
 
@@ -63,7 +63,7 @@ export class VSMShadowPipeline implements ShadowPipeline {
   tempFrame1: GLFrameBuffer;
   tempFrame2: GLFrameBuffer;
   tempFrame3: GLFrameBuffer;
-  currentHandle: ShadowMapHandle | null = null;
+  currentAtlas: AtlasItem | null = null;
   currentUniforms: {[key: string]: unknown;} = {};
 
   constructor(renderer: Renderer) {
@@ -71,6 +71,7 @@ export class VSMShadowPipeline implements ShadowPipeline {
     const {glRenderer} = renderer;
     const {capabilities} = glRenderer;
     const useFloat = false;
+    // TODO: Various resolutions
     this.tempDepth1 = new GLRenderBuffer({
       width: 512,
       height: 512,
@@ -158,8 +159,8 @@ export class VSMShadowPipeline implements ShadowPipeline {
     });
   }
 
-  begin(handle: ShadowMapHandle, uniforms: {[key: string]: unknown;}): void {
-    this.currentHandle = handle;
+  begin(atlas: AtlasItem, uniforms: {[key: string]: unknown;}): void {
+    this.currentAtlas = atlas;
     this.currentUniforms = uniforms;
     const {glRenderer} = this.renderer;
     const {gl} = glRenderer;
@@ -181,8 +182,8 @@ export class VSMShadowPipeline implements ShadowPipeline {
   }
 
   finalize(): void {
-    if (this.currentHandle == null) {
-      throw new Error('Current shadow handle is null');
+    if (this.currentAtlas == null) {
+      throw new Error('Current shadow atlas is null');
     }
     const {glRenderer, shadowMapManager} = this.renderer;
     const {gl, capabilities} = glRenderer;
@@ -209,8 +210,9 @@ export class VSMShadowPipeline implements ShadowPipeline {
       },
     });
     // tempTexture3 -> output (Y)
+    const atlas = this.currentAtlas;
     glRenderer.draw({
-      frameBuffer: shadowMapManager.frameBuffer,
+      frameBuffer: shadowMapManager.getFrameBuffer(),
       geometry: QUAD,
       shader: BLUR_SHADER,
       uniforms: {
@@ -222,9 +224,9 @@ export class VSMShadowPipeline implements ShadowPipeline {
         uDirection: [0, 1],
       },
       state: {
-        viewport: this.currentHandle.bounds,
+        viewport: [atlas.x, atlas.y, atlas.width, atlas.height],
       },
     });
-    this.currentHandle = null;
+    this.currentAtlas = null;
   }
 }

@@ -323,7 +323,7 @@ function main() {
       lastMoveVersion = transformComp.globalVersion;
       lastMoveFrame = 0;
     }
-    if (lastMoveFrame >= 0) {
+    if (lastMoveFrame >= 60) {
       renderer.setPipeline(rayPipeline);
     } else {
       renderer.setPipeline(rasterPipeline);

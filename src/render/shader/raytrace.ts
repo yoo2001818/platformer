@@ -328,3 +328,24 @@ export const INTERSECTION = /* glsl */`
     return hasIntersection;
   }
 `;
+
+export const MATERIAL_INJECTOR = /* glsl */`
+  void unpackMaterialInfoBVH(
+    inout MaterialInfo mOut,
+    vec3 position,
+    vec3 normal,
+    vec2 texCoord,
+    int matAddr,
+    sampler2D bvhMap,
+    vec2 bvhMapSize,
+    vec2 bvhMapSizeInv
+  ) {
+    vec4 texel0 = bvhTexelFetch(matAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
+    vec4 texel1 = bvhTexelFetch(matAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
+    mOut.position = position;
+    mOut.normal = normal;
+    mOut.albedo = texel1.rgb;
+    mOut.roughness = texel0.r;
+    mOut.metalic = texel0.g;
+  }
+`;

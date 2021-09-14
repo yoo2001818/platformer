@@ -9,13 +9,14 @@ import {GLShader} from '../gl/GLShader';
 import {GLTexture2D, GLTexture2DOptions} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
 import {BVHTexture} from '../raytrace/BVHTexture';
+import {MaterialInjector} from '../raytrace/MaterialInjector';
 import {Sobol} from '../raytrace/Sobol';
 import {WorldBVH} from '../raytrace/WorldBVH';
 import {Renderer} from '../Renderer';
 import {POINT_LIGHT} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
-import {INTERSECTION} from '../shader/raytrace';
+import {INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
 import {FILMIC} from '../shader/tonemap';
 import {ShadowPipeline} from '../shadow/ShadowPipeline';
 
@@ -28,6 +29,7 @@ export class RaytracedPipeline implements Pipeline {
   renderer: Renderer;
   worldBVH: WorldBVH;
   bvhTexture: BVHTexture;
+  materialInjector: MaterialInjector;
   rayBuffer: GLTexture2D | null = null;
   rayFrameBuffer: GLFrameBuffer | null = null;
   rayTilePos = 0;
@@ -44,8 +46,13 @@ export class RaytracedPipeline implements Pipeline {
   constructor(renderer: Renderer, worldBVH: WorldBVH) {
     this.renderer = renderer;
     this.worldBVH = worldBVH;
-    this.bvhTexture = new BVHTexture(worldBVH.entityStore, worldBVH);
-    this.sobol = new Sobol(4);
+    this.materialInjector = new MaterialInjector();
+    this.bvhTexture = new BVHTexture(
+      worldBVH.entityStore,
+      worldBVH,
+      this.materialInjector,
+    );
+    this.sobol = new Sobol(2);
   }
 
   dispose(): void {
@@ -99,6 +106,7 @@ export class RaytracedPipeline implements Pipeline {
           ${PBR}
           ${MATERIAL_INFO}
           ${POINT_LIGHT}
+          ${MATERIAL_INJECTOR}
 
           #define PI 3.141592
 
@@ -191,9 +199,9 @@ export class RaytracedPipeline implements Pipeline {
             BVHIntersectResult bvhResult;
             MaterialInfo mInfo;
             PointLight light;
-            light.position = vec3(0.0, 0.95, 0.0);
+            light.position = vec3(2.4, 2.39, -1.3);
             light.color = vec3(1.0);
-            light.intensity = vec3(PI * 4.0, 0.0, 100.0);
+            light.intensity = vec3(PI * 6.0, 0.0, 100.0);
 
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
@@ -218,21 +226,19 @@ export class RaytracedPipeline implements Pipeline {
               normal += blas.normal[2] * bvhResult.barycentric.z;
               normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
               if (dot(normal, dir) > 0.0) {
-                normal *= -1.0;
+                // normal *= -1.0;
               }
               vec3 color = vec3(1.0);
-              if (bvhResult.childId == 2.0) {
-                color = vec3(1.0, 0.0, 0.0);
-              } else if (bvhResult.childId == 1.0) {
-                color = vec3(0.0, 1.0, 0.0);
-              } else if (bvhResult.childId == 5.0) {
-                color = vec3(0.0, 0.0, 1.0);
-              }
-              mInfo.albedo = color;
-              mInfo.normal = normal;
-              mInfo.position = bvhResult.position;
-              mInfo.metalic = 0.0;
-              mInfo.roughness = 0.5;
+              unpackMaterialInfoBVH(
+                mInfo,
+                bvhResult.position,
+                normal,
+                vec2(0.0),
+                int(bvhResult.childId),
+                uBVHMap,
+                uBVHMapSize,
+                1.0 / uBVHMapSize
+              );
               vec3 prevOrigin = origin;
               origin = mInfo.position + mInfo.normal * 0.0001;
               // lighting 
@@ -263,7 +269,11 @@ export class RaytracedPipeline implements Pipeline {
 
               resultColor += lightingColor * attenuation * 0.5;
               // scattering
-              dir = normalize(mInfo.normal + sampleSphere());
+              if (mInfo.metalic > 0.5) {
+                dir = mInfo.normal;
+              } else {
+                dir = normalize(mInfo.normal + sampleSphere());
+              }
               attenuation *= mInfo.albedo * 0.5;
 
             }
@@ -423,6 +433,10 @@ export class RaytracedPipeline implements Pipeline {
       this.worldVersion = transformComp.globalVersion;
       this.rayTilePos = 0;
       this.sobol.reset();
+
+      const next = this.sobol.next();
+      this.randomPos[0] = next[0] * 255 / 256;
+      this.randomPos[1] = next[1] * 255 / 256;
     }
 
     const tw = this.tileWidth;

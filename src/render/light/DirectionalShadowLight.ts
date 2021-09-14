@@ -8,7 +8,7 @@ import {Renderer} from '../Renderer';
 import {DIRECTIONAL_LIGHT} from '../shader/light';
 import {VSM} from '../shader/shadow';
 import {VSMShadowPipeline} from '../shadow/VSMShadowPipeline';
-import {ShadowMapHandle} from '../ShadowMapManager';
+import {AtlasItem} from '../Atlas';
 
 import {Light, LightShaderBlock} from './Light';
 
@@ -23,7 +23,7 @@ export interface DirectionalShadowLightOptions {
 export class DirectionalShadowLight implements Light {
   type = 'directional';
   options: DirectionalShadowLightOptions;
-  atlases: ShadowMapHandle[] = [];
+  atlases: AtlasItem[] = [];
   viewProjections: mat4[];
   breakpoints: number[] = [];
 
@@ -107,13 +107,8 @@ export class DirectionalShadowLight implements Light {
         ],
       });
       for (let i = 0; i < NUM_CASCADES; i += 1) {
-        const bounds = light.atlases[i].bounds;
-        uvOutput.push([
-          bounds[0] / shadowMapManager.width,
-          bounds[1] / shadowMapManager.height,
-          bounds[2] / shadowMapManager.width,
-          bounds[3] / shadowMapManager.height,
-        ]);
+        const atlas = light.atlases[i];
+        uvOutput.push(shadowMapManager.getUV(atlas));
         matOutput.push(light.viewProjections[i]);
         breakpointOutput.push(light.breakpoints[i]);
       }
@@ -185,7 +180,7 @@ export class DirectionalShadowLight implements Light {
       vec3.add(worldMax, worldMax, [0.01, 0.01, 0.01]);
 
       for (let i = 0; i < NUM_CASCADES; i += 1) {
-        const atlas = shadowMapManager.get(light.atlases[i]);
+        const atlas = shadowMapManager.getAtlas(light.atlases[i], 256, 256);
         light.atlases[i] = atlas;
 
         const breakPrevRaw = CASCADE_BREAKPOINTS[i];

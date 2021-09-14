@@ -1,3 +1,5 @@
+import {createId} from '../utils/createId';
+
 import {GLRenderer} from './GLRenderer';
 import {ArrayBufferView} from './types';
 import {ATTRIBUTE_TYPE_MAP, TEXTURE_FORMAT_MAP, TEXTURE_PARAM_MAP, WEBGL1_ATTRIBUTE_TYPE_MAP, WEBGL2_TEXTURE_FORMAT_MAP} from './utils';
@@ -75,6 +77,7 @@ export const TEXTURE_2D = 0x0DE1;
 export const TEXTURE_CUBE_MAP = 0x8513;
 
 export class GLTexture {
+  id: number;
   type: number;
   renderer: GLRenderer | null = null;
   texture: WebGLTexture | null = null;
@@ -83,6 +86,7 @@ export class GLTexture {
   options: GLTextureOptions;
 
   constructor(type: number, options: GLTextureOptions) {
+    this.id = createId();
     this.type = type;
     this.options = options;
   }

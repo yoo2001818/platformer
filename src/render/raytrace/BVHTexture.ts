@@ -12,7 +12,7 @@ const BVH_SIZE = 2;
 const TLAS_SIZE = 10;
 const BLAS_SIZE = 8;
 
-export type BVHTextureChildSet = [Entity, number, Geometry, Float32Array];
+export type BVHTextureChildValue = [Entity, number, Geometry, Float32Array];
 
 export interface BVHTextureChildInjectorResult {
   texels: number;
@@ -21,14 +21,16 @@ export interface BVHTextureChildInjectorResult {
 }
 
 export interface BVHTextureChildInjector {
-  (children: BVHTextureChildSet[]): BVHTextureChildInjectorResult;
+  inject(children: BVHTextureChildValue[]): BVHTextureChildInjectorResult;
 }
 
-const DEFAULT_INJECTOR: BVHTextureChildInjector = (children) => ({
-  texels: 0,
-  getOffset: (index) => index,
-  write: () => {},
-});
+const DEFAULT_INJECTOR: BVHTextureChildInjector = {
+  inject: (children) => ({
+    texels: 0,
+    getOffset: (index) => index,
+    write: () => {},
+  }),
+};
 
 export class BVHTexture {
   entityStore: EntityStore;
@@ -98,7 +100,7 @@ export class BVHTexture {
     const rootBVH = worldBVH.bvh!;
     const children = worldBVH.children!;
     // Retrieve child injector's result.
-    const childInjectorResult = this.childInjector(children);
+    const childInjectorResult = this.childInjector.inject(children);
     // Determine the set of geometries used in the world.
     const geometries: Geometry[] = [];
     const childrenGeomIds = children.map((child) => {

@@ -1,19 +1,13 @@
 import {GLFrameBuffer} from './gl/GLFrameBuffer';
 import {GLTexture2D} from './gl/GLTexture2D';
 import {Renderer} from './Renderer';
-
-export interface ShadowMapHandle {
-  id: number;
-  bounds: [number, number, number, number];
-}
+import {Atlas, AtlasItem} from './Atlas';
 
 export class ShadowMapManager {
   texture: GLTexture2D;
   frameBuffer: GLFrameBuffer;
   renderer: Renderer;
-  width: number;
-  height: number;
-  id: number;
+  atlas: Atlas;
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
@@ -21,8 +15,8 @@ export class ShadowMapManager {
     this.texture = new GLTexture2D({
       format: 'rgba',
       type: useFloat ? 'float' : 'halfFloat',
-      width: 2048,
-      height: 2048,
+      width: 1,
+      height: 1,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -31,29 +25,69 @@ export class ShadowMapManager {
       anistropic: 1,
     });
     this.frameBuffer = new GLFrameBuffer({
-      width: 2048,
-      height: 2048,
+      width: 1,
+      height: 1,
       color: this.texture,
     });
-    this.width = 2048;
-    this.height = 2048;
-    this.id = 0;
+    this.atlas = new Atlas();
   }
 
-  get(handle?: ShadowMapHandle | null): ShadowMapHandle {
-    if (handle != null) {
-      return handle;
+  _updateTexture(): void {
+    if (this.atlas.isResized) {
+      const width = this.atlas.getWidth();
+      const height = this.atlas.getHeight();
+      this.texture.setOptions({
+        ...this.texture.options,
+        width,
+        height,
+      });
+      this.frameBuffer.options.width = width;
+      this.frameBuffer.options.height = height;
+      this.atlas.isResized = false;
     }
-    // TODO Actually implement logic
-    const result: ShadowMapHandle = {
-      id: this.id,
-      bounds: [this.id * 512, 0, 512, 512],
-    };
-    this.id += 1;
-    return result;
   }
 
-  release(handle: ShadowMapHandle): void {
-    // TODO Actually implement logic
+  getWidth(): number {
+    return this.atlas.getWidth();
+  }
+
+  getHeight(): number {
+    return this.atlas.getHeight();
+  }
+
+  getTexture(): GLTexture2D {
+    this._updateTexture();
+    return this.texture;
+  }
+
+  getFrameBuffer(): GLFrameBuffer {
+    this._updateTexture();
+    return this.frameBuffer;
+  }
+
+  getAtlas(
+    item: AtlasItem | null | undefined,
+    width: number,
+    height: number,
+  ): AtlasItem {
+    if (item != null) {
+      return item;
+    }
+    return this.atlas.allocate(width, height);
+  }
+
+  getUV(item: AtlasItem): number[] {
+    const width = this.getWidth();
+    const height = this.getHeight();
+    return [
+      item.x / width,
+      item.y / height,
+      item.width / width,
+      item.height / height,
+    ];
+  }
+
+  release(item: AtlasItem): void {
+    this.atlas.release(item);
   }
 }
