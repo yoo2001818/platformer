@@ -46,7 +46,7 @@ export class RaytracedPipeline implements Pipeline {
   constructor(renderer: Renderer, worldBVH: WorldBVH) {
     this.renderer = renderer;
     this.worldBVH = worldBVH;
-    this.materialInjector = new MaterialInjector();
+    this.materialInjector = new MaterialInjector(renderer);
     this.bvhTexture = new BVHTexture(
       worldBVH.entityStore,
       worldBVH,
@@ -116,6 +116,7 @@ export class RaytracedPipeline implements Pipeline {
           uniform mat4 uInverseProjection;
           uniform sampler2D uBVHMap;
           uniform vec2 uBVHMapSize;
+          uniform sampler2D uAtlasMap;
           uniform sampler2D uRandomMap;
           uniform vec2 uSeed;
           uniform vec2 uScreenSize;
@@ -199,14 +200,14 @@ export class RaytracedPipeline implements Pipeline {
             BVHIntersectResult bvhResult;
             MaterialInfo mInfo;
             PointLight light;
-            light.position = vec3(0.46, 2.12, 2.83);
+            light.position = vec3(0.42, 2.13, 3.03);
             light.color = vec3(1.0);
             light.intensity = vec3(PI * 6.0, 0.0, 100.0);
 
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
 
-            for (int i = 0; i < 4; i += 1) {
+            for (int i = 0; i < 3; i += 1) {
               bool isIntersecting = intersectBVH(
                 bvhResult,
                 uBVHMap,
@@ -228,12 +229,16 @@ export class RaytracedPipeline implements Pipeline {
               if (dot(normal, dir) > 0.0) {
                 // normal *= -1.0;
               }
-              vec3 color = vec3(1.0);
+              vec2 texCoord = vec2(0.0);
+              texCoord += blas.texCoord[0] * bvhResult.barycentric.x;
+              texCoord += blas.texCoord[1] * bvhResult.barycentric.y;
+              texCoord += blas.texCoord[2] * bvhResult.barycentric.z;
               unpackMaterialInfoBVH(
                 mInfo,
                 bvhResult.position,
                 normal,
-                vec2(0.0),
+                texCoord,
+                uAtlasMap,
                 int(bvhResult.childId),
                 uBVHMap,
                 uBVHMapSize,
@@ -487,6 +492,7 @@ export class RaytracedPipeline implements Pipeline {
           this.bvhTexture.bvhTexture.getWidth(),
           this.bvhTexture.bvhTexture.getHeight(),
         ],
+        uAtlasMap: this.materialInjector.texture,
         uSeed: this.randomPos,
         uRandomMap: this.randomMap,
         uRandomMapSize: [

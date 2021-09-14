@@ -342,6 +342,7 @@ export const MATERIAL_INJECTOR = /* glsl */`
     vec3 position,
     vec3 normal,
     vec2 texCoord,
+    sampler2D atlasMap,
     int matAddr,
     sampler2D bvhMap,
     vec2 bvhMapSize,
@@ -349,10 +350,15 @@ export const MATERIAL_INJECTOR = /* glsl */`
   ) {
     vec4 texel0 = bvhTexelFetch(matAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
     vec4 texel1 = bvhTexelFetch(matAddr + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
+    vec4 texel2 = bvhTexelFetch(matAddr + 2, bvhMap, bvhMapSize, bvhMapSizeInv);
     mOut.position = position;
     mOut.normal = normal;
     mOut.albedo = texel1.rgb;
     mOut.roughness = texel0.r;
     mOut.metalic = texel0.g;
+    if (texel0.b > 0.0) {
+      vec2 uv = fract(texCoord) * texel2.zw + texel2.xy;
+      mOut.albedo = pow(texture2D(atlasMap, uv).rgb, vec3(2.2));
+    }
   }
 `;

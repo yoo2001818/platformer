@@ -18,7 +18,7 @@ import {generatePBREnvMap} from '../render/map/generatePBREnvMap';
 import {getHDRType} from '../render/hdr/utils';
 import {SkyboxMaterial} from '../render/material/SkyboxMaterial';
 import {EnvironmentLight} from '../render/light/EnvironmentLight';
-import {DirectionalShadowLight} from '../render/light/DirectionalShadowLight';
+// import {DirectionalShadowLight} from '../render/light/DirectionalShadowLight';
 import {calcNormals} from '../geom/calcNormals';
 import {GLTextureImage} from '../render/gl/GLTextureImage';
 import {parseGLTF} from '../loader/gltf';
@@ -65,7 +65,8 @@ function main() {
 
   const cameraEntity = store.create({
     transform: new Transform()
-      .rotateY(Math.PI / 2)
+      .rotateY(Math.PI / 4)
+      .rotateX(-Math.PI / 4)
       .translate([0, 0, 40]),
     camera: new Camera({
       type: 'perspective',
@@ -184,6 +185,7 @@ function main() {
     light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
 
+  /*
   store.create({
     name: 'directionalLight',
     transform: new Transform()
@@ -194,13 +196,15 @@ function main() {
       power: 10,
     }),
   });
+  */
 
   const orbitController = new OrbitCameraController(
     canvas,
     document.body,
     cameraEntity,
-    3,
+    2.6,
   );
+  vec3.copy(orbitController.center, [0.55, 0.46, 2.95]);
 
   renderer.setCamera(cameraEntity);
 

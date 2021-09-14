@@ -1,9 +1,15 @@
+import {quad} from '../../geom/quad';
 import {Atlas, AtlasItem} from '../Atlas';
+import {GLFrameBuffer} from '../gl/GLFrameBuffer';
+import {GLGeometry} from '../gl/GLGeometry';
+import {GLShader} from '../gl/GLShader';
 import {GLTexture} from '../gl/GLTexture';
+import {GLTexture2D} from '../gl/GLTexture2D';
 import {convertFloatArray} from '../gl/uniform/utils';
 import {Material} from '../Material';
 import {StandardMaterial} from '../material/StandardMaterial';
 import {Mesh} from '../Mesh';
+import {Renderer} from '../Renderer';
 
 import {
   BVHTextureChildInjector,
@@ -11,20 +17,103 @@ import {
   BVHTextureChildValue,
 } from './BVHTexture';
 
+const TEX_MAPPER_QUAD = new GLGeometry(quad());
+const TEX_MAPPER_SHADER = new GLShader(
+  /* glsl */`
+    #version 100
+    precision highp float;
+
+    attribute vec3 aPosition;
+
+    varying vec2 vPosition;
+
+    uniform vec4 uBounds;
+
+    void main() {
+      vPosition = aPosition.xy * 0.5 + 0.5;
+      gl_Position = vec4(
+        (vPosition * uBounds.zw + uBounds.xy) * 2.0 - 1.0,
+        1.0,
+        1.0
+      );
+    }
+  `,
+  /* glsl */`
+    precision highp float;
+
+    varying vec2 vPosition;
+
+    uniform sampler2D uTexture;
+
+    void main() {
+      gl_FragColor = texture2D(uTexture, vPosition);
+    }
+  `,
+);
+
 export class MaterialInjector implements BVHTextureChildInjector {
+  renderer: Renderer;
   atlas: Atlas;
   textureAtlasMap: Map<number, AtlasItem>;
+  texture: GLTexture2D;
+  frameBuffer: GLFrameBuffer;
 
-  constructor() {
+  constructor(renderer: Renderer) {
+    this.renderer = renderer;
     this.atlas = new Atlas();
     this.textureAtlasMap = new Map();
+    this.texture = new GLTexture2D({
+      format: 'rgba',
+      type: 'unsignedByte',
+      width: 2,
+      height: 2,
+      magFilter: 'linear',
+      minFilter: 'linear',
+      mipmap: false,
+      source: null,
+    });
+    this.frameBuffer = new GLFrameBuffer({
+      color: this.texture,
+      width: 2,
+      height: 2,
+    });
   }
 
   updateTexture(entries: [GLTexture, AtlasItem][]): void {
+    const {glRenderer} = this.renderer;
+    const width = this.atlas.getWidth();
+    const height = this.atlas.getHeight();
+    if (this.atlas.isResized) {
+      // Reset the texture...
+      this.texture.setOptions({
+        ...this.texture.options,
+        width,
+        height,
+      });
+      this.frameBuffer.options.width = width;
+      this.frameBuffer.options.height = height;
+    }
     entries.forEach((entry) => {
       const [texture, atlasItem] = entry;
       if (this.atlas.isResized || atlasItem.isUpdated) {
         // Reupload the texture
+        glRenderer.draw({
+          frameBuffer: this.frameBuffer,
+          shader: TEX_MAPPER_SHADER,
+          geometry: TEX_MAPPER_QUAD,
+          uniforms: {
+            uTexture: texture,
+            uBounds: [
+              atlasItem.x / width,
+              atlasItem.y / height,
+              atlasItem.width / width,
+              atlasItem.height / height,
+            ],
+          },
+          state: {
+            depth: false,
+          },
+        });
       }
       atlasItem.isUpdated = false;
     });
@@ -34,8 +123,11 @@ export class MaterialInjector implements BVHTextureChildInjector {
   _getTextureAtlas(texture: GLTexture): AtlasItem {
     const entry = this.textureAtlasMap.get(texture.id);
     if (entry == null) {
-      const newEntry =
-        this.atlas.allocate(texture.getWidth(), texture.getHeight());
+      // FIXME: Texture is asynchronously loaded; therefore it may not exist
+      // when this is being called. For the time being, let's just use 512
+      const width = texture.getWidth() ?? 512;
+      const height = texture.getHeight() ?? 512;
+      const newEntry = this.atlas.allocate(width, height);
       this.textureAtlasMap.set(texture.id, newEntry);
       return newEntry;
     }
@@ -102,14 +194,16 @@ export class MaterialInjector implements BVHTextureChildInjector {
             }
             if (options.albedo instanceof GLTexture) {
               const atlasItem = this._getTextureAtlas(options.albedo);
+              output[addr + 2] = 1;
               for (let i = 0; i < 3; i += 1) {
                 output[addr + 4 + i] = 1;
               }
-              output[8] = atlasItem.x / this.atlas.getWidth();
-              output[9] = atlasItem.y / this.atlas.getHeight();
-              output[10] = atlasItem.width / this.atlas.getWidth();
-              output[11] = atlasItem.height / this.atlas.getHeight();
+              output[addr + 8] = atlasItem.x / this.atlas.getWidth();
+              output[addr + 9] = atlasItem.y / this.atlas.getHeight();
+              output[addr + 10] = atlasItem.width / this.atlas.getWidth();
+              output[addr + 11] = atlasItem.height / this.atlas.getHeight();
             } else {
+              output[addr + 2] = 0;
               const albedo = convertFloatArray(options.albedo, 3);
               for (let i = 0; i < 3; i += 1) {
                 output[addr + 4 + i] = albedo[i];
