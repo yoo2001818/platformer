@@ -18,6 +18,7 @@ import {POINT_LIGHT} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
+import { SAMPLE } from '../shader/sample';
 import {FILMIC} from '../shader/tonemap';
 import {ShadowPipeline} from '../shadow/ShadowPipeline';
 
@@ -108,6 +109,7 @@ export class RaytracedPipeline implements Pipeline {
           ${MATERIAL_INFO}
           ${POINT_LIGHT}
           ${MATERIAL_INJECTOR}
+          ${SAMPLE}
 
           #define PI 3.141592
 
@@ -123,95 +125,9 @@ export class RaytracedPipeline implements Pipeline {
           uniform vec2 uScreenSize;
           uniform vec2 uRandomMapSize;
 
-          vec4 randTexel;
-          int randPtr = 0;
-          vec2 tilePosition;
-          float rand() {
-            if (randPtr == 0) {
-              randTexel = texture2D(uRandomMap, tilePosition);
-            }
-            float result;
-            if (randPtr == 0) {
-              result = randTexel.r;
-            } else if (randPtr == 1) {
-              result = randTexel.g;
-            } else if (randPtr == 2) {
-              result = randTexel.b;
-            } else if (randPtr == 3) {
-              result = randTexel.w;
-            }
-            randPtr += 1;
-            if (randPtr == 4) {
-              randPtr = 0;
-              tilePosition += uSeed;
-            }
-            return result;
-          }
-
-          // https://graphics.pixar.com/library/OrthonormalB/paper.pdf
-          mat3 orthonormalBasis(vec3 n) {
-            float zsign = n.z >= 0.0 ? 1.0 : -1.0;
-            float a = -1.0 / (zsign + n.z);
-            float b = n.x * n.y * a;
-            vec3 s = vec3(1.0 + zsign * n.x * n.x * a, zsign * b, -zsign * n.x);
-            vec3 t = vec3(b, zsign + n.y * n.y * a, -n.y);
-            return mat3(s, t, n);
-          }
-
-          // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#SamplingaUnitDisk
-          vec2 sampleCircle(vec2 p) {
-            p = 2.0 * p - 1.0;
-
-            bool greater = abs(p.x) > abs(p.y);
-
-            float r = greater ? p.x : p.y;
-            float theta = greater ? 0.25 * PI * p.y / p.x : PI * (0.5 - 0.25 * p.x / p.y);
-
-            return r * vec2(cos(theta), sin(theta));
-          }
-
-          // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#Cosine-WeightedHemisphereSampling
-          vec3 cosineSampleHemisphere(vec2 p) {
-            vec2 h = sampleCircle(p);
-            float z = sqrt(max(0.0, 1.0 - h.x * h.x - h.y * h.y));
-            return vec3(h, z);
-          }
-
-          vec3 sampleSphere() {
-            return normalize(vec3(
-              rand(),
-              rand(),
-              rand()
-            ) * 2.0 - 1.0);
-          }
-
-          float fade(float low, float high, float value){
-              float mid = (low+high)*0.5;
-              float range = (high-low)*0.5;
-              float x = 1.0 - clamp(abs(mid-value)/range, 0.0, 1.0);
-              return smoothstep(0.0, 1.0, x);
-          }
-
-          vec3 getColor(float intensity){
-              vec3 blue = vec3(0.0, 0.0, 1.0);
-              vec3 cyan = vec3(0.0, 1.0, 1.0);
-              vec3 green = vec3(0.0, 1.0, 0.0);
-              vec3 yellow = vec3(1.0, 1.0, 0.0);
-              vec3 red = vec3(1.0, 0.0, 0.0);
-
-              vec3 color = (
-                  fade(-0.25, 0.25, intensity)*blue +
-                  fade(0.0, 0.5, intensity)*cyan +
-                  fade(0.25, 0.75, intensity)*green +
-                  fade(0.5, 1.0, intensity)*yellow +
-                  smoothstep(0.75, 1.0, intensity)*red
-              );
-              return color;
-          }
-
           void main() {
-            tilePosition = uSeed + fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize);
-            vec2 ndcPos = vPosition.xy + (1.0 / uScreenSize) * (vec2(rand(), rand()) * 2.0 - 1.0);
+            randInit(uSeed + fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize), uSeed);
+            vec2 ndcPos = vPosition.xy + (1.0 / uScreenSize) * (randVec2(uRandomMap) * 2.0 - 1.0);
             vec4 viewFarPos = uInverseProjection * vec4(ndcPos, 1.0, 1.0);
             viewFarPos /= viewFarPos.w;
             vec4 viewNearPos = uInverseProjection * vec4(ndcPos, -1.0, 1.0);
@@ -302,7 +218,7 @@ export class RaytracedPipeline implements Pipeline {
               if (mInfo.metalic > 0.5) {
                 dir = mInfo.normal;
               } else {
-                dir = normalize(mInfo.normal + sampleSphere());
+                dir = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
               }
               attenuation *= mInfo.albedo * 0.5;
 
