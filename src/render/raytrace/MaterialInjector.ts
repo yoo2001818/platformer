@@ -57,6 +57,7 @@ export class MaterialInjector implements BVHTextureChildInjector {
   textureAtlasMap: Map<number, AtlasItem>;
   texture: GLTexture2D;
   frameBuffer: GLFrameBuffer;
+  entries: [GLTexture, AtlasItem][];
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
@@ -77,9 +78,14 @@ export class MaterialInjector implements BVHTextureChildInjector {
       width: 2,
       height: 2,
     });
+    this.entries = [];
   }
 
-  updateTexture(entries: [GLTexture, AtlasItem][]): void {
+  isReady(): boolean {
+    return this.entries.every((v) => v[0].isReady());
+  }
+
+  updateTexture(): void {
     const {glRenderer} = this.renderer;
     const width = this.atlas.getWidth();
     const height = this.atlas.getHeight();
@@ -93,29 +99,33 @@ export class MaterialInjector implements BVHTextureChildInjector {
       this.frameBuffer.options.width = width;
       this.frameBuffer.options.height = height;
     }
-    entries.forEach((entry) => {
+    this.entries.forEach((entry) => {
       const [texture, atlasItem] = entry;
       if (this.atlas.isResized || atlasItem.isUpdated) {
         // Reupload the texture
-        glRenderer.draw({
-          frameBuffer: this.frameBuffer,
-          shader: TEX_MAPPER_SHADER,
-          geometry: TEX_MAPPER_QUAD,
-          uniforms: {
-            uTexture: texture,
-            uBounds: [
-              atlasItem.x / width,
-              atlasItem.y / height,
-              atlasItem.width / width,
-              atlasItem.height / height,
-            ],
-          },
-          state: {
-            depth: false,
-          },
-        });
+        if (texture.isReady()) {
+          glRenderer.draw({
+            frameBuffer: this.frameBuffer,
+            shader: TEX_MAPPER_SHADER,
+            geometry: TEX_MAPPER_QUAD,
+            uniforms: {
+              uTexture: texture,
+              uBounds: [
+                atlasItem.x / width,
+                atlasItem.y / height,
+                atlasItem.width / width,
+                atlasItem.height / height,
+              ],
+            },
+            state: {
+              depth: false,
+            },
+          });
+          atlasItem.isUpdated = false;
+        } else {
+          atlasItem.isUpdated = true;
+        }
       }
-      atlasItem.isUpdated = false;
     });
     this.atlas.isResized = false;
   }
@@ -171,7 +181,7 @@ export class MaterialInjector implements BVHTextureChildInjector {
       }
     });
     const count = materials.length * 4;
-    this.updateTexture(atlasEntries);
+    this.entries = atlasEntries;
 
     return {
       texels: count,

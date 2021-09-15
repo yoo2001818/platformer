@@ -7,8 +7,7 @@ import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
-
-import {DeferredPipeline} from './DeferredPipeline';
+import {DeferredPipeline} from '../pipeline/DeferredPipeline';
 
 function createHemisphere(samples: number): GLTexture2D {
   const data = new Float32Array(samples * 3);

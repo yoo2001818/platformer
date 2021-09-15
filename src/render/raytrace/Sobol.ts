@@ -66,7 +66,6 @@ export class Sobol {
         }
       }
     }
-    console.log(this.direction);
   }
 
   next(): number[] {

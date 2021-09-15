@@ -15,9 +15,10 @@ import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
 import {FXAA} from '../shader/fxaa';
 import {ShadowPipeline} from '../shadow/ShadowPipeline';
+import {SSAO} from '../deferredEffect/SSAO';
+import {DeferredEffect} from '../deferredEffect/DeferredEffect';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
-import {SSAO} from './ssao';
 
 interface FallbackLightConfig {
   type: string;
@@ -47,6 +48,7 @@ export class DeferredPipeline implements Pipeline {
   lights: LightGroup[] = [];
   cameraUniforms: {[key: string]: unknown;} = {};
   ssao: SSAO;
+  effects: DeferredEffect[] = [];
   fallbackLightId = '';
 
   constructor(renderer: Renderer) {
@@ -345,6 +347,10 @@ export class DeferredPipeline implements Pipeline {
     });
   }
 
+  addEffect(effect: DeferredEffect): void {
+    this.effects.push(effect);
+  }
+
   prepare(): void {
     const {glRenderer} = this.renderer;
     const {capabilities} = glRenderer;
@@ -432,7 +438,7 @@ export class DeferredPipeline implements Pipeline {
     });
   }
 
-  render(): void {
+  render(deltaTime?: number): void {
     const {entityStore, camera, glRenderer} = this.renderer;
     const {gl} = glRenderer;
 
@@ -503,6 +509,11 @@ export class DeferredPipeline implements Pipeline {
       const {light, entities} = group;
       light.renderDeferred?.(entities, this.renderer, this);
     });
+
+    // Render deferred effect
+    for (const effect of this.effects) {
+      effect.render(deltaTime);
+    }
 
     // Render forward
     entityStore.forEachChunkWith([meshComp], (chunk) => {

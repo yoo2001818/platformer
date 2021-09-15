@@ -1,5 +1,3 @@
-import {Camera} from '../../3d/Camera';
-import {Transform} from '../../3d/Transform';
 import {TransformComponent} from '../../3d/TransformComponent';
 import {quad} from '../../geom/quad';
 import {GLArrayBuffer} from '../gl/GLArrayBuffer';
@@ -7,28 +5,25 @@ import {GLFrameBuffer} from '../gl/GLFrameBuffer';
 import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D, GLTexture2DOptions} from '../gl/GLTexture2D';
-import {DrawOptions} from '../gl/types';
 import {generateBlueNoiseMap} from '../map/generateBlueNoiseMap';
+import {DeferredPipeline} from '../pipeline/DeferredPipeline';
 import {BVHTexture} from '../raytrace/BVHTexture';
 import {MaterialInjector} from '../raytrace/MaterialInjector';
 import {Sobol} from '../raytrace/Sobol';
 import {WorldBVH} from '../raytrace/WorldBVH';
-import {Renderer} from '../Renderer';
 import {POINT_LIGHT} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
 import {SAMPLE} from '../shader/sample';
-import {FILMIC} from '../shader/tonemap';
-import {ShadowPipeline} from '../shadow/ShadowPipeline';
 
-import {Pipeline, PipelineShaderBlock} from './Pipeline';
+import {DeferredEffect} from './DeferredEffect';
 
 const LIGHT_QUAD = new GLGeometry(quad());
 const TARGET_DELTA_TIME = 1 / 60;
 
-export class RaytracedPipeline implements Pipeline {
-  renderer: Renderer;
+export class RaytraceEffect implements DeferredEffect {
+  pipeline: DeferredPipeline;
   worldBVH: WorldBVH;
   bvhTexture: BVHTexture;
   materialInjector: MaterialInjector;
@@ -41,14 +36,13 @@ export class RaytracedPipeline implements Pipeline {
   tileHeight = 1;
   randomPos: Float32Array = new Float32Array(2);
   randomMap: GLTexture2D | null = null;
-  cameraUniforms: {[key: string]: unknown;} = {};
   worldVersion = -1;
   sobol: Sobol;
 
-  constructor(renderer: Renderer, worldBVH: WorldBVH) {
-    this.renderer = renderer;
+  constructor(pipeline: DeferredPipeline, worldBVH: WorldBVH) {
+    this.pipeline = pipeline;
     this.worldBVH = worldBVH;
-    this.materialInjector = new MaterialInjector(renderer);
+    this.materialInjector = new MaterialInjector(pipeline.renderer);
     this.bvhTexture = new BVHTexture(
       worldBVH.entityStore,
       worldBVH,
@@ -57,31 +51,8 @@ export class RaytracedPipeline implements Pipeline {
     this.sobol = new Sobol(2);
   }
 
-  dispose(): void {
-  }
-
-  getDeferredShader(id: string, onCreate: () => PipelineShaderBlock): GLShader {
-    throw new Error('Raytraced pipeline cannot work on shaders');
-  }
-
-  getForwardShader(id: string, onCreate: () => PipelineShaderBlock): GLShader {
-    throw new Error('Raytraced pipeline cannot work on shaders');
-  }
-
-  drawDeferred(options: DrawOptions): void {
-    throw new Error('Raytraced pipeline cannot work on draw call');
-  }
-
-  drawForward(options: DrawOptions): void {
-    throw new Error('Raytraced pipeline cannot work on draw call');
-  }
-
-  renderShadow(shadowPipeline: ShadowPipeline): void {
-    throw new Error('Raytraced pipeline cannot work on shadows');
-  }
-
   getRaytraceShader(): GLShader {
-    const {renderer} = this;
+    const {renderer} = this.pipeline;
     // TODO: Clean this up
     return renderer.getResource(`raytrace~raytraced`, () => {
       return new GLShader(
@@ -204,9 +175,7 @@ export class RaytracedPipeline implements Pipeline {
                   L
                 );
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
-                  if (i == 0) {
-                    lightingColor += calcPoint(prevOrigin, mInfo, light);
-                  } else {
+                  if (i > 0) {
                     lightingColor += max(dot(mInfo.normal, L), 0.0) *
                       light.color * mInfo.albedo * light.intensity.x / PI;
                   }
@@ -231,7 +200,7 @@ export class RaytracedPipeline implements Pipeline {
   }
 
   getDisplayShader(): GLShader {
-    const {renderer} = this;
+    const {renderer} = this.pipeline;
     return renderer.getResource(`display~raytraced`, () => {
       return new GLShader(
         /* glsl */`
@@ -251,8 +220,6 @@ export class RaytracedPipeline implements Pipeline {
           #version 100
           precision highp float;
 
-          ${FILMIC}
-
           varying vec2 vPosition;
 
           uniform sampler2D uBuffer;
@@ -260,45 +227,15 @@ export class RaytracedPipeline implements Pipeline {
           void main() {
             vec2 uv = vPosition * 0.5 + 0.5;
             vec4 color = texture2D(uBuffer, uv);
-            gl_FragColor = vec4(tonemap(color.xyz / color.w), 1.0);
+            gl_FragColor = vec4(color.xyz / max(color.w, 1.0), 1.0);
           }
         `,
       );
     });
   }
 
-  refreshRandomMap(): void {
-    const tileWidth = 256;
-    const tileHeight = 256;
-    const opts: GLTexture2DOptions = {
-      magFilter: 'nearest',
-      minFilter: 'nearest',
-      wrapS: 'repeat',
-      wrapT: 'repeat',
-      format: 'rgba',
-      type: 'float',
-      width: tileWidth,
-      height: tileHeight,
-      mipmap: false,
-    };
-    if (this.randomMap == null) {
-      this.randomMap = new GLTexture2D({
-        ...opts,
-        source: null,
-      });
-    }
-    const buffer = new Float32Array(tileWidth * tileHeight * 4);
-    for (let i = 0; i < tileWidth * tileHeight * 4; i += 1) {
-      buffer[i] = Math.random();
-    }
-    this.randomMap.setOptions({
-      ...opts,
-      source: buffer,
-    });
-  }
-
   prepare(): void {
-    const {glRenderer} = this.renderer;
+    const {glRenderer} = this.pipeline.renderer;
     const {capabilities} = glRenderer;
     const useFloat = capabilities.hasFloatBlend() &&
       capabilities.hasFloatBuffer() &&
@@ -345,25 +282,11 @@ export class RaytracedPipeline implements Pipeline {
   }
 
   render(deltaTime?: number): void {
-    const {entityStore, glRenderer, camera} = this.renderer;
-
-    if (camera == null) {
-      throw new Error('Camera is not specified');
-    }
+    const {cameraUniforms, depthBuffer, gBuffers} = this.pipeline;
+    const {entityStore, glRenderer} = this.pipeline.renderer;
 
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
-    const cameraData = camera!.get<Camera>('camera')!;
-    const cameraTransform = camera!.get<Transform>('transform')!;
-
-    const aspect = this.renderer.getAspectRatio();
-    this.cameraUniforms = {
-      uInverseView: cameraData.getInverseView(camera!),
-      uInverseProjection: cameraData.getInverseProjection(aspect),
-      uView: cameraData.getView(camera!),
-      uProjection: cameraData.getProjection(aspect),
-      uViewPos: cameraTransform.getPosition(),
-    };
 
     this.prepare();
 
@@ -392,9 +315,6 @@ export class RaytracedPipeline implements Pipeline {
       this.randomPos[1] = next[1] * (randomMapHeight - 1) / randomMapHeight;
     }
     this.materialInjector.updateTexture();
-    if (!this.materialInjector.isReady()) {
-      return;
-    }
 
     const tw = this.tileWidth;
     const th = this.tileHeight;
@@ -438,7 +358,10 @@ export class RaytracedPipeline implements Pipeline {
       },
       shader: this.getRaytraceShader(),
       uniforms: {
-        ...this.cameraUniforms,
+        ...cameraUniforms,
+        uDepthBuffer: depthBuffer,
+        uGBuffer0: gBuffers![0],
+        uGBuffer1: gBuffers![1],
         uBVHMap: this.bvhTexture.bvhTexture,
         uBVHMapSize: [
           this.bvhTexture.bvhTexture.getWidth(),
@@ -465,15 +388,21 @@ export class RaytracedPipeline implements Pipeline {
 
     // Output to screen
     glRenderer.draw({
+      frameBuffer: this.pipeline.outFrameBuffer!,
       geometry: LIGHT_QUAD,
       shader: this.getDisplayShader(),
       uniforms: {
         uBuffer: this.rayBuffer,
       },
       state: {
+        depthMask: false,
         depth: false,
+        cull: false,
+        blend: {
+          equation: 'add',
+          func: ['one', 'one'],
+        },
       },
     });
   }
-
 }
