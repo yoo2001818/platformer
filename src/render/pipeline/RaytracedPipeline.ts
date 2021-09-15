@@ -8,6 +8,7 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D, GLTexture2DOptions} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
+import {generateBlueNoiseMap} from '../map/generateBlueNoiseMap';
 import {BVHTexture} from '../raytrace/BVHTexture';
 import {MaterialInjector} from '../raytrace/MaterialInjector';
 import {Sobol} from '../raytrace/Sobol';
@@ -422,7 +423,8 @@ export class RaytracedPipeline implements Pipeline {
       });
     }
     if (this.randomMap == null) {
-      this.refreshRandomMap();
+      this.randomMap = generateBlueNoiseMap();
+      // this.refreshRandomMap();
     }
   }
 
@@ -450,6 +452,12 @@ export class RaytracedPipeline implements Pipeline {
     this.prepare();
 
     const shouldRefresh = this.worldVersion !== transformComp.globalVersion;
+    const randomMapWidth = this.randomMap!.getWidth();
+    const randomMapHeight = this.randomMap!.getHeight();
+
+    if (!this.randomMap!.isReady()) {
+      return;
+    }
 
     if (shouldRefresh) {
       // TODO: Don't update it unless any mesh has moved
@@ -464,8 +472,8 @@ export class RaytracedPipeline implements Pipeline {
       this.sobol.reset();
 
       const next = this.sobol.next();
-      this.randomPos[0] = next[0] * 255 / 256;
-      this.randomPos[1] = next[1] * 255 / 256;
+      this.randomPos[0] = next[0] * (randomMapWidth - 1) / randomMapWidth;
+      this.randomPos[1] = next[1] * (randomMapHeight - 1) / randomMapHeight;
     }
 
     const tw = this.tileWidth;
@@ -492,8 +500,8 @@ export class RaytracedPipeline implements Pipeline {
     const nextScanId = Math.floor((this.rayTilePos + tilePerFrame) / (tw * th));
     if (prevScanId !== nextScanId) {
       const next = this.sobol.next();
-      this.randomPos[0] = next[0] * 255 / 256;
-      this.randomPos[1] = next[1] * 255 / 256;
+      this.randomPos[0] = next[0] * (randomMapWidth - 1) / randomMapWidth;
+      this.randomPos[1] = next[1] * (randomMapHeight - 1) / randomMapHeight;
     }
     this.rayTileBuffer.set(tileData);
     this.rayTilePos += tilePerFrame;
@@ -519,10 +527,7 @@ export class RaytracedPipeline implements Pipeline {
         uAtlasMap: this.materialInjector.texture,
         uSeed: this.randomPos,
         uRandomMap: this.randomMap,
-        uRandomMapSize: [
-          this.randomMap!.getWidth(),
-          this.randomMap!.getHeight(),
-        ],
+        uRandomMapSize: [randomMapWidth, randomMapHeight],
         uScreenSize: [
           this.rayBuffer!.getWidth(),
           this.rayBuffer!.getHeight(),

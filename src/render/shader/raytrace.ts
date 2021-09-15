@@ -82,8 +82,8 @@ export const INTERSECTION = /* glsl */`
   };
 
   struct BVHBLASLeaf {
-    float id[3];
-    vec3 position[3];
+    // float id[3];
+    // vec3 position[3];
     vec3 normal[3];
     vec2 texCoord[3];
     vec4 tangent;
@@ -118,11 +118,13 @@ export const INTERSECTION = /* glsl */`
     vec2 bvhMapSize,
     vec2 bvhMapSizeInv
   ) {
+    /*
     for (int i = 0; i < 3; ++i) {
       vec4 texel = bvhTexelFetch(addr + i, bvhMap, bvhMapSize, bvhMapSizeInv);
       outResult.position[i] = texel.xyz;
       outResult.id[i] = texel.w;
     }
+    */
     vec4 texel3 = bvhTexelFetch(addr + 3, bvhMap, bvhMapSize, bvhMapSizeInv);
     vec4 texel4 = bvhTexelFetch(addr + 4, bvhMap, bvhMapSize, bvhMapSizeInv);
     vec4 texel5 = bvhTexelFetch(addr + 5, bvhMap, bvhMapSize, bvhMapSizeInv);
