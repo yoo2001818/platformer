@@ -20,7 +20,7 @@ import {SAMPLE} from '../shader/sample';
 import {DeferredEffect} from './DeferredEffect';
 
 const LIGHT_QUAD = new GLGeometry(quad());
-const TARGET_DELTA_TIME = 1 / 60;
+const TARGET_DELTA_TIME = 1 / 30;
 
 export class RaytraceEffect implements DeferredEffect {
   pipeline: DeferredPipeline;
@@ -88,6 +88,7 @@ export class RaytraceEffect implements DeferredEffect {
 
           uniform mat4 uInverseView;
           uniform mat4 uInverseProjection;
+          uniform vec3 uViewPos;
           uniform sampler2D uBVHMap;
           uniform vec2 uBVHMapSize;
           uniform sampler2D uAtlasMap;
@@ -95,76 +96,52 @@ export class RaytraceEffect implements DeferredEffect {
           uniform vec2 uSeed;
           uniform vec2 uScreenSize;
           uniform vec2 uRandomMapSize;
+          uniform highp sampler2D uDepthBuffer;
+          uniform sampler2D uGBuffer0;
+          uniform sampler2D uGBuffer1;
 
           void main() {
             randInit(uSeed + fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize), uSeed);
-            vec2 ndcPos = vPosition.xy + (1.0 / uScreenSize) * (randVec2(uRandomMap) * 2.0 - 1.0);
-            vec4 viewFarPos = uInverseProjection * vec4(ndcPos, 1.0, 1.0);
-            viewFarPos /= viewFarPos.w;
-            vec4 viewNearPos = uInverseProjection * vec4(ndcPos, -1.0, 1.0);
-            viewNearPos /= viewNearPos.w;
+            vec2 uv = vPosition.xy * 0.5 + 0.5;
 
-            viewFarPos = uInverseView * viewFarPos;
-            viewNearPos = uInverseView * viewNearPos;
+            float depth = texture2D(uDepthBuffer, uv).x;
+            vec4 values[GBUFFER_SIZE];
+            values[0] = texture2D(uGBuffer0, uv);
+            values[1] = texture2D(uGBuffer1, uv);
 
-            vec3 dir = normalize((viewFarPos - viewNearPos).xyz);
-            vec3 origin = viewNearPos.xyz;
-            BVHIntersectResult bvhResult;
             MaterialInfo mInfo;
+            unpackMaterialInfo(
+              depth, values, vPosition.xy,
+              uInverseProjection, uInverseView,
+              mInfo
+            );
+
             PointLight light;
             light.position = vec3(1.78, 2.399, -1.78);
             light.color = vec3(1.0);
             light.intensity = vec3(PI * 6.0, 0.0, 100.0);
 
+            vec3 dir;
+            vec3 origin;
+            vec3 prevOrigin;
+            BVHIntersectResult bvhResult;
+
+            dir = mInfo.normal;
+            origin = mInfo.position + dir * 0.0001;
+            prevOrigin = uViewPos;
+
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
 
             for (int i = 0; i < 3; i += 1) {
-              bool isIntersecting = intersectBVH(
-                bvhResult,
-                uBVHMap,
-                uBVHMapSize, 1.0 / uBVHMapSize,
-                0,
-                origin,
-                dir
-              );
-              if (!isIntersecting) {
-                break;
-              }
-              BVHBLASLeaf blas;
-              bvhBLASFetch(blas, bvhResult.faceAddr, uBVHMap, uBVHMapSize, 1.0 / uBVHMapSize);
-              vec3 normal = vec3(0.0);
-              normal += blas.normal[0] * bvhResult.barycentric.x;
-              normal += blas.normal[1] * bvhResult.barycentric.y;
-              normal += blas.normal[2] * bvhResult.barycentric.z;
-              normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
-              if (dot(normal, dir) > 0.0) {
-                // normal *= -1.0;
-              }
-              vec2 texCoord = vec2(0.0);
-              texCoord += blas.texCoord[0] * bvhResult.barycentric.x;
-              texCoord += blas.texCoord[1] * bvhResult.barycentric.y;
-              texCoord += blas.texCoord[2] * bvhResult.barycentric.z;
-              unpackMaterialInfoBVH(
-                mInfo,
-                bvhResult.position,
-                normal,
-                texCoord,
-                uAtlasMap,
-                int(bvhResult.childId),
-                uBVHMap,
-                uBVHMapSize,
-                1.0 / uBVHMapSize
-              );
-              vec3 prevOrigin = origin;
-              origin = mInfo.position + mInfo.normal * 0.0001;
               // lighting 
               vec3 lightingColor = vec3(0.0);
-              {
-                vec3 L = light.position - mInfo.position;
+              if (i > 0) {
+                vec3 L = light.position - origin; 
                 float lightDist = length(L);
                 L /= lightDist;
                 // Check occulsion
+                /*
                 BVHIntersectResult lightResult;
                 bool isLightIntersecting = intersectBVH(
                   lightResult,
@@ -175,11 +152,12 @@ export class RaytraceEffect implements DeferredEffect {
                   L
                 );
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
-                  if (i > 0) {
-                    lightingColor += max(dot(mInfo.normal, L), 0.0) *
-                      light.color * mInfo.albedo * light.intensity.x / PI;
-                  }
+                  lightingColor += max(dot(mInfo.normal, L), 0.0) *
+                    light.color * mInfo.albedo * light.intensity.x / PI;
                 }
+                */
+                lightingColor += max(dot(mInfo.normal, L), 0.0) *
+                  light.color * mInfo.albedo * light.intensity.x / PI;
               }
 
               resultColor += lightingColor * attenuation * 0.5;
@@ -190,7 +168,46 @@ export class RaytraceEffect implements DeferredEffect {
                 dir = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
               }
               attenuation *= mInfo.albedo * 0.5;
-
+              // next ray
+              if (i < 1) {
+                bool isIntersecting = intersectBVH(
+                  bvhResult,
+                  uBVHMap,
+                  uBVHMapSize, 1.0 / uBVHMapSize,
+                  0,
+                  origin,
+                  dir
+                );
+                if (!isIntersecting) {
+                  break;
+                }
+                BVHBLASLeaf blas;
+                bvhBLASFetch(blas, bvhResult.faceAddr, uBVHMap, uBVHMapSize, 1.0 / uBVHMapSize);
+                vec3 normal = vec3(0.0);
+                normal += blas.normal[0] * bvhResult.barycentric.x;
+                normal += blas.normal[1] * bvhResult.barycentric.y;
+                normal += blas.normal[2] * bvhResult.barycentric.z;
+                normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
+                if (dot(normal, dir) > 0.0) {
+                  // normal *= -1.0;
+                }
+                vec2 texCoord = vec2(0.0);
+                texCoord += blas.texCoord[0] * bvhResult.barycentric.x;
+                texCoord += blas.texCoord[1] * bvhResult.barycentric.y;
+                texCoord += blas.texCoord[2] * bvhResult.barycentric.z;
+                unpackMaterialInfoBVH(
+                  mInfo,
+                  bvhResult.position,
+                  normal,
+                  texCoord,
+                  uAtlasMap,
+                  int(bvhResult.childId),
+                  uBVHMap,
+                  uBVHMapSize,
+                  1.0 / uBVHMapSize
+                );
+                origin = mInfo.position + mInfo.normal * 0.0001;
+              }
             }
             gl_FragColor = vec4(resultColor, 1.0);
           }
