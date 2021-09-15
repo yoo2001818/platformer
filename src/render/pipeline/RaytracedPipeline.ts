@@ -101,7 +101,6 @@ export class RaytracedPipeline implements Pipeline {
           #version 100
           precision highp float;
           precision highp sampler2D;
-          #define BVH_DEBUG
 
           ${INTERSECTION}
           ${PBR}
@@ -232,7 +231,7 @@ export class RaytracedPipeline implements Pipeline {
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
 
-            for (int i = 0; i < 1; i += 1) {
+            for (int i = 0; i < 3; i += 1) {
               bool isIntersecting = intersectBVH(
                 bvhResult,
                 uBVHMap,
@@ -241,8 +240,6 @@ export class RaytracedPipeline implements Pipeline {
                 origin,
                 dir
               );
-              resultColor = vec3(getColor(float(bvhAABBTests) / 400.0));
-              break;
               if (!isIntersecting) {
                 break;
               }

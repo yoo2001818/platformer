@@ -60,6 +60,38 @@ export function calcBounds(
   return output;
 }
 
+export function calcBoundsUnion(
+  b0: Float32Array | null,
+  b1: Float32Array,
+  b1Addr = 0,
+): Float32Array {
+  if (b0 == null) {
+    const output = new Float32Array(6);
+    for (let i = 0; i < 6; i += 1) {
+      output[i] = b1[i + b1Addr];
+    }
+    return output;
+  }
+  for (let i = 0; i < 3; i += 1) {
+    b0[i] = Math.min(b0[i], b1[i + b1Addr]);
+    b0[i + 3] = Math.max(b0[i + 3], b1[i + 3 + b1Addr]);
+  }
+  return b0;
+}
+
+export function calcBoundsSurfaceArea(
+  bounds: Float32Array | null,
+  addr = 0,
+): number {
+  if (bounds == null) {
+    return 0;
+  }
+  const x = bounds[addr + 3] - bounds[addr];
+  const y = bounds[addr + 4] - bounds[addr + 1];
+  const z = bounds[addr + 5] - bounds[addr + 2];
+  return 2 * (x * y + x * z + y * z);
+}
+
 export function calcCenters(bounds: Float32Array): Float32Array {
   const length = (bounds.length / 6) | 0;
   const centers = new Float32Array(length * 3);
@@ -69,6 +101,165 @@ export function calcCenters(bounds: Float32Array): Float32Array {
     }
   }
   return centers;
+}
+
+export function splitBVHAxisSAH(
+  node: BVHLeafNode,
+  bvh: BVH,
+  workBuffer: Uint32Array,
+  workBufferAddr: number,
+  axis: number,
+): [number, number] {
+  const {indices, centers, bounds} = bvh;
+  const {offset, length} = node;
+  const bucketSize = 12;
+  const buckets: {count: number; bounds: Float32Array | null;}[] = [];
+  for (let i = 0; i < bucketSize; i += 1) {
+    buckets[i] = {count: 0, bounds: null};
+  }
+  // Allocate buckets
+  const nodeMin = node.bounds[axis];
+  const nodeMax = node.bounds[axis + 3];
+  for (let i = offset; i < offset + length; i += 1) {
+    const index = indices[i];
+    const percentage =
+      (centers[index * 3 + axis] - nodeMin) / (nodeMax - nodeMin);
+    const target = Math.round(percentage * (bucketSize - 1));
+    const bucket = buckets[target];
+    bucket.count += 1;
+    bucket.bounds = calcBoundsUnion(bucket.bounds, bounds, index * 6);
+  }
+  // Compute cost for each buckets
+  const costs: number[] = [];
+  for (let i = 0; i < bucketSize - 1; i += 1) {
+    let b0: Float32Array | null = null;
+    let b1: Float32Array | null = null;
+    let count0 = 0;
+    let count1 = 0;
+    buckets.slice(0, i + 1).forEach((bucket) => {
+      if (bucket.bounds == null) {
+        return;
+      }
+      b0 = calcBoundsUnion(b0, bucket.bounds);
+      count0 += bucket.count;
+    });
+    buckets.slice(i + 1).forEach((bucket) => {
+      if (bucket.bounds == null) {
+        return;
+      }
+      b1 = calcBoundsUnion(b1, bucket.bounds);
+      count1 += bucket.count;
+    });
+    costs[i] = 0.125 + (
+      count0 * calcBoundsSurfaceArea(b0) +
+      count1 * calcBoundsSurfaceArea(b1)) /
+      calcBoundsSurfaceArea(node.bounds);
+  }
+  // Find the minimal bucket
+  let minCost = costs[0];
+  let minCostIndex = 0;
+  for (let i = 1; i < bucketSize - 1; i += 1) {
+    if (minCost > costs[i]) {
+      minCost = costs[i];
+      minCostIndex = i;
+    }
+  }
+  // Finally, partition them
+  let leftPos = workBufferAddr;
+  let rightPos = workBufferAddr + length - 1;
+  for (let i = offset; i < offset + length; i += 1) {
+    const index = indices[i];
+    const percentage =
+      (centers[index * 3 + axis] - nodeMin) / (nodeMax - nodeMin);
+    const target = Math.round(percentage * (bucketSize - 1));
+    if (target > minCostIndex) {
+      // right
+      workBuffer[rightPos] = index;
+      rightPos -= 1;
+    } else {
+      // left
+      workBuffer[leftPos] = index;
+      leftPos += 1;
+    }
+  }
+  return [
+    leftPos - workBufferAddr,
+    workBufferAddr + length - 1 - rightPos,
+  ];
+}
+
+export function splitBVHAxisCenter(
+  node: BVHLeafNode,
+  bvh: BVH,
+  workBuffer: Uint32Array,
+  workBufferAddr: number,
+  axis: number,
+): [number, number] {
+  // https://github.com/benraziel/bvh-tree
+  const {indices, centers} = bvh;
+  const {offset, length} = node;
+  // center method
+  const center = calcCenters(node.bounds);
+  // Try to separate by each axis.
+  let leftPos = workBufferAddr;
+  let rightPos = workBufferAddr + length - 1;
+  for (let i = offset; i < offset + length; i += 1) {
+    const index = indices[i];
+    if (centers[index * 3 + axis] > center[axis]) {
+      // right
+      workBuffer[rightPos] = index;
+      rightPos -= 1;
+    } else {
+      // left
+      workBuffer[leftPos] = index;
+      leftPos += 1;
+    }
+  }
+  return [
+    leftPos - workBufferAddr,
+    workBufferAddr + length - 1 - rightPos,
+  ];
+}
+
+export function splitBVHAxisAverage(
+  node: BVHLeafNode,
+  bvh: BVH,
+  workBuffer: Uint32Array,
+  workBufferAddr: number,
+  axis: number,
+): [number, number] {
+  // https://github.com/benraziel/bvh-tree
+  const {indices, centers} = bvh;
+  const {offset, length} = node;
+  const center = new Float32Array(3);
+  for (let i = offset; i < offset + length; i += 1) {
+    const index = indices[i];
+    for (let j = 0; j < 3; j += 1) {
+      center[j] += centers[index * 3 + j];
+    }
+  }
+  for (let j = 0; j < 3; j += 1) {
+    center[j] /= length;
+  }
+  // Try to separate by each axis.
+  let leftPos = workBufferAddr;
+  let rightPos = workBufferAddr + length - 1;
+  for (let i = offset; i < offset + length; i += 1) {
+    const index = indices[i];
+    if (centers[index * 3 + axis] > center[axis]) {
+      // right
+      workBuffer[rightPos] = index;
+      rightPos -= 1;
+    } else {
+      // left
+      workBuffer[leftPos] = index;
+      leftPos += 1;
+    }
+  }
+  return [
+    leftPos - workBufferAddr,
+    workBufferAddr + length - 1 - rightPos,
+  ];
 }
 
 export function splitBVH(
@@ -81,57 +272,29 @@ export function splitBVH(
     return node;
   }
   // https://github.com/benraziel/bvh-tree
-  const {indices, centers} = bvh;
+  const {indices} = bvh;
   const {offset, length} = node;
-  // center method
-  const center = calcCenters(node.bounds);
-  // average method
-  /*
-  const center = new Float32Array(3);
-  for (let i = offset; i < offset + length; i += 1) {
-    const index = indices[i];
-    for (let j = 0; j < 3; j += 1) {
-      center[j] += centers[index * 3 + j];
-    }
-  }
-  for (let j = 0; j < 3; j += 1) {
-    center[j] /= length;
-  }
-  */
   // Try to separate by each axis.
-  const lengths = new Uint32Array(6);
+  const lengths: [number, number][] = [];
   for (let axis = 0; axis < 3; axis += 1) {
-    let leftPos = axis * length;
-    let rightPos = (axis + 1) * length - 1;
-    for (let i = offset; i < offset + length; i += 1) {
-      const index = indices[i];
-      if (centers[index * 3 + axis] > center[axis]) {
-        // right
-        workBuffer[rightPos] = index;
-        rightPos -= 1;
-      } else {
-        // left
-        workBuffer[leftPos] = index;
-        leftPos += 1;
-      }
-    }
-    lengths[axis * 2] = leftPos - axis * length;
-    lengths[axis * 2 + 1] = (axis + 1) * length - 1 - rightPos;
+    lengths[axis] = splitBVHAxisSAH(
+      node, bvh, workBuffer, axis * length, axis,
+    );
   }
   // Determine the best axis
   let bestAxis = 0;
   let bestScore = 0;
   for (let axis = 0; axis < 3; axis += 1) {
-    const leftLength = lengths[axis * 2];
-    const rightLength = lengths[axis * 2 + 1];
+    const leftLength = lengths[axis][0];
+    const rightLength = lengths[axis][1];
     const score = Math.abs(leftLength - rightLength);
     if (score < bestScore || axis === 0) {
       bestAxis = axis;
       bestScore = score;
     }
   }
-  const leftLength = lengths[bestAxis * 2];
-  const rightLength = lengths[bestAxis * 2 + 1];
+  const leftLength = lengths[bestAxis][0];
+  const rightLength = lengths[bestAxis][1];
   if (leftLength === 0 || rightLength === 0) {
     // Do nothing if separation results in no-op
     return node;
