@@ -389,9 +389,13 @@ export const DENOISE = /* glsl */`
   // implemented on https://www.shadertoy.com/view/ldKBzG
   // feel free to use it
 
-  float denoiseStrength = 3.0f;
+  vec4 alignedTexture2D(sampler2D samp, vec2 uv, vec2 resolution, vec2 subdiv) {
+    vec2 pixelUV = floor(mod(uv * resolution, subdiv));
+    vec2 newUV = (uv + pixelUV) / subdiv;
+    return texture2D(samp, newUV);
+  }
 
-  vec4 denoiseRaytrace(vec2 uv, float strength, sampler2D rayMap, sampler2D normalMap, vec2 invResolution) {
+  vec4 denoiseRaytrace(vec2 uv, float strength, sampler2D rayMap, sampler2D normalMap, vec2 resolution, vec2 invResolution, vec2 subdiv) {
     vec2 offset[25];
     offset[0] = vec2(-2,-2);
     offset[1] = vec2(-1,-2);
@@ -456,19 +460,19 @@ export const DENOISE = /* glsl */`
     kernel[24] = 1.0f/256.0f;
     
     vec4 sum = vec4(0.0);
-    float c_phi = 1.0;
-    float n_phi = 0.5;
+    float c_phi = 0.3;
+    float n_phi = 0.01;
     //float p_phi = 0.3;
-    vec4 cval = texture2D(rayMap, uv);
+    vec4 cval = alignedTexture2D(rayMap, uv, resolution, subdiv);
     cval /= max(cval.w, 1.0);
-    vec4 nval = vec4(texture2D(normalMap, uv).rgb, 1.0);
+    vec4 nval = texture2D(normalMap, uv);
     //vec4 pval = texelFetch(iChannel2, ivec2(fragCoord), 0);
     
     float cum_w = 0.0;
     for(int i = 0; i < 25; i++) {
         vec2 nextUV = uv + offset[i] * strength * invResolution;
         
-        vec4 ctmp = texture2D(rayMap, nextUV);
+        vec4 ctmp = alignedTexture2D(rayMap, nextUV, resolution, subdiv);
         ctmp /= max(ctmp.w, 1.0);
         vec4 t = cval - ctmp;
         float dist2 = dot(t,t);

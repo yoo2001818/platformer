@@ -229,6 +229,8 @@ export class DeferredPipeline implements Pipeline {
             ${block.body}
 
             result *= ao;
+
+            result = vec3(0.0);
             
             gl_FragColor = vec4(result, 1.0);
           }

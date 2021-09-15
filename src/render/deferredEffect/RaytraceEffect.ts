@@ -102,9 +102,15 @@ export class RaytraceEffect implements DeferredEffect {
           uniform vec2 uGBufferSize;
 
           void main() {
-            randInit(uSeed + fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize), uSeed);
+            // Interlacing
             vec2 uv = vPosition.xy * 0.5 + 0.5;
-            uv = (round(uv * uGBufferSize) + 0.5) / uGBufferSize;
+            vec2 interlaceUV = floor(uv * 4.0);
+            uv = fract(uv * 4.0);
+            uv += interlaceUV / uScreenSize;
+            // uv = (round(uv * uGBufferSize) + 0.5) / uGBufferSize;
+
+            vec2 ndc = uv * 2.0 - 1.0;
+            randInit(uSeed + fract(uv * uScreenSize / uRandomMapSize), uSeed);
 
             float depth = texture2D(uDepthBuffer, uv).x;
             vec4 values[GBUFFER_SIZE];
@@ -113,7 +119,7 @@ export class RaytraceEffect implements DeferredEffect {
 
             MaterialInfo mInfo;
             unpackMaterialInfo(
-              depth, values, vPosition.xy,
+              depth, values, ndc,
               uInverseProjection, uInverseView,
               mInfo
             );
@@ -121,7 +127,7 @@ export class RaytraceEffect implements DeferredEffect {
             PointLight light;
             light.position = vec3(1.78, 2.399, -1.78);
             light.color = vec3(1.0);
-            light.intensity = vec3(PI * 6.0, 0.0, 100.0);
+            light.intensity = vec3(PI * 8.0, 0.0, 100.0);
 
             vec3 dir;
             vec3 origin;
@@ -129,7 +135,7 @@ export class RaytraceEffect implements DeferredEffect {
             BVHIntersectResult bvhResult;
 
             dir = mInfo.normal;
-            origin = mInfo.position + dir * 0.01;
+            origin = mInfo.position + dir * 0.04;
             prevOrigin = uViewPos;
 
             vec3 resultColor = vec3(0.0);
@@ -138,12 +144,11 @@ export class RaytraceEffect implements DeferredEffect {
             for (int i = 0; i < 3; i += 1) {
               // lighting 
               vec3 lightingColor = vec3(0.0);
-              if (i > 0) {
+              /* if (i > 0) */ {
                 vec3 L = light.position - origin; 
                 float lightDist = length(L);
                 L /= lightDist;
                 // Check occulsion
-                /*
                 BVHIntersectResult lightResult;
                 bool isLightIntersecting = intersectBVH(
                   lightResult,
@@ -154,12 +159,13 @@ export class RaytraceEffect implements DeferredEffect {
                   L
                 );
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
-                  lightingColor += max(dot(mInfo.normal, L), 0.0) *
-                    light.color * mInfo.albedo * light.intensity.x / PI;
+                  if (i == 0) {
+                    lightingColor += calcPoint(prevOrigin, mInfo, light);
+                  } else {
+                    lightingColor += max(dot(mInfo.normal, L), 0.0) *
+                      light.color * mInfo.albedo * light.intensity.x / PI;
+                  }
                 }
-                */
-                lightingColor += max(dot(mInfo.normal, L), 0.0) *
-                  light.color * mInfo.albedo * light.intensity.x / PI;
               }
 
               resultColor += lightingColor * attenuation * 0.5;
@@ -246,15 +252,21 @@ export class RaytraceEffect implements DeferredEffect {
           uniform sampler2D uRayMap;
           uniform sampler2D uNormalMap;
           uniform vec2 uScreenSize;
+          uniform vec2 uGBufferSize;
           
           float rand(vec2 co) {
               return fract(sin(dot(co.xy,vec2(12.9898,78.233))) * 43758.5453);
           }
 
           void main() {
-            vec2 uv = vPosition * 0.5 + 0.5;
-            uv += (vec2(rand(uv), rand(uv)) - 0.5) / uScreenSize;
-            vec4 color = denoiseRaytrace(uv, 2.0, uRayMap, uNormalMap, 1.0 / uScreenSize);
+            // Interlacing
+            vec2 srcUV = vPosition.xy * 0.5 + 0.5;
+            vec2 uv = srcUV;
+            uv += (rand(vPosition) - 0.5) / uScreenSize;
+
+            vec4 color = denoiseRaytrace(uv, 3.0, uRayMap, uNormalMap, uScreenSize, 1.0 / uScreenSize, vec2(4.0));
+            // gl_FragColor = vec4(color.rgb, 1.0);
+            // vec4 color = texture2D(uRayMap, uv);
             gl_FragColor = vec4(color.rgb, 1.0);
           }
         `,
@@ -271,16 +283,18 @@ export class RaytraceEffect implements DeferredEffect {
     const isMobile = navigator.userAgent.match(/Android|iPhone|iPad|iPod/i);
     let width = glRenderer.getWidth();
     let height = glRenderer.getHeight();
-    width = Math.floor(width / 2);
-    height = Math.floor(height / 2);
+    width = Math.floor(width / 1);
+    height = Math.floor(height / 1);
     if (isMobile) {
       width = Math.floor(width / 3);
       height = Math.floor(height / 3);
     }
     // width = 128;
     // height = 128;
-    this.tileWidth = Math.floor(width / 64);
-    this.tileHeight = Math.floor(height / 64);
+    // this.tileWidth = Math.floor(width / 64);
+    // this.tileHeight = Math.floor(height / 64);
+    this.tileWidth = 4;
+    this.tileHeight = 4;
     const defaultOpts: GLTexture2DOptions = {
       width,
       height,
@@ -431,6 +445,10 @@ export class RaytraceEffect implements DeferredEffect {
         uScreenSize: [
           this.rayBuffer!.getWidth(),
           this.rayBuffer!.getHeight(),
+        ],
+        uGBufferSize: [
+          depthBuffer!.getWidth(),
+          depthBuffer!.getHeight(),
         ],
       },
       state: {
