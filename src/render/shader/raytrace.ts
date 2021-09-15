@@ -460,8 +460,8 @@ export const DENOISE = /* glsl */`
     kernel[24] = 1.0f/256.0f;
     
     vec4 sum = vec4(0.0);
-    float c_phi = 0.3;
-    float n_phi = 0.01;
+    float c_phi = 1.0;
+    float n_phi = 0.3;
     //float p_phi = 0.3;
     vec4 cval = alignedTexture2D(rayMap, uv, resolution, subdiv);
     cval /= max(cval.w, 1.0);

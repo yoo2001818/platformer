@@ -28,6 +28,7 @@ export class RaytraceEffect implements DeferredEffect {
   bvhTexture: BVHTexture;
   materialInjector: MaterialInjector;
   rayBuffer: GLTexture2D | null = null;
+  directRayBuffer: GLTexture2D | null = null;
   rayFrameBuffer: GLFrameBuffer | null = null;
   rayTilePos = 0;
   rayTileFrame = 1;
@@ -100,13 +101,18 @@ export class RaytraceEffect implements DeferredEffect {
           uniform sampler2D uGBuffer0;
           uniform sampler2D uGBuffer1;
           uniform vec2 uGBufferSize;
+          uniform int uPassId;
+
+          #ifdef WEBGL2
+          layout(location = 1) out vec4 glFragData1;
+          #endif
 
           void main() {
             // Interlacing
             vec2 uv = vPosition.xy * 0.5 + 0.5;
             vec2 interlaceUV = floor(uv * 4.0);
             uv = fract(uv * 4.0);
-            uv += interlaceUV / uScreenSize;
+            uv += (interlaceUV - 1.0) / uScreenSize;
             // uv = (round(uv * uGBufferSize) + 0.5) / uGBufferSize;
 
             vec2 ndc = uv * 2.0 - 1.0;
@@ -127,7 +133,7 @@ export class RaytraceEffect implements DeferredEffect {
             PointLight light;
             light.position = vec3(1.78, 2.399, -1.78);
             light.color = vec3(1.0);
-            light.intensity = vec3(PI * 8.0, 0.0, 100.0);
+            light.intensity = vec3(PI * 6.0, 0.0, 100.0);
 
             vec3 dir;
             vec3 origin;
@@ -135,13 +141,16 @@ export class RaytraceEffect implements DeferredEffect {
             BVHIntersectResult bvhResult;
 
             dir = mInfo.normal;
-            origin = mInfo.position + dir * 0.04;
+            origin = mInfo.position + dir * (0.01 / (1.0 - (depth * 0.5)));
             prevOrigin = uViewPos;
 
+            vec4 directColor = vec4(0.0);
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
 
-            for (int i = 0; i < 3; i += 1) {
+            const int bounces = 3;
+
+            for (int i = 0; i < bounces; i += 1) {
               // lighting 
               vec3 lightingColor = vec3(0.0);
               /* if (i > 0) */ {
@@ -160,7 +169,9 @@ export class RaytraceEffect implements DeferredEffect {
                 );
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
                   if (i == 0) {
-                    lightingColor += calcPoint(prevOrigin, mInfo, light);
+                    if (uPassId == 0) {
+                      directColor += vec4(calcPoint(prevOrigin, mInfo, light) * 0.5, 1.0);
+                    }
                   } else {
                     lightingColor += max(dot(mInfo.normal, L), 0.0) *
                       light.color * mInfo.albedo * light.intensity.x / PI;
@@ -175,9 +186,13 @@ export class RaytraceEffect implements DeferredEffect {
               } else {
                 dir = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
               }
-              attenuation *= mInfo.albedo * 0.5;
+              if (i == 0) {
+                attenuation *= 0.5;
+              } else {
+                attenuation *= mInfo.albedo * 0.5;
+              }
               // next ray
-              if (i < 1) {
+              if (i < bounces - 1) {
                 bool isIntersecting = intersectBVH(
                   bvhResult,
                   uBVHMap,
@@ -217,7 +232,16 @@ export class RaytraceEffect implements DeferredEffect {
                 origin = mInfo.position + mInfo.normal * 0.0001;
               }
             }
-            gl_FragColor = vec4(resultColor, 1.0);
+            if (uPassId == 0) {
+              directColor.w = 1.0;
+            }
+            #ifdef WEBGL2
+              gl_FragColor = vec4(resultColor, 1.0);
+              glFragData1 = directColor;
+            #else
+              gl_FragData[0] = vec4(resultColor, 1.0);
+              gl_FragData[1] = directColor;
+            #endif
           }
         `,
       );
@@ -250,7 +274,9 @@ export class RaytraceEffect implements DeferredEffect {
           varying vec2 vPosition;
 
           uniform sampler2D uRayMap;
-          uniform sampler2D uNormalMap;
+          uniform sampler2D uDirectRayMap;
+          uniform sampler2D uGBuffer0;
+          uniform sampler2D uGBuffer1;
           uniform vec2 uScreenSize;
           uniform vec2 uGBufferSize;
           
@@ -262,12 +288,20 @@ export class RaytraceEffect implements DeferredEffect {
             // Interlacing
             vec2 srcUV = vPosition.xy * 0.5 + 0.5;
             vec2 uv = srcUV;
-            uv += (rand(vPosition) - 0.5) / uScreenSize;
+            // uv += (rand(vPosition) - 0.5) / uScreenSize;
 
-            vec4 color = denoiseRaytrace(uv, 3.0, uRayMap, uNormalMap, uScreenSize, 1.0 / uScreenSize, vec2(4.0));
+            vec4 radiance = alignedTexture2D(uDirectRayMap, uv, uScreenSize, vec2(4.0));
+            if (radiance.w == 0.0) {
+              vec2 offset = ceil(uScreenSize / 4.0);
+              uv = (floor(uv * offset) + 0.01) / offset; 
+              radiance = alignedTexture2D(uDirectRayMap, uv, uScreenSize, vec2(4.0));
+            }
+            radiance = radiance / max(radiance.w, 1.0);
+            vec4 color = denoiseRaytrace(uv, 2.0, uRayMap, uGBuffer1, uScreenSize, 1.0 / uScreenSize, vec2(4.0));
+            vec3 albedo = texture2D(uGBuffer0, uv).rgb;
             // gl_FragColor = vec4(color.rgb, 1.0);
             // vec4 color = texture2D(uRayMap, uv);
-            gl_FragColor = vec4(color.rgb, 1.0);
+            gl_FragColor = vec4(color.rgb * albedo + radiance.rgb, 1.0);
           }
         `,
       );
@@ -312,11 +346,21 @@ export class RaytraceEffect implements DeferredEffect {
         type: useFloat ? 'float' : 'halfFloat',
       });
     }
+    if (this.directRayBuffer == null) {
+      this.directRayBuffer = new GLTexture2D({
+        ...defaultOpts,
+        format: 'rgba',
+        type: useFloat ? 'float' : 'halfFloat',
+      });
+    }
     if (this.rayFrameBuffer == null) {
       this.rayFrameBuffer = new GLFrameBuffer({
         width,
         height,
-        color: this.rayBuffer!,
+        color: [
+          this.rayBuffer!,
+          this.directRayBuffer!,
+        ],
       });
     }
     if (this.randomMap == null) {
@@ -357,6 +401,9 @@ export class RaytraceEffect implements DeferredEffect {
       const next = this.sobol.next();
       this.randomPos[0] = next[0] * (randomMapWidth - 1) / randomMapWidth;
       this.randomPos[1] = next[1] * (randomMapHeight - 1) / randomMapHeight;
+    }
+    if (!this.materialInjector.isReady()) {
+      return;
     }
     this.materialInjector.updateTexture();
 
@@ -423,6 +470,7 @@ export class RaytraceEffect implements DeferredEffect {
           depthBuffer!.getWidth(),
           depthBuffer!.getHeight(),
         ],
+        uPassId: prevScanId,
       },
       state: {
         blend: {
@@ -441,7 +489,9 @@ export class RaytraceEffect implements DeferredEffect {
       shader: this.getDisplayShader(),
       uniforms: {
         uRayMap: this.rayBuffer,
-        uNormalMap: gBuffers![1],
+        uDirectRayMap: this.directRayBuffer,
+        uGBuffer0: gBuffers![0],
+        uGBuffer1: gBuffers![1],
         uScreenSize: [
           this.rayBuffer!.getWidth(),
           this.rayBuffer!.getHeight(),

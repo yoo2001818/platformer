@@ -220,7 +220,6 @@ export class StandardMaterial implements Material {
         attribute vec3 aPosition;
         attribute vec3 aNormal;
         attribute vec2 aTexCoord;
-        attribute vec3 aColor;
         #ifdef USE_NORMAL_MAP
         attribute vec4 aTangent;
         #endif
@@ -250,7 +249,6 @@ export class StandardMaterial implements Material {
         varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec2 vTexCoord;
-        varying vec3 vColor;
         #ifdef USE_NORMAL_MAP
         varying vec4 vTangent;
         #endif
@@ -280,7 +278,6 @@ export class StandardMaterial implements Material {
           #ifdef USE_NORMAL_MAP
           vTangent = vec4((model * vec4(aTangent.xyz, 0.0)).xyz, aTangent.w);
           #endif
-          vColor = aColor;
         } 
       `,
       frag: /* glsl */`
@@ -298,7 +295,6 @@ export class StandardMaterial implements Material {
         varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec2 vTexCoord;
-        varying vec3 vColor;
         #ifdef USE_NORMAL_MAP
         varying vec4 vTangent;
         #endif
@@ -324,7 +320,6 @@ export class StandardMaterial implements Material {
           #else
             mInfo.albedo = uMaterial.albedo;
           #endif
-          mInfo.albedo = mix(mInfo.albedo, vColor, 0.5);
           // Tone mapping
 
           #ifdef USE_NORMAL_MAP
