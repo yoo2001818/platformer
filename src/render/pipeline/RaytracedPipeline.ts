@@ -101,6 +101,7 @@ export class RaytracedPipeline implements Pipeline {
           #version 100
           precision highp float;
           precision highp sampler2D;
+          #define BVH_DEBUG
 
           ${INTERSECTION}
           ${PBR}
@@ -184,6 +185,30 @@ export class RaytracedPipeline implements Pipeline {
             ) * 2.0 - 1.0);
           }
 
+          float fade(float low, float high, float value){
+              float mid = (low+high)*0.5;
+              float range = (high-low)*0.5;
+              float x = 1.0 - clamp(abs(mid-value)/range, 0.0, 1.0);
+              return smoothstep(0.0, 1.0, x);
+          }
+
+          vec3 getColor(float intensity){
+              vec3 blue = vec3(0.0, 0.0, 1.0);
+              vec3 cyan = vec3(0.0, 1.0, 1.0);
+              vec3 green = vec3(0.0, 1.0, 0.0);
+              vec3 yellow = vec3(1.0, 1.0, 0.0);
+              vec3 red = vec3(1.0, 0.0, 0.0);
+
+              vec3 color = (
+                  fade(-0.25, 0.25, intensity)*blue +
+                  fade(0.0, 0.5, intensity)*cyan +
+                  fade(0.25, 0.75, intensity)*green +
+                  fade(0.5, 1.0, intensity)*yellow +
+                  smoothstep(0.75, 1.0, intensity)*red
+              );
+              return color;
+          }
+
           void main() {
             tilePosition = uSeed + fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize);
             vec2 ndcPos = vPosition.xy + (1.0 / uScreenSize) * (vec2(rand(), rand()) * 2.0 - 1.0);
@@ -200,14 +225,14 @@ export class RaytracedPipeline implements Pipeline {
             BVHIntersectResult bvhResult;
             MaterialInfo mInfo;
             PointLight light;
-            light.position = vec3(0.42, 2.13, 3.03);
+            light.position = vec3(1.78, 2.399, -1.78);
             light.color = vec3(1.0);
             light.intensity = vec3(PI * 6.0, 0.0, 100.0);
 
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
 
-            for (int i = 0; i < 3; i += 1) {
+            for (int i = 0; i < 1; i += 1) {
               bool isIntersecting = intersectBVH(
                 bvhResult,
                 uBVHMap,
@@ -216,6 +241,8 @@ export class RaytracedPipeline implements Pipeline {
                 origin,
                 dir
               );
+              resultColor = vec3(getColor(float(bvhAABBTests) / 400.0));
+              break;
               if (!isIntersecting) {
                 break;
               }

@@ -66,7 +66,7 @@ function main() {
   const cameraEntity = store.create({
     transform: new Transform()
       .rotateY(Math.PI / 4)
-      .rotateX(-Math.PI / 4)
+      .rotateX(-Math.PI * 0.4 / 4)
       .translate([0, 0, 40]),
     camera: new Camera({
       type: 'perspective',
@@ -86,7 +86,7 @@ function main() {
   );
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
-  const gltf = parseGLTF(require('./models/livingroom.gltf'));
+  const gltf = parseGLTF(require('./models/pri-home5.gltf'));
   store.createEntities(gltf.entities);
 
   /*
@@ -202,9 +202,9 @@ function main() {
     canvas,
     document.body,
     cameraEntity,
-    2.6,
+    2.2,
   );
-  vec3.copy(orbitController.center, [0.55, 0.46, 2.95]);
+  vec3.copy(orbitController.center, [1.8, 1.0, -1.8]);
 
   renderer.setCamera(cameraEntity);
 

@@ -147,6 +147,11 @@ export const INTERSECTION = /* glsl */`
   #define BVH_BLAS_SIZE 8
   #define BVH_MAX_DIST 1000000.0
 
+  #ifdef BVH_DEBUG
+    int bvhAABBTests = 0;
+    int bvhTriangleTests = 0;
+  #endif
+
   #ifndef WEBGL2
   // In WebGL 1, it's not possible to use array random access. Although 
   // extremely slow, this makes it possible to implement this in GLSL ES 2.0...
@@ -196,7 +201,7 @@ export const INTERSECTION = /* glsl */`
     vec3 blasResultPos;
     vec3 blasResultBarycentric;
     float blasResultDist;
-    float tlasNearDist;
+    float nearDist;
     bool hasIntersection = false;
     for (int i = 0; i < BVH_MAX_LOOP; ++i) {
       if (stackPos < 0) break;
@@ -214,9 +219,12 @@ export const INTERSECTION = /* glsl */`
           isPopping = true;
         } else {
           bool isIntersecting = intersectRayAABB(
-            tlasLeaf.boxMin, tlasLeaf.boxMax, origin, dir, tlasNearDist
+            tlasLeaf.boxMin, tlasLeaf.boxMax, origin, dir, nearDist
           );
-          if (isIntersecting && tlasNearDist < outResult.rayDist) {
+          #ifdef BVH_DEBUG
+            bvhAABBTests += 1;
+          #endif
+          if (isIntersecting && nearDist < outResult.rayDist) {
             hasChild = true;
             blasOrigin = (tlasLeaf.invMatrix * vec4(origin, 1.0)).xyz;
             blasDir = normalize((tlasLeaf.invMatrix * vec4(dir, 0.0)).xyz);
@@ -254,6 +262,9 @@ export const INTERSECTION = /* glsl */`
           blasOrigin,
           blasDir
         );
+        #ifdef BVH_DEBUG
+          bvhTriangleTests += 1;
+        #endif
         if (isIntersecting && resultDist < blasResultDist) {
           resultPos = blasOrigin + blasDir * resultDist;
           blasResultAddr = childAddr;
@@ -270,12 +281,15 @@ export const INTERSECTION = /* glsl */`
       } else {
         vec3 currOrigin;
         vec3 currDir;
+        float currDist;
         if (isTLAS) {
           currOrigin = origin;
           currDir = dir;
+          currDist = outResult.rayDist;
         } else {
           currOrigin = blasOrigin;
           currDir = blasDir;
+          currDist = blasResultDist;
         }
         vec4 leftMin =
           bvhTexelFetch(current.y, bvhMap, bvhMapSize, bvhMapSizeInv);
@@ -286,9 +300,14 @@ export const INTERSECTION = /* glsl */`
         vec4 rightMax =
           bvhTexelFetch(current.z + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
         bool leftIntersects =
-          intersectRayAABB(leftMin.xyz, leftMax.xyz, currOrigin, currDir, tlasNearDist);
+          intersectRayAABB(leftMin.xyz, leftMax.xyz, currOrigin, currDir, nearDist);
         bool rightIntersects =
-          intersectRayAABB(rightMin.xyz, rightMax.xyz, currOrigin, currDir, tlasNearDist);
+          intersectRayAABB(rightMin.xyz, rightMax.xyz, currOrigin, currDir, nearDist);
+        #ifdef BVH_DEBUG
+          bvhAABBTests += 2;
+        #endif
+        leftIntersects = leftIntersects && currDist > nearDist;
+        rightIntersects = rightIntersects && currDist > nearDist;
         if (leftIntersects && rightIntersects) {
           #ifdef WEBGL2
           stack[stackPos] = ivec3(current.y, int(leftMin.w), int(leftMax.w));
