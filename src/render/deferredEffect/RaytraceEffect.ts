@@ -14,7 +14,7 @@ import {WorldBVH} from '../raytrace/WorldBVH';
 import {POINT_LIGHT} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
-import {INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
+import {DENOISE, INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
 import {SAMPLE} from '../shader/sample';
 
 import {DeferredEffect} from './DeferredEffect';
@@ -99,10 +99,12 @@ export class RaytraceEffect implements DeferredEffect {
           uniform highp sampler2D uDepthBuffer;
           uniform sampler2D uGBuffer0;
           uniform sampler2D uGBuffer1;
+          uniform vec2 uGBufferSize;
 
           void main() {
             randInit(uSeed + fract((vPosition.xy * 0.5 + 0.5) * uScreenSize / uRandomMapSize), uSeed);
             vec2 uv = vPosition.xy * 0.5 + 0.5;
+            uv = (round(uv * uGBufferSize) + 0.5) / uGBufferSize;
 
             float depth = texture2D(uDepthBuffer, uv).x;
             vec4 values[GBUFFER_SIZE];
@@ -127,7 +129,7 @@ export class RaytraceEffect implements DeferredEffect {
             BVHIntersectResult bvhResult;
 
             dir = mInfo.normal;
-            origin = mInfo.position + dir * 0.0001;
+            origin = mInfo.position + dir * 0.01;
             prevOrigin = uViewPos;
 
             vec3 resultColor = vec3(0.0);
@@ -237,14 +239,23 @@ export class RaytraceEffect implements DeferredEffect {
           #version 100
           precision highp float;
 
+          ${DENOISE}
+
           varying vec2 vPosition;
 
-          uniform sampler2D uBuffer;
+          uniform sampler2D uRayMap;
+          uniform sampler2D uNormalMap;
+          uniform vec2 uScreenSize;
           
+          float rand(vec2 co) {
+              return fract(sin(dot(co.xy,vec2(12.9898,78.233))) * 43758.5453);
+          }
+
           void main() {
             vec2 uv = vPosition * 0.5 + 0.5;
-            vec4 color = texture2D(uBuffer, uv);
-            gl_FragColor = vec4(color.xyz / max(color.w, 1.0), 1.0);
+            uv += (vec2(rand(uv), rand(uv)) - 0.5) / uScreenSize;
+            vec4 color = denoiseRaytrace(uv, 2.0, uRayMap, uNormalMap, 1.0 / uScreenSize);
+            gl_FragColor = vec4(color.rgb, 1.0);
           }
         `,
       );
@@ -260,6 +271,8 @@ export class RaytraceEffect implements DeferredEffect {
     const isMobile = navigator.userAgent.match(/Android|iPhone|iPad|iPod/i);
     let width = glRenderer.getWidth();
     let height = glRenderer.getHeight();
+    width = Math.floor(width / 2);
+    height = Math.floor(height / 2);
     if (isMobile) {
       width = Math.floor(width / 3);
       height = Math.floor(height / 3);
@@ -392,6 +405,10 @@ export class RaytraceEffect implements DeferredEffect {
           this.rayBuffer!.getWidth(),
           this.rayBuffer!.getHeight(),
         ],
+        uGBufferSize: [
+          depthBuffer!.getWidth(),
+          depthBuffer!.getHeight(),
+        ],
       },
       state: {
         blend: {
@@ -409,7 +426,12 @@ export class RaytraceEffect implements DeferredEffect {
       geometry: LIGHT_QUAD,
       shader: this.getDisplayShader(),
       uniforms: {
-        uBuffer: this.rayBuffer,
+        uRayMap: this.rayBuffer,
+        uNormalMap: gBuffers![1],
+        uScreenSize: [
+          this.rayBuffer!.getWidth(),
+          this.rayBuffer!.getHeight(),
+        ],
       },
       state: {
         depthMask: false,
