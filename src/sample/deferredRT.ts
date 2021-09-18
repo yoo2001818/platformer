@@ -61,8 +61,9 @@ function main() {
 
   const cameraEntity = store.create({
     transform: new Transform()
-      .rotateY(Math.PI / 4)
-      .rotateX(-Math.PI * 0.4 / 4)
+      .rotateY(Math.PI / 2)
+      // .rotateY(Math.PI / 4)
+      // .rotateX(-Math.PI * 0.4 / 4)
       .translate([0, 0, 40]),
     camera: new Camera({
       type: 'perspective',
@@ -198,9 +199,9 @@ function main() {
     canvas,
     document.body,
     cameraEntity,
-    2.2,
+    3,
   );
-  vec3.copy(orbitController.center, [1.8, 1.0, -1.8]);
+  vec3.copy(orbitController.center, [0, 0, 0]);
 
   renderer.setCamera(cameraEntity);
 

@@ -301,22 +301,33 @@ export const INTERSECTION = /* glsl */`
           bvhTexelFetch(current.z, bvhMap, bvhMapSize, bvhMapSizeInv);
         vec4 rightMax =
           bvhTexelFetch(current.z + 1, bvhMap, bvhMapSize, bvhMapSizeInv);
+        float nearDistLeft;
+        float nearDistRight;
         bool leftIntersects =
-          intersectRayAABB(leftMin.xyz, leftMax.xyz, currOrigin, currDir, nearDist);
+          intersectRayAABB(leftMin.xyz, leftMax.xyz, currOrigin, currDir, nearDistLeft);
         bool rightIntersects =
-          intersectRayAABB(rightMin.xyz, rightMax.xyz, currOrigin, currDir, nearDist);
+          intersectRayAABB(rightMin.xyz, rightMax.xyz, currOrigin, currDir, nearDistRight);
         #ifdef BVH_DEBUG
           bvhAABBTests += 2;
         #endif
-        leftIntersects = leftIntersects && currDist > nearDist;
-        rightIntersects = rightIntersects && currDist > nearDist;
+        leftIntersects = leftIntersects && currDist > nearDistLeft;
+        rightIntersects = rightIntersects && currDist > nearDistRight;
         if (leftIntersects && rightIntersects) {
-          #ifdef WEBGL2
-          stack[stackPos] = ivec3(current.y, int(leftMin.w), int(leftMax.w));
-          #else
-          storeStackEntry(stack, stackPos, ivec3(current.y, int(leftMin.w), int(leftMax.w)));
-          #endif
-          current = ivec3(current.z, int(rightMin.w), int(rightMax.w));
+          if (nearDistLeft < nearDistRight) {
+            #ifdef WEBGL2
+            stack[stackPos] = ivec3(current.y, int(leftMin.w), int(leftMax.w));
+            #else
+            storeStackEntry(stack, stackPos, ivec3(current.y, int(leftMin.w), int(leftMax.w)));
+            #endif
+            current = ivec3(current.z, int(rightMin.w), int(rightMax.w));
+          } else {
+            #ifdef WEBGL2
+            stack[stackPos] = ivec3(current.y, int(rightMin.w), int(rightMax.w));
+            #else
+            storeStackEntry(stack, stackPos, ivec3(current.y, int(rightMin.w), int(rightMax.w)));
+            #endif
+            current = ivec3(current.z, int(leftMin.w), int(leftMax.w));
+          }
           stackPos += 1;
           if (isTLAS) {
             stackDivider += 1;

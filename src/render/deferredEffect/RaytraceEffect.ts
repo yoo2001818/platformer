@@ -20,7 +20,7 @@ import {SAMPLE} from '../shader/sample';
 import {DeferredEffect} from './DeferredEffect';
 
 const LIGHT_QUAD = new GLGeometry(quad());
-const TARGET_DELTA_TIME = 1 / 30;
+const TARGET_DELTA_TIME = 1 / 55;
 
 export class RaytraceEffect implements DeferredEffect {
   pipeline: DeferredPipeline;
@@ -84,6 +84,7 @@ export class RaytraceEffect implements DeferredEffect {
           ${SAMPLE}
 
           #define PI 3.141592
+          #define INTERLACE_TILES 1.0
 
           varying vec2 vPosition;
 
@@ -110,13 +111,14 @@ export class RaytraceEffect implements DeferredEffect {
           void main() {
             // Interlacing
             vec2 uv = vPosition.xy * 0.5 + 0.5;
-            vec2 interlaceUV = floor(uv * 4.0);
-            uv = fract(uv * 4.0);
-            uv += (interlaceUV - 1.0) / uScreenSize;
+            vec2 interlaceUV = floor(uv * INTERLACE_TILES);
+            uv = fract(uv * INTERLACE_TILES);
+            // uv += (interlaceUV - 3.5) / uScreenSize;
             // uv = (round(uv * uGBufferSize) + 0.5) / uGBufferSize;
 
             vec2 ndc = uv * 2.0 - 1.0;
             randInit(uSeed + fract(uv * uScreenSize / uRandomMapSize), uSeed);
+            // randInit(uSeed + fract(interlaceUV / INTERLACE_TILES * uScreenSize / uRandomMapSize), uSeed);
 
             float depth = texture2D(uDepthBuffer, uv).x;
             vec4 values[GBUFFER_SIZE];
@@ -131,9 +133,9 @@ export class RaytraceEffect implements DeferredEffect {
             );
 
             PointLight light;
-            light.position = vec3(1.78, 2.399, -1.78);
+            light.position = vec3(0.0, 0.99, 0.0);
             light.color = vec3(1.0);
-            light.intensity = vec3(PI * 6.0, 0.0, 100.0);
+            light.intensity = vec3(PI * 4.0, 0.0, 100.0);
 
             vec3 dir;
             vec3 origin;
@@ -167,7 +169,7 @@ export class RaytraceEffect implements DeferredEffect {
                   origin,
                   L
                 );
-                if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
+                if (!isLightIntersecting || (lightResult.rayDist - lightDist > -0.001)) {
                   if (i == 0) {
                     if (uPassId == 0) {
                       directColor += vec4(calcPoint(prevOrigin, mInfo, light) * 0.5, 1.0);
@@ -238,6 +240,7 @@ export class RaytraceEffect implements DeferredEffect {
             #ifdef WEBGL2
               gl_FragColor = vec4(resultColor, 1.0);
               glFragData1 = directColor;
+              // glFragData1 = vec4(vec3(float(bvhTriangleTests) / 100.0), 1.0);
             #else
               gl_FragData[0] = vec4(resultColor, 1.0);
               gl_FragData[1] = directColor;
@@ -268,6 +271,9 @@ export class RaytraceEffect implements DeferredEffect {
         /* glsl */`
           #version 100
           precision highp float;
+          precision highp sampler2D;
+
+          #define INTERLACE_TILES 1.0
 
           ${DENOISE}
 
@@ -290,15 +296,19 @@ export class RaytraceEffect implements DeferredEffect {
             vec2 uv = srcUV;
             // uv += (rand(vPosition) - 0.5) / uScreenSize;
 
-            vec4 radiance = alignedTexture2D(uDirectRayMap, uv, uScreenSize, vec2(4.0));
-            if (radiance.w == 0.0) {
-              vec2 offset = ceil(uScreenSize / 4.0);
-              uv = (floor(uv * offset) + 0.01) / offset; 
-              radiance = alignedTexture2D(uDirectRayMap, uv, uScreenSize, vec2(4.0));
-            }
-            radiance = radiance / max(radiance.w, 1.0);
-            vec4 color = denoiseRaytrace(uv, 2.0, uRayMap, uGBuffer1, uScreenSize, 1.0 / uScreenSize, vec2(4.0));
+            vec4 radiance = alignedTexture2D(uDirectRayMap, uv, uScreenSize, vec2(INTERLACE_TILES));
+            // vec4 color = denoiseRaytrace(uv, 1.0, uRayMap, uGBuffer1, uScreenSize, 1.0 / uScreenSize, vec2(INTERLACE_TILES));
+            vec4 color = alignedTexture2D(uRayMap, uv, uScreenSize, vec2(INTERLACE_TILES));
             vec3 albedo = texture2D(uGBuffer0, uv).rgb;
+
+            if (radiance.w == 0.0) {
+              vec2 offset = ceil(uScreenSize / INTERLACE_TILES);
+              uv = (floor(uv * offset) + 0.01) / offset; 
+              radiance = alignedTexture2D(uDirectRayMap, uv, uScreenSize, vec2(INTERLACE_TILES));
+              color = alignedTexture2D(uDirectRayMap, uv, uScreenSize, vec2(INTERLACE_TILES));
+            }
+            color = color / max(color.a, 1.0);
+            radiance = radiance / max(radiance.a, 1.0);
             // gl_FragColor = vec4(color.rgb, 1.0);
             // vec4 color = texture2D(uRayMap, uv);
             gl_FragColor = vec4(color.rgb * albedo + radiance.rgb, 1.0);
@@ -314,11 +324,12 @@ export class RaytraceEffect implements DeferredEffect {
     const useFloat = capabilities.hasFloatBlend() &&
       capabilities.hasFloatBuffer() &&
       capabilities.hasFloatTextureLinear();
-    const isMobile = navigator.userAgent.match(/Android|iPhone|iPad|iPod/i);
     let width = glRenderer.getWidth();
     let height = glRenderer.getHeight();
-    width = Math.floor(width / 1);
-    height = Math.floor(height / 1);
+    width = Math.floor(width / 8) * 8;
+    height = Math.floor(height / 8) * 8;
+
+    const isMobile = navigator.userAgent.match(/Android|iPhone|iPad|iPod/i);
     if (isMobile) {
       width = Math.floor(width / 3);
       height = Math.floor(height / 3);
@@ -327,8 +338,8 @@ export class RaytraceEffect implements DeferredEffect {
     // height = 128;
     // this.tileWidth = Math.floor(width / 64);
     // this.tileHeight = Math.floor(height / 64);
-    this.tileWidth = 4;
-    this.tileHeight = 4;
+    this.tileWidth = 8;
+    this.tileHeight = 8;
     const defaultOpts: GLTexture2DOptions = {
       width,
       height,
@@ -430,9 +441,11 @@ export class RaytraceEffect implements DeferredEffect {
     const prevScanId = Math.floor(this.rayTilePos / (tw * th));
     const nextScanId = Math.floor((this.rayTilePos + tilePerFrame) / (tw * th));
     if (prevScanId !== nextScanId) {
-      const next = this.sobol.next();
-      this.randomPos[0] = next[0] * (randomMapWidth - 1) / randomMapWidth;
-      this.randomPos[1] = next[1] * (randomMapHeight - 1) / randomMapHeight;
+      // const next = this.sobol.next();
+      this.randomPos[0] = Math.random();
+      // next[0] * (randomMapWidth - 1) / randomMapWidth;
+      this.randomPos[1] = Math.random();
+      // next[1] * (randomMapHeight - 1) / randomMapHeight;
     }
     this.rayTileBuffer.set(tileData);
     this.rayTilePos += tilePerFrame;

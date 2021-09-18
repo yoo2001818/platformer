@@ -350,7 +350,7 @@ export class StandardMaterial implements Material {
       `,
     }));
 
-    if (chunk.has('armature')) {
+    if (featureBits & ARMATURE_BIT) {
       // Draw each armature separately;
       chunk.forEach((entity) => {
         const transform = entity.get(transformComp)!;
