@@ -16,7 +16,8 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "declaration": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "jsx": "react"
   },
   "include": ["src/**/*"]
 }
