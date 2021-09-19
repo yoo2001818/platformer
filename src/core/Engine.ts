@@ -7,7 +7,7 @@ export const RENDER_PHASE = 3;
 export const AFTER_RENDER_PHASE = 4;
 
 export interface SystemFunction {
-  (deltaTime?: number): void;
+  (deltaTime: number): void;
 }
 
 export class Engine {
@@ -31,6 +31,13 @@ export class Engine {
     this.systems[phase].add(callback);
   }
 
+  unregisterSystem(phase: number, callback: SystemFunction): void {
+    if (this.systems[phase] == null) {
+      return;
+    }
+    this.systems[phase].delete(callback);
+  }
+
   setResource(name: string, value: any): void {
     this.resources.set(name, value);
   }
@@ -39,7 +46,7 @@ export class Engine {
     return this.resources.get(name) as T;
   }
 
-  update(deltaTime?: number): void {
+  update(deltaTime: number): void {
     this.systems.forEach((set) => {
       set.forEach((callback) => callback(deltaTime));
     });

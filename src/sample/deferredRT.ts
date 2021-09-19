@@ -1,6 +1,5 @@
 import {vec3} from 'gl-matrix';
 
-import {EntityStore} from '../core/EntityStore';
 import {Renderer} from '../render/Renderer';
 import {Geometry} from '../render/Geometry';
 import {StandardMaterial} from '../render/material/StandardMaterial';
@@ -26,8 +25,10 @@ import {create3DComponents} from '../3d/create3DComponents';
 import {WorldBVH} from '../render/raytrace/WorldBVH';
 import {DeferredPipeline} from '../render/pipeline/DeferredPipeline';
 import {RaytraceEffect} from '../render/deferredEffect/RaytraceEffect';
+import {Engine, RENDER_PHASE, UPDATE_PHASE} from '../core/Engine';
 
-const store = new EntityStore();
+const engine = new Engine();
+const store = engine.entityStore;
 
 store.registerComponents(create3DComponents());
 
@@ -86,44 +87,6 @@ function main() {
   const gltf = parseGLTF(require('./models/pri-home5.gltf'));
   store.createEntities(gltf.entities);
 
-  /*
-  const bvh = gltf.meshes[0].geometries[0].getBVH();
-  function traverseBVH(bvh: BVH, node: BVHNode, depth = 0): void {
-    if (depth === 5) {
-      const center: vec3 = [
-        (node.bounds[0] + node.bounds[3]) / 2,
-        (node.bounds[1] + node.bounds[4]) / 2,
-        (node.bounds[2] + node.bounds[5]) / 2,
-      ];
-      const size: vec3 = [
-        node.bounds[3] - center[0],
-        node.bounds[4] - center[1],
-        node.bounds[5] - center[2],
-      ];
-      store.create({
-        name: 'box',
-        transform: new Transform()
-          .setPosition(center)
-          .setScale(size),
-        mesh: new Mesh(
-          new StandardMaterial({
-            albedo: [Math.random(), Math.random(), Math.random()],
-            metalic: 0,
-            roughness: 0.4,
-          }),
-          new Geometry(calcNormals(box())),
-          {castShadow: false},
-        ),
-      });
-    }
-    if (!node.isLeaf) {
-      traverseBVH(bvh, node.left, depth + 1);
-      traverseBVH(bvh, node.right, depth + 1);
-    }
-  }
-  traverseBVH(bvh, bvh.root);
-  */
-
   store.create({
     name: 'floor',
     transform: new Transform()
@@ -145,24 +108,6 @@ function main() {
     ),
   });
 
-  /*
-  store.create({
-    name: 'arrow',
-    transform: new Transform()
-      .setPosition([0, 0, 0])
-      .setScale([0.1, 0.1, 0.1]),
-    mesh: new Mesh(
-      new StandardMaterial({
-        albedo: '#ffffff',
-        metalic: 0,
-        roughness: 0.4,
-      }),
-      new Geometry(calcNormals(box())),
-      {castShadow: false},
-    ),
-  });
-  */
-
   store.create({
     name: 'skybox',
     transform: new Transform(),
@@ -182,19 +127,6 @@ function main() {
     light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
 
-  /*
-  store.create({
-    name: 'directionalLight',
-    transform: new Transform()
-      .rotateY(90 * Math.PI / 180)
-      .rotateX(-40 * Math.PI / 180),
-    light: new DirectionalShadowLight({
-      color: '#ffffff',
-      power: 10,
-    }),
-  });
-  */
-
   const orbitController = new OrbitCameraController(
     canvas,
     document.body,
@@ -213,21 +145,16 @@ function main() {
     rasterPipeline.addEffect(new RaytraceEffect(rasterPipeline, worldBVH));
   }
 
+  engine.registerSystem(UPDATE_PHASE, (v) => orbitController.update(v));
+  engine.registerSystem(UPDATE_PHASE, (v) => updateAnimation(store, v));
+  engine.registerSystem(RENDER_PHASE, (v) => renderer.render(v));
+
   let lastTime = 0;
 
   function update(time: number) {
     const delta = time - lastTime;
     lastTime = time;
-
-    store.sort();
-
-    orbitController.update(delta);
-
-
-    renderer.render(delta / 1000);
-
-    updateAnimation(store, delta / 1000);
-
+    engine.update(delta / 1000);
     requestAnimationFrame(update);
   }
 

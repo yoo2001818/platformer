@@ -1,4 +1,4 @@
-import './sample/editor';
+import './sample/deferredRT';
 
 document.body.style.margin = '0';
 document.body.style.padding = '0';
