@@ -5,8 +5,8 @@ import type {EntityStore} from '../EntityStore';
 import {Component} from './Component';
 
 export class UnisonComponent<
-  TReadValue,
-  TWriteValue extends TReadValue = TReadValue
+  TReadValue extends TWriteValue,
+  TWriteValue = TReadValue
 > implements Component<TReadValue, TWriteValue> {
 
   index: number | null = null;
@@ -14,9 +14,14 @@ export class UnisonComponent<
   allocatedIds: Map<string, number> = new Map();
 
   _getSignature: (value: TReadValue) => string;
+  _fromJSON: ((value: TWriteValue) => TReadValue) | null;
 
-  constructor(getSignature: (value: TReadValue) => string) {
+  constructor(
+    getSignature: (value: TReadValue) => string,
+    fromJSON?: (value: TWriteValue) => TReadValue,
+  ) {
     this._getSignature = getSignature;
+    this._fromJSON = fromJSON ?? null;
   }
 
   _validateHash(
@@ -48,12 +53,18 @@ export class UnisonComponent<
   }
 
   set(entity: Entity, value: TWriteValue): void {
+    let nextValue: TReadValue;
+    if (this._fromJSON != null) {
+      nextValue = this._fromJSON(value);
+    } else {
+      nextValue = value as TReadValue;
+    }
     this._validateHash(
       entity,
       entity._getRawMap(this, null),
-      value,
+      nextValue,
     );
-    entity._setRawMap(this, value);
+    entity._setRawMap(this, nextValue);
   }
 
   delete(entity: Entity): void {
@@ -69,7 +80,13 @@ export class UnisonComponent<
     if (value == null) {
       return 0;
     }
-    const signature = this._getSignature(value);
+    let nextValue: TReadValue;
+    if (this._fromJSON != null) {
+      nextValue = this._fromJSON(value);
+    } else {
+      nextValue = value as TReadValue;
+    }
+    const signature = this._getSignature(nextValue);
     let id = this.allocatedIds.get(signature);
     if (id != null) {
       return id;

@@ -4,13 +4,15 @@ import type {EntityStore} from '../EntityStore';
 import {Component} from './Component';
 
 export class ObjectComponent<
-  TReadValue,
-  TWriteValue extends TReadValue = TReadValue
+  TReadValue extends TWriteValue,
+  TWriteValue = TReadValue
 > implements Component<TReadValue, TWriteValue> {
 
   index: number | null = null;
+  _fromJSON: ((value: TWriteValue) => TReadValue) | null;
 
-  constructor() {
+  constructor(fromJSON?: (value: TWriteValue) => TReadValue) {
+    this._fromJSON = fromJSON ?? null;
   }
 
   _validateHash(
@@ -42,12 +44,18 @@ export class ObjectComponent<
   }
 
   set(entity: Entity, value: TWriteValue): void {
+    let nextValue: TReadValue;
+    if (this._fromJSON != null) {
+      nextValue = this._fromJSON(value);
+    } else {
+      nextValue = value as TReadValue;
+    }
     this._validateHash(
       entity,
       entity._getRawMap(this, null),
-      value,
+      nextValue,
     );
-    entity._setRawMap(this, value);
+    entity._setRawMap(this, nextValue);
   }
 
   delete(entity: Entity): void {

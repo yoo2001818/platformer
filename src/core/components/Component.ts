@@ -11,6 +11,7 @@ export interface Component<
   register(store: EntityStore, index: number): void;
   unregister(): void;
 
+  toJSON?(entity: Entity): unknown;
   get(entity: Entity): TReadValue | null;
   set(entity: Entity, value: TWriteValue): void;
   delete(entity: Entity): void;

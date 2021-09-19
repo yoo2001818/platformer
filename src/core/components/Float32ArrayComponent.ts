@@ -4,7 +4,8 @@ import type {EntityStore} from '../EntityStore';
 
 import {Component} from './Component';
 
-export class Float32ArrayComponent implements Component<Float32Array> {
+export class Float32ArrayComponent
+  implements Component<Float32Array, Float32Array | number[]> {
   index: number | null;
   dimensions: number;
   constructor(dimensions: number) {
@@ -24,6 +25,14 @@ export class Float32ArrayComponent implements Component<Float32Array> {
     this.index = null;
   }
 
+  toJSON(entity: Entity): number[] | null {
+    const value = this.get(entity);
+    if (value != null) {
+      return Array.from(value);
+    }
+    return null;
+  }
+
   get(entity: Entity): Float32Array | null {
     if (entity.chunk != null) {
       return this.getChunk(entity.chunk, entity.chunkOffset);
@@ -31,7 +40,11 @@ export class Float32ArrayComponent implements Component<Float32Array> {
     return entity._getRawMap(this, null);
   }
 
-  set(entity: Entity, value: Float32Array): void {
+  set(entity: Entity, value: Float32Array | number[]): void {
+    if (Array.isArray(value)) {
+      this.set(entity, new Float32Array(value));
+      return;
+    }
     // Compare hash before writing
     const prevHash = this.getHashCode(this.get(entity));
     const nextHash = this.getHashCode(value);
