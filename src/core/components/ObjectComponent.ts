@@ -49,7 +49,7 @@ export class ObjectComponent<
     return entity._getRawMap(this, null);
   }
 
-  set(entity: Entity, value: TWriteValue): void {
+  set(entity: Entity, value: TWriteValue): TReadValue {
     let nextValue: TReadValue;
     if (this._fromJSON != null) {
       nextValue = this._fromJSON(value);
@@ -62,6 +62,7 @@ export class ObjectComponent<
       nextValue,
     );
     entity._setRawMap(this, nextValue);
+    return nextValue;
   }
 
   delete(entity: Entity): void {

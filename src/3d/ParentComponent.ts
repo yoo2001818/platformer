@@ -44,6 +44,14 @@ export class ParentComponent
     this.index = null;
   }
 
+  toJSON(entity: Entity): unknown | null {
+    const target = this.get(entity);
+    if (target != null) {
+      return target.handle.toJSON();
+    }
+    return target;
+  }
+
   get(entity: Entity): Entity | null {
     return entity._getRawMap(this, null);
   }

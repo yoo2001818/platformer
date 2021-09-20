@@ -14,4 +14,8 @@ export class EntityHandle {
   incrementVersion(): EntityHandle {
     return new EntityHandle(this.id, this.version + 1);
   }
+
+  toJSON(): unknown {
+    return {id: this.id, version: this.version};
+  }
 }

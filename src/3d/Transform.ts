@@ -5,6 +5,28 @@ import {Entity} from '../core/Entity';
 import {TransformComponent} from './TransformComponent';
 
 export class Transform {
+
+  static fromJSON(data: unknown): Transform {
+    if (data instanceof Transform) {
+      return data;
+    }
+    const transform = new Transform();
+    if (typeof data === 'object' && data != null) {
+      const dataJSON = data as
+        {position: number[]; scale: number[]; rotation: number[];};
+      if ('position' in data) {
+        transform.setPosition(dataJSON.position as vec3);
+      }
+      if ('scale' in data) {
+        transform.setScale(dataJSON.scale as vec3);
+      }
+      if ('rotation' in data) {
+        transform.setRotation(dataJSON.rotation as quat);
+      }
+    }
+    return transform;
+  }
+
   position: Float32Array;
   scale: Float32Array;
   rotation: Float32Array;
@@ -255,4 +277,13 @@ export class Transform {
     quat.setAxisAngle(out, rot, angle);
     return this.setRotation(out);
   }
+
+  toJSON(): unknown {
+    return {
+      position: Array.from(this.position),
+      scale: Array.from(this.scale),
+      rotation: Array.from(this.rotation),
+    };
+  }
+
 }

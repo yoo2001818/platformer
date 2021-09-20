@@ -51,8 +51,16 @@ export class EntityStore {
     });
   }
 
-  getComponent<T extends Component<any, any>>(name: string): T {
+  getComponentOptional<T extends Component<any, any>>(name: string): T | null {
     return this.componentNames.get(name) as T;
+  }
+
+  getComponent<T extends Component<any, any>>(name: string): T {
+    const result = this.getComponentOptional<T>(name);
+    if (result == null) {
+      throw new Error(`Component ${name} is not registered`);
+    }
+    return result;
   }
 
   getComponents(): Component<any, any>[] {

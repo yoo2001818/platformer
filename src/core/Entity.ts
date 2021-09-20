@@ -76,7 +76,7 @@ export class Entity {
   }
 
   get<TReadValue>(
-    component: Component<TReadValue> | string,
+    component: Component<TReadValue, any> | string,
   ): TReadValue | null {
     if (typeof component === 'string') {
       return this.get(this.store.getComponent(component));
@@ -118,6 +118,10 @@ export class Entity {
 
   setMap(options: {[key: string]: any;}): void {
     Object.keys(options).forEach((key) => {
+      // Ignore 'handle' - it's reserved for marking IDs
+      if (key === 'handle') {
+        return;
+      }
       this.set(key, options[key]);
     });
   }
@@ -138,6 +142,7 @@ export class Entity {
 
   toJSON(): {[key: string]: unknown;} {
     const result: {[key: string]: any;} = {};
+    result.handle = this.handle;
     this.store.getComponents().forEach((component) => {
       const name = component.getName()!;
       if (component.toJSON != null) {
