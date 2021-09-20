@@ -8,6 +8,7 @@ export class ObjectComponent<
   TWriteValue = TReadValue
 > implements Component<TReadValue, TWriteValue> {
 
+  name: string | null = null;
   index: number | null = null;
   _fromJSON: ((value: TWriteValue) => TReadValue) | null;
 
@@ -27,12 +28,17 @@ export class ObjectComponent<
     }
   }
 
+  getName(): string | null {
+    return this.name;
+  }
+
   getIndex(): number | null {
     return this.index;
   }
 
-  register(store: EntityStore, index: number): void {
-    this.index = index;
+  register(storeVal: EntityStore, indexVal: number, nameVal: string): void {
+    this.name = nameVal;
+    this.index = indexVal;
   }
 
   unregister(): void {

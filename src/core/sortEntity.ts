@@ -7,7 +7,7 @@ export function sortEntity(store: EntityStore): void {
     if (!entity.floating || !entity.isValid()) {
       return;
     }
-    const group = store.getGroup(entity);
+    const group = store.getGroupOf(entity);
     group.allocate(entity);
   });
   store.floatingEntities = [];

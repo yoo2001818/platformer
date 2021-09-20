@@ -41,7 +41,7 @@ export class EntityStore {
     }
     this.components.push(component);
     this.componentNames.set(name, component);
-    component.register(this, nextId);
+    component.register(this, nextId, name);
   }
 
   registerComponents(components: {[key: string]: Component<any>;}): void {
@@ -116,6 +116,10 @@ export class EntityStore {
     entity.destroy();
   }
 
+  getEntities(): Entity[] {
+    return this.entities.filter((v) => v.isValid());
+  }
+
   _handleDestroy(entity: Entity): void {
     this.deletedEntities.push(entity);
     entity._markDeleted();
@@ -125,7 +129,7 @@ export class EntityStore {
     this.floatingEntities.push(entity);
   }
 
-  getGroup(entity: Entity): EntityGroup {
+  getGroupOf(entity: Entity): EntityGroup {
     const hashCodes = entity.getHashCodes();
     const hashCode = getHashCode(hashCodes);
     const matchedGroups = this.groups.get(hashCode);
@@ -218,5 +222,9 @@ export class EntityStore {
       }
       group.forEachChunk(callback);
     });
+  }
+
+  toJSON(): unknown {
+    return this.getEntities().map((v) => v.toJSON());
   }
 }

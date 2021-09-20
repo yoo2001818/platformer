@@ -7,8 +7,9 @@ export interface Component<
   TReadValue,
   TWriteValue = TReadValue
 > {
+  getName(): string | null;
   getIndex(): number | null;
-  register(store: EntityStore, index: number): void;
+  register(store: EntityStore, index: number, name: string): void;
   unregister(): void;
 
   toJSON?(entity: Entity): unknown;

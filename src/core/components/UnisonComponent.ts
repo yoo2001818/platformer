@@ -9,6 +9,7 @@ export class UnisonComponent<
   TWriteValue = TReadValue
 > implements Component<TReadValue, TWriteValue> {
 
+  name: string | null = null;
   index: number | null = null;
 
   allocatedIds: Map<string, number> = new Map();
@@ -36,11 +37,16 @@ export class UnisonComponent<
     }
   }
 
+  getName(): string | null {
+    return this.name;
+  }
+
   getIndex(): number | null {
     return this.index;
   }
 
-  register(store: EntityStore, index: number): void {
+  register(store: EntityStore, index: number, name: string): void {
+    this.name = name;
     this.index = index;
   }
 

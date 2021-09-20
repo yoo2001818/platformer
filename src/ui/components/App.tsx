@@ -11,9 +11,9 @@ export function App(): React.ReactElement {
   }
   return (
     <EngineProvider engine={engine.current}>
-      <div>
+      <pre>
         { JSON.stringify(engine.current, null, 2) }
-      </div>
+      </pre>
     </EngineProvider>
   );
 }

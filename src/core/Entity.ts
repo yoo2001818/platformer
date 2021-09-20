@@ -122,9 +122,35 @@ export class Entity {
     });
   }
 
+  getMap(): {[key: string]: any;} {
+    const result: {[key: string]: any;} = {};
+    this.store.getComponents().forEach((component) => {
+      result[component.getName()!] = component.get(this);
+    });
+    return result;
+  }
+
   getHashCodes(): number[] {
     return this.store.getComponents().map((component) => {
       return component.getHashCode(component.get(this));
     });
+  }
+
+  toJSON(): {[key: string]: unknown;} {
+    const result: {[key: string]: any;} = {};
+    this.store.getComponents().forEach((component) => {
+      const name = component.getName()!;
+      if (component.toJSON != null) {
+        result[name] = component.toJSON(this);
+      } else {
+        let value = component.get(this);
+        const valueJSONable = value as {toJSON(): unknown;};
+        if (value != null && typeof valueJSONable.toJSON === 'function') {
+          value = valueJSONable.toJSON();
+        }
+        result[name] = value;
+      }
+    });
+    return result;
   }
 }

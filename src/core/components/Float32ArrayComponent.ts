@@ -6,18 +6,25 @@ import {Component} from './Component';
 
 export class Float32ArrayComponent
   implements Component<Float32Array, Float32Array | number[]> {
+  name: string | null;
   index: number | null;
   dimensions: number;
   constructor(dimensions: number) {
+    this.name = null;
     this.index = null;
     this.dimensions = dimensions;
+  }
+
+  getName(): string | null {
+    return this.name;
   }
 
   getIndex(): number | null {
     return this.index;
   }
 
-  register(storeVal: EntityStore, indexVal: number): void {
+  register(storeVal: EntityStore, indexVal: number, nameVal: string): void {
+    this.name = nameVal;
     this.index = indexVal;
   }
 

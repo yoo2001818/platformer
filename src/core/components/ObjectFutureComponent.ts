@@ -20,6 +20,7 @@ export class ObjectFutureComponent<
 > implements Component<TReadValue, TWriteValue> {
 
   entityStore: EntityStore | null = null;
+  name: string | null = null;
   index: number | null = null;
   childrenMap: Map<number | null, Entity[]> = new Map();
   _deserialize: ObjectFutureDeserializer<TReadValue, TWriteValue>;
@@ -40,13 +41,18 @@ export class ObjectFutureComponent<
     }
   }
 
+  getName(): string | null {
+    return this.name;
+  }
+
   getIndex(): number | null {
     return this.index;
   }
 
-  register(store: EntityStore, index: number): void {
+  register(store: EntityStore, index: number, name: string): void {
     this.entityStore = store;
     this.index = index;
+    this.name = name;
     this.childrenMap = new Map();
   }
 
