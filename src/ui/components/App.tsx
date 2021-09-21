@@ -5,6 +5,7 @@ import {Engine} from '../../core/Engine';
 import {parseGLTF} from '../../loader/gltf';
 
 import {EngineProvider} from './EngineContext';
+import {EntityList} from './EntityList';
 
 export function App(): React.ReactElement {
   const engine = useRef<Engine | null>(null);
@@ -20,6 +21,7 @@ export function App(): React.ReactElement {
   }
   return (
     <EngineProvider engine={engine.current}>
+      <EntityList />
       <pre>
         { JSON.stringify(engine.current, null, 2) }
       </pre>
