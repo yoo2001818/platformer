@@ -73,16 +73,17 @@ export class ParentComponent
     );
     this._removeChildren(prev?.handle.id ?? null, entity);
     entity._setRawMap(this, value);
-    // TODO: Entity without parent won't be populated in the index
     this._setChildren(value?.handle.id ?? null, entity);
   }
 
   delete(entity: Entity): void {
+    const prev = entity._getRawMap<Entity | null>(this, null);
     this._validateHash(
       entity,
-      entity._getRawMap(this, null),
+      prev,
       null,
     );
+    this._removeChildren(prev?.handle.id ?? null, entity);
     entity._setRawMap(this, null);
   }
 

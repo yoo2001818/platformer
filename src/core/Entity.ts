@@ -75,6 +75,15 @@ export class Entity {
     }
   }
 
+  has(
+    component: Component<any, any> | string,
+  ): boolean {
+    if (typeof component === 'string') {
+      return this.has(this.store.getComponent(component));
+    }
+    return component.get(this) != null;
+  }
+
   get<TReadValue>(
     component: Component<TReadValue, any> | string,
   ): TReadValue | null {
