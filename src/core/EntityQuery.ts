@@ -1,5 +1,6 @@
 import {Component} from './components/Component';
 import {Entity} from './Entity';
+import {EntityGroup} from './EntityGroup';
 import {EntityStore} from './EntityStore';
 
 export class EntityQuery {
@@ -47,10 +48,33 @@ export class EntityQuery {
     return true;
   }
 
+  _testGroup(group: EntityGroup): boolean {
+    if (!this.withComponents.every((v) => group.has(v))) {
+      return false;
+    }
+    if (!this.withoutComponents.every((v) => !group.has(v))) {
+      return false;
+    }
+    return true;
+  }
+
   forEach(callback: (entity: Entity) => void): void {
-    this.entityStore.forEach((entity) => {
+    this.entityStore.forEachGroup((group) => {
+      if (this._testGroup(group)) {
+        group.forEach(callback);
+      }
+    });
+    this.entityStore.floatingEntities.forEach((entity) => {
       if (this._testEntity(entity)) {
         callback(entity);
+      }
+    });
+  }
+
+  forEachGroup(callback: (group: EntityGroup) => void): void {
+    this.entityStore.forEachGroup((group) => {
+      if (this._testGroup(group)) {
+        callback(group);
       }
     });
   }

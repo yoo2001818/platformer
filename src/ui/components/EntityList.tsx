@@ -1,13 +1,18 @@
 import React from 'react';
 
-import {ParentComponent} from '../../3d/ParentComponent';
+import {Entity} from '../../core/Entity';
 import {useEngineValue} from '../hooks/useEngineValue';
 
 export function EntityList(): React.ReactElement {
   const entities = useEngineValue((engine) => {
-    const parent = engine.entityStore.getComponent<ParentComponent>('parent');
-    const root = parent.getChildren(null);
-    return root;
+    const result: Entity[] = [];
+    engine.entityStore
+      .query()
+      .without('parent')
+      .forEach((entity) => {
+        result.push(entity);
+      });
+    return result;
   });
   return (
     <ul>

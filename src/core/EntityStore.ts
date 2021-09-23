@@ -4,6 +4,7 @@ import {EntityChunk} from './EntityChunk';
 import {EntityFuture} from './EntityFuture';
 import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
+import {EntityQuery} from './EntityQuery';
 import {sortEntity} from './sortEntity';
 import {getHashCode} from './utils/getHashCode';
 
@@ -162,6 +163,10 @@ export class EntityStore {
     const newGroup = new EntityGroup(this, hashCodes, entity);
     this.groups.set(hashCode, [newGroup]);
     return newGroup;
+  }
+
+  query(): EntityQuery {
+    return new EntityQuery(this);
   }
 
   sort(): void {
