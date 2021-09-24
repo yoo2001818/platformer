@@ -1,7 +1,9 @@
 import React from 'react';
+import styled from '@emotion/styled';
 
 import {Entity} from '../../core/Entity';
 import {useEngineValue} from '../hooks/useEngineValue';
+import {COLORS} from '../constants/colors';
 
 export function EntityList(): React.ReactElement {
   const entities = useEngineValue((engine) => {
@@ -15,12 +17,29 @@ export function EntityList(): React.ReactElement {
     return result;
   });
   return (
-    <ul>
+    <EntityListUl>
       { entities.map((entity, i) => (
-        <li key={entity.handle.id}>
+        <EntityListItem key={entity.handle.id}>
           { entity.get('name') }
-        </li>
+        </EntityListItem>
       )) }
-    </ul>
+    </EntityListUl>
   );
 }
+
+const EntityListUl = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+`;
+
+const EntityListItem = styled.li`
+  padding: 5px 16px;
+  background-color: ${COLORS.gray0};
+  color: ${COLORS.gray90};
+  font-size: 13px;
+  &:hover {
+    background-color: ${COLORS.blue50};
+    color: ${COLORS.gray0};
+  }
+`;
