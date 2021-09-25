@@ -6,6 +6,7 @@ import {parseGLTF} from '../../loader/gltf';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
+import {LayoutTree} from './LayoutTree';
 
 export function App(): React.ReactElement {
   const engine = useRef<Engine | null>(null);
@@ -21,10 +22,9 @@ export function App(): React.ReactElement {
   }
   return (
     <EngineProvider engine={engine.current}>
-      <EntityList />
-      <pre>
-        { JSON.stringify(engine.current, null, 2) }
-      </pre>
+      <LayoutTree>
+        <EntityList />
+      </LayoutTree>
     </EngineProvider>
   );
 }
