@@ -18,5 +18,7 @@ export function LayoutTree(
 }
 
 const TreeDiv = styled.div`
+  width: 100%;
+  height: 100%;
 `;
 

@@ -1,2 +1,2 @@
 export * from './LayoutTree';
-export * from './SplitContainer';
+export * from './SplitList';

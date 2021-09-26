@@ -1,4 +1,5 @@
 import React, {useRef} from 'react';
+import {css, Global} from '@emotion/react';
 
 import {create3DComponents} from '../../3d/create3DComponents';
 import {Engine} from '../../core/Engine';
@@ -6,7 +7,7 @@ import {parseGLTF} from '../../loader/gltf';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
-import {LayoutTree} from './LayoutTree';
+import {LayoutTree, SplitList, SplitCell} from './LayoutTree';
 
 export function App(): React.ReactElement {
   const engine = useRef<Engine | null>(null);
@@ -22,8 +23,24 @@ export function App(): React.ReactElement {
   }
   return (
     <EngineProvider engine={engine.current}>
+      <Global
+        styles={css`
+          html, body, #root {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+          }
+        `}
+      />
       <LayoutTree>
-        <EntityList />
+        <SplitList direction="horizontal">
+          <SplitCell size={0.85}>
+            Canvas
+          </SplitCell>
+          <SplitCell size={0.15}>
+            <EntityList />
+          </SplitCell>
+        </SplitList>
       </LayoutTree>
     </EngineProvider>
   );
