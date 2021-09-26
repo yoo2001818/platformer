@@ -29,14 +29,24 @@ export function SplitList(
     return output;
   }, [direction, children]);
   return (
-    <ContainerDiv className={className}>
+    <ContainerDiv
+      className={className}
+      direction={direction}
+    >
       { mappedChildren }
     </ContainerDiv>
   );
 }
 
-const ContainerDiv = styled.div`
+const ContainerDiv = styled.div<{direction: string;}>`
   display: flex;
   width: 100%;
   height: 100%;
+  ${({direction}) => (direction === 'vertical'
+    ? `
+      flex-direction: column;
+    `
+    : `
+      flex-direction: row;
+    `)}
 `;

@@ -34,11 +34,18 @@ export function App(): React.ReactElement {
       />
       <LayoutTree>
         <SplitList direction="horizontal">
-          <SplitCell size={0.85}>
+          <SplitCell size={0.8}>
             Canvas
           </SplitCell>
-          <SplitCell size={0.15}>
-            <EntityList />
+          <SplitCell size={0.2}>
+            <SplitList direction="vertical">
+              <SplitCell size={0.4}>
+                <EntityList />
+              </SplitCell>
+              <SplitCell size={0.6}>
+                Inspector
+              </SplitCell>
+            </SplitList>
           </SplitCell>
         </SplitList>
       </LayoutTree>
