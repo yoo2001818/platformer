@@ -8,6 +8,7 @@ import {parseGLTF} from '../../loader/gltf';
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
 import {LayoutTree, SplitList, SplitCell} from './LayoutTree';
+import {PanelHeader} from './PanelHeader';
 
 export function App(): React.ReactElement {
   const engine = useRef<Engine | null>(null);
@@ -35,15 +36,22 @@ export function App(): React.ReactElement {
       <LayoutTree>
         <SplitList direction="horizontal">
           <SplitCell size={0.8}>
-            Canvas
+            <PanelHeader>
+              Canvas
+            </PanelHeader>
           </SplitCell>
           <SplitCell size={0.2}>
             <SplitList direction="vertical">
               <SplitCell size={0.4}>
+                <PanelHeader>
+                  Hierarchy
+                </PanelHeader>
                 <EntityList />
               </SplitCell>
               <SplitCell size={0.6}>
-                Inspector
+                <PanelHeader>
+                  Inspector
+                </PanelHeader>
               </SplitCell>
             </SplitList>
           </SplitCell>

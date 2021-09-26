@@ -17,10 +17,10 @@ export function SplitDivider(
 }
 
 const Divider = styled.hr`
-  flex: 0 0 3px;
+  flex: 0 0 2px;
   display: block;
   margin: 0;
   padding: 0;
   border: none;
-  background-color: ${COLORS.gray50};
+  background-color: ${COLORS.gray80};
 `;
