@@ -1,5 +1,6 @@
 import React, {useRef} from 'react';
 import {css, Global} from '@emotion/react';
+import {RecoilRoot} from 'recoil';
 
 import {create3DComponents} from '../../3d/create3DComponents';
 import {Engine} from '../../core/Engine';
@@ -23,40 +24,42 @@ export function App(): React.ReactElement {
     });
   }
   return (
-    <EngineProvider engine={engine.current}>
-      <Global
-        styles={css`
-          html, body, #root {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-          }
-        `}
-      />
-      <LayoutTree>
-        <SplitList direction="horizontal">
-          <SplitCell size={0.8}>
-            <PanelHeader>
-              Canvas
-            </PanelHeader>
-          </SplitCell>
-          <SplitCell size={0.2}>
-            <SplitList direction="vertical">
-              <SplitCell size={0.4}>
-                <PanelHeader>
-                  Hierarchy
-                </PanelHeader>
-                <EntityList />
-              </SplitCell>
-              <SplitCell size={0.6}>
-                <PanelHeader>
-                  Inspector
-                </PanelHeader>
-              </SplitCell>
-            </SplitList>
-          </SplitCell>
-        </SplitList>
-      </LayoutTree>
+    <RecoilRoot>
+      <EngineProvider engine={engine.current}>
+        <Global
+          styles={css`
+            html, body, #root {
+              width: 100%;
+              height: 100%;
+              margin: 0;
+            }
+          `}
+        />
+        <LayoutTree>
+          <SplitList direction="horizontal">
+            <SplitCell size={0.8}>
+              <PanelHeader>
+                Canvas
+              </PanelHeader>
+            </SplitCell>
+            <SplitCell size={0.2}>
+              <SplitList direction="vertical">
+                <SplitCell size={0.4}>
+                  <PanelHeader>
+                    Hierarchy
+                  </PanelHeader>
+                  <EntityList />
+                </SplitCell>
+                <SplitCell size={0.6}>
+                  <PanelHeader>
+                    Properties
+                  </PanelHeader>
+                </SplitCell>
+              </SplitList>
+            </SplitCell>
+          </SplitList>
+        </LayoutTree>
     </EngineProvider>
+    </RecoilRoot>
   );
 }
