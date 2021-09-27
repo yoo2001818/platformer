@@ -10,6 +10,7 @@ import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
 import {LayoutTree, SplitList, SplitCell} from './LayoutTree';
 import {PanelHeader} from './PanelHeader';
+import {EntityProperties} from './EntityProperties';
 
 export function App(): React.ReactElement {
   const engine = useRef<Engine | null>(null);
@@ -54,6 +55,7 @@ export function App(): React.ReactElement {
                   <PanelHeader>
                     Properties
                   </PanelHeader>
+                  <EntityProperties />
                 </SplitCell>
               </SplitList>
             </SplitCell>

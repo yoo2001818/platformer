@@ -24,6 +24,7 @@ export function SplitCell(
 }
 
 const SplitCellDiv = styled.div<{direction?: string; size: number;}>`
+  overflow: auto;
   ${({size}) => `
     flex: ${size * 100} 0 0px;
     min-width: 0;
