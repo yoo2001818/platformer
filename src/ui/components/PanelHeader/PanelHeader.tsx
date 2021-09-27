@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import {COLORS} from '../../constants/colors';
+import {COLORS} from '../../styles/colors';
 
 export interface PanelHeaderProps {
   className?: string;
