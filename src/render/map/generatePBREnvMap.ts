@@ -140,7 +140,7 @@ const BAKE_SHADER = new ShaderBank<[string]>(
 // This accepts a cubepack map and generates an environment map for PBR, which
 // contains number of cubepack map samples on 2D texture.
 export function generatePBREnvMap(
-  renderer: GLRenderer,
+  renderer: GLRenderer | null,
   source: GLTexture,
   hdrFormat: HDRType,
 ): GLTexture {
@@ -148,7 +148,7 @@ export function generatePBREnvMap(
   if (width == null || height == null) {
     throw new Error('The width/height of target buffer must be specified');
   }
-  return new GLTextureGenerated(source.options, () => {
+  return new GLTextureGenerated(source.options, (renderer) => {
     const maxLevel = Math.floor(Math.log2(0.5 * width) - 3);
     const hammersleyMap = generateHammersleyMap(1024);
     const target = new GLTexture2D({

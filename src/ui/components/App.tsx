@@ -8,6 +8,15 @@ import {parseGLTF} from '../../loader/gltf';
 import {Transform} from '../../3d/Transform';
 import {Camera} from '../../3d/Camera';
 import {PointLight} from '../../render/light/PointLight';
+import {GLTexture2D} from '../../render/gl/GLTexture2D';
+import {createImage} from '../../render/utils/createImage';
+import {generateCubePackEquirectangular} from '../../render/map/generateCubePack';
+import {generatePBREnvMap} from '../../render/map/generatePBREnvMap';
+import {Mesh} from '../../render/Mesh';
+import {SkyboxMaterial} from '../../render/material/SkyboxMaterial';
+import {Geometry} from '../../render/Geometry';
+import {quad} from '../../geom/quad';
+import {EnvironmentLight} from '../../render/light/EnvironmentLight';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
@@ -25,6 +34,7 @@ function initEngine(): Engine {
     transform: {position: [0, 1, 0]},
   });
   engine.entityStore.create({
+    name: 'Camera',
     transform: new Transform()
       .rotateY(Math.PI / 2)
       // .rotateY(Math.PI / 4)
@@ -38,10 +48,44 @@ function initEngine(): Engine {
     }),
   });
   engine.entityStore.create({
-    name: 'pointLight',
+    name: 'PointLight',
     transform: new Transform()
       .translate([0, 1, 0]),
-    light: new PointLight({color: '#ffffff', power: 1, radius: 10, range: 10}),
+    light: new PointLight({color: '#ffffff', power: 5, radius: 10, range: 12}),
+  });
+  const skyboxTexture = new GLTexture2D({
+    width: 4096,
+    height: 2048,
+    format: 'rgba',
+    source: createImage(require('./../../sample/studio_country_hall_2k.rgbe.png')),
+    magFilter: 'nearest',
+    minFilter: 'nearest',
+    mipmap: false,
+  });
+  const mip = generateCubePackEquirectangular(
+    null,
+    skyboxTexture,
+    'rgbe',
+    'halfFloat',
+    1024,
+  );
+  const pbrTexture = generatePBREnvMap(null, mip, 'halfFloat');
+  engine.entityStore.create({
+    name: 'skybox',
+    transform: new Transform(),
+    mesh: new Mesh(
+      new SkyboxMaterial({
+        texture: pbrTexture,
+        lod: 2,
+      }),
+      new Geometry(quad()),
+      {castRay: false},
+    ),
+  });
+  engine.entityStore.create({
+    name: 'envLight',
+    transform: new Transform(),
+    light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
   return engine;
 }

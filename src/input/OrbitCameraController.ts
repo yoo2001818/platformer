@@ -73,8 +73,10 @@ export class OrbitCameraController {
   }
 
   setEntity(entity: Entity): void {
-    this.entity = entity;
-    this.hasChanged = true;
+    if (this.entity !== entity) {
+      this.entity = entity;
+      this.hasChanged = true;
+    }
   }
 
   registerEvents() {
@@ -284,7 +286,7 @@ export class OrbitCameraController {
     }
     const transform = this.entity.get<Transform>('transform')!;
     if (this.lerpCounter !== -1) {
-      this.lerpCounter = Math.min(1, this.lerpCounter + delta * 0.004);
+      this.lerpCounter = Math.min(1, this.lerpCounter + delta * 4);
       vec3.lerp(this.center,
         this.lerpStart, this.lerpEnd, easeInOutQuad(this.lerpCounter));
       this.hasChanged = true;
@@ -293,7 +295,7 @@ export class OrbitCameraController {
       }
     }
     if (this.slerpCounter !== -1) {
-      this.slerpCounter = Math.min(1, this.slerpCounter + delta * 0.004);
+      this.slerpCounter = Math.min(1, this.slerpCounter + delta * 4);
       quat.slerp(transform.getRotation(),
         this.slerpStart, this.slerpEnd, easeInOutQuad(this.slerpCounter));
       this.hasChanged = true;

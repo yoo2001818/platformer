@@ -174,7 +174,7 @@ const EQUI_SHADER = new ShaderBank<[string, string]>(
 );
 
 export function generateCubePackEquirectangular(
-  renderer: GLRenderer,
+  renderer: GLRenderer | null,
   source: GLTexture,
   inFormat: HDRType,
   outFormat: HDRType,
@@ -186,7 +186,7 @@ export function generateCubePackEquirectangular(
     ...getHDROptions(outFormat),
     width,
     height,
-  }, () => {
+  }, (renderer) => {
     const target = new GLTexture2D({
       ...getHDROptions(outFormat),
       width,

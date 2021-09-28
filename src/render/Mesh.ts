@@ -64,4 +64,8 @@ export class Mesh {
     }
     return this.boundPoints;
   }
+
+  toJSON(): unknown {
+    return {};
+  }
 }
