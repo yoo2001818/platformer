@@ -5,24 +5,51 @@ import {RecoilRoot} from 'recoil';
 import {create3DComponents} from '../../3d/create3DComponents';
 import {Engine} from '../../core/Engine';
 import {parseGLTF} from '../../loader/gltf';
+import {Transform} from '../../3d/Transform';
+import {Camera} from '../../3d/Camera';
+import {PointLight} from '../../render/light/PointLight';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
 import {LayoutTree, SplitList, SplitCell} from './LayoutTree';
 import {Panel, PanelHeader, PanelContent} from './Panel';
 import {EntityProperties} from './EntityProperties';
+import {Viewport} from './Viewport';
+
+function initEngine(): Engine {
+  const engine = new Engine();
+  engine.entityStore.registerComponents(create3DComponents());
+  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/gi.gltf')).entities);
+  engine.entityStore.create({
+    name: 'Test',
+    transform: {position: [0, 1, 0]},
+  });
+  engine.entityStore.create({
+    transform: new Transform()
+      .rotateY(Math.PI / 2)
+      // .rotateY(Math.PI / 4)
+      // .rotateX(-Math.PI * 0.4 / 4)
+      .translate([0, 0, 40]),
+    camera: new Camera({
+      type: 'perspective',
+      fov: 70 / 180 * Math.PI,
+      far: 1000,
+      near: 0.3,
+    }),
+  });
+  engine.entityStore.create({
+    name: 'pointLight',
+    transform: new Transform()
+      .translate([0, 1, 0]),
+    light: new PointLight({color: '#ffffff', power: 1, radius: 10, range: 10}),
+  });
+  return engine;
+}
 
 export function App(): React.ReactElement {
   const engine = useRef<Engine | null>(null);
   if (engine.current == null) {
-    engine.current = new Engine();
-    const engineVal = engine.current;
-    engineVal.entityStore.registerComponents(create3DComponents());
-    engineVal.entityStore.createEntities(parseGLTF(require('../../sample/models/gi.gltf')).entities);
-    engineVal.entityStore.create({
-      name: 'Test',
-      transform: {position: [0, 1, 0]},
-    });
+    engine.current = initEngine();
   }
   return (
     <RecoilRoot>
@@ -41,8 +68,11 @@ export function App(): React.ReactElement {
             <SplitCell size={0.8}>
               <Panel>
                 <PanelHeader>
-                  Canvas
+                  Viewport
                 </PanelHeader>
+                <PanelContent>
+                  <Viewport />
+                </PanelContent>
               </Panel>
             </SplitCell>
             <SplitCell size={0.2}>

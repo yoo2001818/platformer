@@ -35,12 +35,12 @@ export class OrbitCameraController {
 
   mouseElem: HTMLElement;
   keyElem: HTMLElement;
-  entity: Entity;
+  entity: Entity | null;
 
   constructor(
     mouseElem: HTMLElement,
     keyElem: HTMLElement,
-    entity: Entity,
+    entity: Entity | null,
     radius = 6,
   ) {
     // Blender-like control mode
@@ -72,10 +72,18 @@ export class OrbitCameraController {
     this.registerEvents();
   }
 
+  setEntity(entity: Entity): void {
+    this.entity = entity;
+    this.hasChanged = true;
+  }
+
   registerEvents() {
     const {mouseElem, keyElem} = this;
     mouseElem.addEventListener('mousemove', (e) => {
       if (!this.mouseHeld) {
+        return;
+      }
+      if (this.entity == null) {
         return;
       }
       const offsetX = e.clientX - this.mouseX;
@@ -114,6 +122,9 @@ export class OrbitCameraController {
     mouseElem.addEventListener('touchstart', (e) => {
       e.preventDefault();
       this.mouseHeld = true;
+      if (this.entity == null) {
+        return;
+      }
       const transform = this.entity.get<Transform>('transform')!;
       // Determine if we should go clockwise or anticlockwise.
       const upLocal = vec3.create();
@@ -127,6 +138,9 @@ export class OrbitCameraController {
     }, false);
     mouseElem.addEventListener('touchmove', (e) => {
       if (!this.mouseHeld) {
+        return;
+      }
+      if (this.entity == null) {
         return;
       }
       const offsetX = e.changedTouches[0].pageX - this.mouseX;
@@ -157,6 +171,9 @@ export class OrbitCameraController {
       if (e.button === 0) {
         return;
       }
+      if (this.entity == null) {
+        return;
+      }
       this.mouseHeld = true;
       const transform = this.entity.get<Transform>('transform')!;
       // Determine if we should go clockwise or anticlockwise.
@@ -179,6 +196,9 @@ export class OrbitCameraController {
     });
     keyElem.addEventListener('keydown', (e) => {
       if (e.shiftKey) {
+        return;
+      }
+      if (this.entity == null) {
         return;
       }
       const transform = this.entity.get<Transform>('transform')!;
@@ -231,6 +251,9 @@ export class OrbitCameraController {
       if (e.deltaMode === 0) {
         diff /= 12;
       }
+      if (this.entity == null) {
+        return;
+      }
       const transform = this.entity.get<Transform>('transform')!;
       if (e.shiftKey) {
         const vecY = vec3.create();
@@ -256,6 +279,9 @@ export class OrbitCameraController {
   }
 
   update(delta: number): void {
+    if (this.entity == null) {
+      return;
+    }
     const transform = this.entity.get<Transform>('transform')!;
     if (this.lerpCounter !== -1) {
       this.lerpCounter = Math.min(1, this.lerpCounter + delta * 0.004);
