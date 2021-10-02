@@ -33,7 +33,7 @@ function initEngine(): Engine {
     name: 'Test',
     transform: {position: [0, 1, 0]},
   });
-  engine.entityStore.create({
+  const camera = engine.entityStore.create({
     name: 'Camera',
     transform: new Transform()
       .rotateY(Math.PI / 2)
@@ -86,6 +86,9 @@ function initEngine(): Engine {
     name: 'envLight',
     transform: new Transform(),
     light: new EnvironmentLight({texture: pbrTexture, power: 1}),
+  });
+  engine.setResource('viewportOptions', {
+    camera,
   });
   return engine;
 }
