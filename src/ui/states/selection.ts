@@ -6,3 +6,8 @@ export const selectedEntity = atom<EntityHandle | null>({
   key: 'selectedEntity',
   default: null,
 });
+
+export const editorCamera = atom<EntityHandle | null>({
+  key: 'editorCamera',
+  default: null,
+});
