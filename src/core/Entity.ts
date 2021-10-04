@@ -149,6 +149,17 @@ export class Entity {
     });
   }
 
+  getEntries(): [string, any][] {
+    const output: [string, any][] = [];
+    this.store.getComponents().forEach((component) => {
+      const value = component.get(this);
+      if (value != null) {
+        output.push([component.getName()!, value]);
+      }
+    });
+    return output;
+  }
+
   toJSON(): {[key: string]: unknown;} {
     const result: {[key: string]: any;} = {};
     result.handle = this.handle;
