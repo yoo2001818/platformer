@@ -5,7 +5,9 @@ import {useRecoilValue} from 'recoil';
 import {COLORS} from '../../styles/colors';
 import {selectedEntity} from '../../states/selection';
 import {useEntity} from '../../hooks/useEntity';
-import {TextInput} from '../Input';
+
+import {EntityPropertiesHeader} from './Header';
+import {EntityPropertiesComponent} from './Component';
 
 // TODO: We're reading off of the entity state; however this should be changed
 export function EntityProperties(): React.ReactElement | null {
@@ -17,16 +19,15 @@ export function EntityProperties(): React.ReactElement | null {
   const components = entity.getEntries();
   return (
     <Div>
-      <TextInput
-        value={entity.get('name')!}
-        onChange={(name) => {
-          entity.set('name', name);
-        }}
-      />
+      <EntityPropertiesHeader entity={entity} />
       <ul>
         { components.map(([name, value]) => (
           <li key={name}>
-            { name }
+            <EntityPropertiesComponent
+              entity={entity}
+              name={name}
+              value={value}
+            />
           </li>
         )) }
       </ul>

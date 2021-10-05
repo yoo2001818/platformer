@@ -28,5 +28,15 @@ export function TextInput(
 }
 
 const Input = styled.input`
-  color: ${COLORS.gray90};
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px 5px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  border: 1px solid ${COLORS.gray40};
+  background: ${COLORS.gray0};
+  color: ${COLORS.gray100};
+  border-radius: 2px;
 `;
