@@ -12,18 +12,6 @@ export class ParentComponent
   index: number | null = null;
   childrenMap: Map<number | null, Entity[]> = new Map();
 
-  _validateHash(
-    entity: Entity,
-    prevValue: Entity | null,
-    nextValue: Entity | null,
-  ): void {
-    const prevHash = this.getHashCode(prevValue);
-    const nextHash = this.getHashCode(nextValue);
-    if (prevHash !== nextHash) {
-      entity.float();
-    }
-  }
-
   getName(): string | null {
     return this.name;
   }
@@ -66,11 +54,7 @@ export class ParentComponent
       return;
     }
     const prev = entity._getRawMap<Entity | null>(this, null);
-    this._validateHash(
-      entity,
-      prev,
-      value,
-    );
+    entity._setHashCode(this.index!, this.getHashCode(value));
     this._removeChildren(prev?.handle.id ?? null, entity);
     entity._setRawMap(this, value);
     this._setChildren(value?.handle.id ?? null, entity);
@@ -78,11 +62,7 @@ export class ParentComponent
 
   delete(entity: Entity): void {
     const prev = entity._getRawMap<Entity | null>(this, null);
-    this._validateHash(
-      entity,
-      prev,
-      null,
-    );
+    entity._setHashCode(this.index!, this.getHashCode(null));
     this._removeChildren(prev?.handle.id ?? null, entity);
     entity._setRawMap(this, null);
   }

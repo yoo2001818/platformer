@@ -29,18 +29,6 @@ export class ObjectFutureComponent<
     this._deserialize = deserialize;
   }
 
-  _validateHash(
-    entity: Entity,
-    prevValue: TReadValue | null,
-    nextValue: TReadValue | null,
-  ): void {
-    const prevHash = this.getHashCode(prevValue);
-    const nextHash = this.getHashCode(nextValue);
-    if (prevHash !== nextHash) {
-      entity.float();
-    }
-  }
-
   getName(): string | null {
     return this.name;
   }
@@ -75,22 +63,13 @@ export class ObjectFutureComponent<
       }
       return this.entityStore!.futureResolver!(future);
     });
-    const prev = entity._getRawMap<TReadValue | null>(this, null);
-    this._validateHash(
-      entity,
-      prev,
-      mapped,
-    );
+    entity._setHashCode(this.index!, this.getHashCode(value));
     entity._setRawMap(this, mapped);
     return mapped;
   }
 
   delete(entity: Entity): void {
-    this._validateHash(
-      entity,
-      entity._getRawMap(this, null),
-      null,
-    );
+    entity._setHashCode(this.index!, this.getHashCode(null));
     entity._setRawMap(this, null);
   }
 

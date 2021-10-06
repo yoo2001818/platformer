@@ -8,6 +8,7 @@ export class Entity {
   deleted: boolean;
   floating: boolean;
   componentMap: unknown[];
+  hashCodes: number[];
   chunk: EntityChunk | null;
   chunkOffset: number;
   store: EntityStore;
@@ -17,6 +18,7 @@ export class Entity {
     this.deleted = false;
     this.floating = true;
     this.componentMap = [];
+    this.hashCodes = [];
     this.chunk = null;
     this.chunkOffset = 0;
     this.store = store;
@@ -60,6 +62,13 @@ export class Entity {
       throw new Error('Component is not registered');
     }
     this.componentMap[index] = value;
+  }
+
+  _setHashCode(index: number, hashCode: number): void {
+    if (this.hashCodes[index] !== hashCode) {
+      this.float();
+    }
+    this.hashCodes[index] = hashCode;
   }
 
   isValid(): boolean {
@@ -144,9 +153,7 @@ export class Entity {
   }
 
   getHashCodes(): number[] {
-    return this.store.getComponents().map((component) => {
-      return component.getHashCode(component.get(this));
-    });
+    return this.hashCodes;
   }
 
   getEntries(): [string, any][] {

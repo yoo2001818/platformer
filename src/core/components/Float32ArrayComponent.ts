@@ -52,12 +52,7 @@ export class Float32ArrayComponent
       this.set(entity, new Float32Array(value));
       return;
     }
-    // Compare hash before writing
-    const prevHash = this.getHashCode(this.get(entity));
-    const nextHash = this.getHashCode(value);
-    if (prevHash !== nextHash) {
-      entity.float();
-    }
+    entity._setHashCode(this.index!, this.getHashCode(value));
     if (entity.chunk != null) {
       if (value != null) {
         this.setChunk(entity.chunk, entity.chunkOffset, value);
@@ -68,6 +63,7 @@ export class Float32ArrayComponent
   }
 
   delete(entity: Entity): void {
+    entity._setHashCode(this.index!, this.getHashCode(null));
     entity._setRawMap(this, null);
   }
 

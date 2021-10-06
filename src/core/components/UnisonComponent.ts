@@ -25,18 +25,6 @@ export class UnisonComponent<
     this._fromJSON = fromJSON ?? null;
   }
 
-  _validateHash(
-    entity: Entity,
-    prevValue: TWriteValue | null,
-    nextValue: TWriteValue | null,
-  ): void {
-    const prevHash = this.getHashCode(prevValue);
-    const nextHash = this.getHashCode(nextValue);
-    if (prevHash !== nextHash) {
-      entity.float();
-    }
-  }
-
   getName(): string | null {
     return this.name;
   }
@@ -65,20 +53,12 @@ export class UnisonComponent<
     } else {
       nextValue = value as TReadValue;
     }
-    this._validateHash(
-      entity,
-      entity._getRawMap(this, null),
-      nextValue,
-    );
+    entity._setHashCode(this.index!, this.getHashCode(nextValue));
     entity._setRawMap(this, nextValue);
   }
 
   delete(entity: Entity): void {
-    this._validateHash(
-      entity,
-      entity._getRawMap(this, null),
-      null,
-    );
+    entity._setHashCode(this.index!, this.getHashCode(null));
     entity._setRawMap(this, null);
   }
 
