@@ -45,7 +45,8 @@ export class EntityGroup {
     if (typeof component === 'string') {
       return this.has(this.store.getComponent(component));
     }
-    return this.hashCodes[component.getIndex()!] !== 0;
+    const value = this.hashCodes[component.getIndex()!];
+    return value !== undefined && value !== 0;
   }
 
   _getNextSize(): number {

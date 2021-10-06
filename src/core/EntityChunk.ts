@@ -90,10 +90,7 @@ export class EntityChunk {
   }
 
   has(component: Component<any, any> | string): boolean {
-    if (typeof component === 'string') {
-      return this.has(this.group.store.getComponent(component));
-    }
-    return this.group.hashCodes[component.getIndex()!] !== 0;
+    return this.group.has(component);
   }
 
   _handleFloat(entity: Entity): void {
