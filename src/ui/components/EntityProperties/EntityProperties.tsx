@@ -20,17 +20,14 @@ export function EntityProperties(): React.ReactElement | null {
   return (
     <Div>
       <EntityPropertiesHeader entity={entity} />
-      <ul>
-        { components.map(([name, value]) => (
-          <li key={name}>
-            <EntityPropertiesComponent
-              entity={entity}
-              name={name}
-              value={value}
-            />
-          </li>
-        )) }
-      </ul>
+      { components.map(([name, value]) => (
+        <EntityPropertiesComponent
+          entity={entity}
+          name={name}
+          value={value}
+          key={name}
+        />
+      )) }
     </Div>
   );
 }
