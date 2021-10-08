@@ -2,6 +2,8 @@ import React from 'react';
 
 import {Entity} from '../../../core/Entity';
 
+import {EntityPropertiesComponentHeader} from './ComponentHeader';
+
 export interface EntityPropertiesComponentProps {
   className?: string;
   entity: Entity;
@@ -15,7 +17,7 @@ export function EntityPropertiesComponent(
   const {className, entity, name, value} = props;
   return (
     <div className={className}>
-      { name }
+      <EntityPropertiesComponentHeader name={name} />
       <pre>
         { JSON.stringify(value, null, 2) }
       </pre>
