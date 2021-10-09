@@ -18,9 +18,6 @@ export function EntityPropertiesComponent(
   return (
     <div className={className}>
       <EntityPropertiesComponentHeader name={name} />
-      <pre>
-        { JSON.stringify(value, null, 2) }
-      </pre>
     </div>
   );
 }
