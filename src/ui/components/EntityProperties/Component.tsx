@@ -24,7 +24,7 @@ export function EntityPropertiesComponent(
     default:
       return (
         <div className={className}>
-          <EntityPropertiesComponentHeader name={name} />
+          <EntityPropertiesComponentHeader label={name} />
         </div>
       );
   }

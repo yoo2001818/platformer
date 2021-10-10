@@ -5,16 +5,16 @@ import {COLORS} from '../../styles';
 
 export interface EntityPropertiesComponentHeaderProps {
   className?: string;
-  name: string;
+  label: string;
 }
 
 export function EntityPropertiesComponentHeader(
   props: EntityPropertiesComponentHeaderProps,
 ): React.ReactElement {
-  const {className, name} = props;
+  const {className, label} = props;
   return (
     <Div className={className}>
-      { name }
+      { label }
     </Div>
   );
 }
