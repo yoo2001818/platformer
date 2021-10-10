@@ -3,6 +3,7 @@ import React from 'react';
 import {Entity} from '../../../core/Entity';
 
 import {EntityPropertiesComponentHeader} from './ComponentHeader';
+import {EntityPropertiesTransform} from './components/Transform';
 
 export interface EntityPropertiesComponentProps {
   className?: string;
@@ -15,9 +16,16 @@ export function EntityPropertiesComponent(
   props: EntityPropertiesComponentProps,
 ): React.ReactElement {
   const {className, entity, name, value} = props;
-  return (
-    <div className={className}>
-      <EntityPropertiesComponentHeader name={name} />
-    </div>
-  );
+  switch (name) {
+    case 'transform':
+      return (
+        <EntityPropertiesTransform {...props} />
+      );
+    default:
+      return (
+        <div className={className}>
+          <EntityPropertiesComponentHeader name={name} />
+        </div>
+      );
+  }
 }
