@@ -5,6 +5,7 @@ import {EntityPropertiesComponentHeader} from '../ComponentHeader';
 import {Transform} from '../../../../3d/Transform';
 import {COLORS} from '../../../styles';
 import {FormGroup} from '../../FormGroup';
+import {DimensionInput} from '../../Input';
 
 export interface EntityPropertiesTransformProps {
   className?: string;
@@ -18,7 +19,13 @@ export function EntityPropertiesTransform(
   return (
     <Div className={className}>
       <EntityPropertiesComponentHeader label="Transform" />
-      <FormGroup label="Position">Test</FormGroup>
+      <FormGroup label="Position">
+        <DimensionInput
+          dimensions={3}
+          value={value.getPosition()}
+          onChange={(arr) => value.setPosition(arr)}
+        />
+      </FormGroup>
       <FormGroup label="Scale">Test</FormGroup>
       <FormGroup label="Rotation">Test</FormGroup>
       { JSON.stringify(value.getPosition(), null, 2) }

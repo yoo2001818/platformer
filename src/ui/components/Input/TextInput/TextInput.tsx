@@ -3,7 +3,8 @@ import styled from '@emotion/styled';
 
 import {COLORS} from '../../../styles';
 
-export interface TextInputProps {
+export interface TextInputProps extends
+Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   className?: string;
   value: string | null;
   onChange: (value: string) => void;
@@ -13,7 +14,7 @@ export interface TextInputProps {
 export function TextInput(
   props: TextInputProps,
 ): React.ReactElement {
-  const {className, value, onChange, placeholder} = props;
+  const {className, value, onChange, placeholder, ...restProps} = props;
   return (
     <Input
       className={className}
@@ -23,6 +24,7 @@ export function TextInput(
         onChange(e.currentTarget.value);
       }}
       placeholder={placeholder}
+      {...restProps}
     />
   );
 }

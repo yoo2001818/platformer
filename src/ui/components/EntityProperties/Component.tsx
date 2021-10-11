@@ -15,7 +15,7 @@ export interface EntityPropertiesComponentProps {
 export function EntityPropertiesComponent(
   props: EntityPropertiesComponentProps,
 ): React.ReactElement {
-  const {className, entity, name, value} = props;
+  const {className, name} = props;
   switch (name) {
     case 'transform':
       return (

@@ -20,7 +20,7 @@ export function EntityPropertiesComponentHeader(
 }
 
 const Div = styled.div`
-  margin: 0px 4px;
+  margin: 0px 4px 5px;
   padding: 5px 5px;
   color: ${COLORS.gray100};
   font-weight: bold;
