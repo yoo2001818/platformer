@@ -40,7 +40,7 @@ export function Viewport(
 
     const orbitController = new OrbitCameraController(
       canvasElem,
-      document.body,
+      canvasElem,
       null,
       3,
     );
@@ -74,7 +74,7 @@ export function Viewport(
     };
   }, [engine]);
   return (
-    <Canvas className={className} ref={canvasRef} />
+    <Canvas className={className} ref={canvasRef} tabIndex={0} />
   );
 }
 
