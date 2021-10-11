@@ -26,9 +26,20 @@ export function EntityPropertiesTransform(
           onChange={(arr) => value.setPosition(arr)}
         />
       </FormGroup>
-      <FormGroup label="Scale">Test</FormGroup>
-      <FormGroup label="Rotation">Test</FormGroup>
-      { JSON.stringify(value.getPosition(), null, 2) }
+      <FormGroup label="Scale">
+        <DimensionInput
+          dimensions={3}
+          value={value.getScale()}
+          onChange={(arr) => value.setScale(arr)}
+        />
+      </FormGroup>
+      <FormGroup label="Rotation">
+        <DimensionInput
+          dimensions={4}
+          value={value.getRotation()}
+          onChange={(arr) => value.setRotation(arr)}
+        />
+      </FormGroup>
     </Div>
   );
 }

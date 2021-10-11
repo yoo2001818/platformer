@@ -39,4 +39,6 @@ const GroupLabel = styled.div`
 `;
 
 const GroupContent = styled.div`
+  flex: 1 0 0px;
+  min-width: 0;
 `;

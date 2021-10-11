@@ -20,6 +20,7 @@ export function TextInput(
       className={className}
       type="text"
       value={value ?? ''}
+      size={1}
       onChange={(e) => {
         onChange(e.currentTarget.value);
       }}

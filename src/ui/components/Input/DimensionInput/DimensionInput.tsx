@@ -31,8 +31,11 @@ export function DimensionInput<T extends number[] | Float32Array>(
 }
 
 const InputDiv = styled.div`
+  display: flex;
+  margin: 0 -2.5px;
 `;
 
 const InputNumberInput = styled(NumberInput)`
-
+  flex: 1 0 0px;
+  margin: 0 2.5px;
 `;
