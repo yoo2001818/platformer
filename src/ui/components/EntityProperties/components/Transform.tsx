@@ -5,7 +5,8 @@ import {EntityPropertiesComponentHeader} from '../ComponentHeader';
 import {Transform} from '../../../../3d/Transform';
 import {COLORS} from '../../../styles';
 import {FormGroup} from '../../FormGroup';
-import {DimensionInput} from '../../Input';
+import {DimensionInput, SelectInput} from '../../Input';
+import {FormRow} from '../../FormRow';
 
 export interface EntityPropertiesTransformProps {
   className?: string;
@@ -26,18 +27,30 @@ export function EntityPropertiesTransform(
           onChange={(arr) => value.setPosition(arr)}
         />
       </FormGroup>
+      <FormGroup label="Rotation">
+        <FormRow>
+          <SelectInput
+            value="quaternion"
+            onChange={() => {}}
+            options={[
+              {label: 'Quaternion', value: 'quaternion'},
+              {label: 'Euler YZX', value: 'yzx'},
+            ]}
+          />
+        </FormRow>
+        <FormRow>
+          <DimensionInput
+            dimensions={4}
+            value={value.getRotation()}
+            onChange={(arr) => value.setRotation(arr)}
+          />
+        </FormRow>
+      </FormGroup>
       <FormGroup label="Scale">
         <DimensionInput
           dimensions={3}
           value={value.getScale()}
           onChange={(arr) => value.setScale(arr)}
-        />
-      </FormGroup>
-      <FormGroup label="Rotation">
-        <DimensionInput
-          dimensions={4}
-          value={value.getRotation()}
-          onChange={(arr) => value.setRotation(arr)}
         />
       </FormGroup>
     </Div>

@@ -16,7 +16,7 @@ export function TextInput(
 ): React.ReactElement {
   const {className, value, onChange, placeholder, ...restProps} = props;
   return (
-    <Input
+    <TextInputInput
       className={className}
       type="text"
       value={value ?? ''}
@@ -30,7 +30,7 @@ export function TextInput(
   );
 }
 
-const Input = styled.input`
+export const TextInputInput = styled.input`
   display: block;
   width: 100%;
   box-sizing: border-box;
