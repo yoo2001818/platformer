@@ -1,9 +1,9 @@
 import React from 'react';
 
 import {Entity} from '../../../core/Entity';
+import {TransformProperties} from '../Properties';
 
 import {EntityPropertiesComponentHeader} from './ComponentHeader';
-import {EntityPropertiesTransform} from './components/Transform';
 
 export interface EntityPropertiesComponentProps {
   className?: string;
@@ -19,7 +19,10 @@ export function EntityPropertiesComponent(
   switch (name) {
     case 'transform':
       return (
-        <EntityPropertiesTransform {...props} />
+        <>
+          <EntityPropertiesComponentHeader label="Transform" />
+          <TransformProperties {...props} />
+        </>
       );
     default:
       return (

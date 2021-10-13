@@ -1,25 +1,23 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import {EntityPropertiesComponentHeader} from '../ComponentHeader';
-import {Transform} from '../../../../3d/Transform';
-import {COLORS} from '../../../styles';
-import {FormGroup} from '../../FormGroup';
-import {DimensionInput, SelectInput} from '../../Input';
-import {FormRow} from '../../FormRow';
+import {Transform} from '../../../3d/Transform';
+import {COLORS} from '../../styles';
+import {FormGroup} from '../FormGroup';
+import {DimensionInput, SelectInput} from '../Input';
+import {FormRow} from '../FormRow';
 
-export interface EntityPropertiesTransformProps {
+export interface TransformPropertiesProps {
   className?: string;
   value: Transform;
 }
 
-export function EntityPropertiesTransform(
-  props: EntityPropertiesTransformProps,
+export function TransformProperties(
+  props: TransformPropertiesProps,
 ): React.ReactElement {
   const {className, value} = props;
   return (
     <Div className={className}>
-      <EntityPropertiesComponentHeader label="Transform" />
       <FormGroup label="Position">
         <DimensionInput
           dimensions={3}
