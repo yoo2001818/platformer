@@ -8,12 +8,13 @@ export interface NumberInputProps {
   onChange: (value: number) => void;
   placeholder?: string;
   fraction?: number;
+  scale?: number;
 }
 
 export function NumberInput(
   props: NumberInputProps,
 ): React.ReactElement {
-  const {value, onChange, fraction = 4, ...restProps} = props;
+  const {value, onChange, fraction = 4, scale = 1, ...restProps} = props;
   const [inputValue, setInputValue] = useState<string | null>(null);
   const handleChange = useCallback((value: string) => {
     setInputValue(value);
@@ -50,9 +51,9 @@ export function NumberInput(
         delta = currentPos - pos;
         pos = currentPos;
       }
-      let modifier = 1;
+      let modifier = scale;
       if (e.ctrlKey) {
-        modifier = 0.1;
+        modifier *= 0.1;
       }
       currentValue += delta * 0.01 * modifier;
 
@@ -73,7 +74,7 @@ export function NumberInput(
     };
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-  }, [value, onChange]);
+  }, [value, onChange, scale]);
   return (
     <TextInput
       value={inputValue ?? (value != null ? value.toFixed(fraction) : '')}
