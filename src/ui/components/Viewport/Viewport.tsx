@@ -8,6 +8,8 @@ import {Renderer} from '../../../render/Renderer';
 import {RENDER_PHASE, UPDATE_PHASE} from '../../../core/Engine';
 import {OrbitCameraController} from '../../../input/OrbitCameraController';
 
+import {TestEffect} from './TestEffect';
+
 export interface ViewportProps {
   className?: string;
 }
@@ -36,6 +38,9 @@ export function Viewport(
     }
     const glRenderer = new GLRenderer(gl);
     const renderer = new Renderer(glRenderer, engine.entityStore);
+    renderer.gizmoEffects = [
+      new TestEffect(renderer),
+    ];
     glRenderer.setViewport();
 
     const orbitController = new OrbitCameraController(
