@@ -5,8 +5,8 @@ import {Transform} from '../../../../3d/Transform';
 import {DimensionInput, SelectInput} from '../../Input';
 import {FormRow} from '../../FormRow';
 import {
-  quaternionFromEulerXYZ,
-  quaternionToEulerXYZ,
+  quaternionFromEulerYZX,
+  quaternionToEulerYZX,
 } from '../../../../3d/utils/euler';
 
 export interface TransformPropertiesRotationProps {
@@ -17,7 +17,7 @@ export function TransformPropertiesRotation(
   props: TransformPropertiesRotationProps,
 ): React.ReactElement {
   const {value} = props;
-  const [type, setType] = useState('quaternion');
+  const [type, setType] = useState('yzx');
   return (
     <>
       <FormRow>
@@ -26,14 +26,14 @@ export function TransformPropertiesRotation(
           onChange={(value) => setType(value)}
           options={[
             {label: 'Quaternion', value: 'quaternion'},
-            {label: 'Euler XYZ', value: 'xyz'},
+            {label: 'Euler YZX', value: 'yzx'},
           ]}
         />
       </FormRow>
       { type === 'quaternion' && (
         <TransformPropertiesRotationQuaternion value={value} />
       ) }
-      { type === 'xyz' && (
+      { type === 'yzx' && (
         <TransformPropertiesRotationEuler value={value} />
       ) }
     </>
@@ -62,12 +62,12 @@ function TransformPropertiesRotationEuler(
   const {value} = props;
   const rotation = value.getRotation();
   const euler = new Float32Array(3);
-  quaternionToEulerXYZ(euler, rotation);
+  quaternionToEulerYZX(euler, rotation);
   vec3.scale(euler, euler, 180 / Math.PI);
   const handleChange = useCallback((euler: Float32Array) => {
     vec3.scale(euler, euler, Math.PI / 180);
     const out = new Float32Array(4);
-    quaternionFromEulerXYZ(out, euler);
+    quaternionFromEulerYZX(out, euler);
     value.setRotation(out);
   }, [value]);
   return (
@@ -76,7 +76,8 @@ function TransformPropertiesRotationEuler(
         dimensions={3}
         value={euler}
         onChange={handleChange}
-        scale={10}
+        scale={20}
+        fraction={2}
       />
     </FormRow>
   );

@@ -6,6 +6,7 @@ import {NumberInput} from '../NumberInput';
 export interface DimensionInputProps<T extends number[] | Float32Array> {
   className?: string;
   dimensions: number;
+  fraction?: number;
   scale?: number;
   value: T;
   onChange: (value: T) => void;
@@ -14,7 +15,7 @@ export interface DimensionInputProps<T extends number[] | Float32Array> {
 export function DimensionInput<T extends number[] | Float32Array>(
   props: DimensionInputProps<T>,
 ): React.ReactElement {
-  const {className, dimensions, scale, value, onChange} = props;
+  const {className, dimensions, fraction, scale, value, onChange} = props;
   return (
     <InputDiv className={className}>
       { Array.from({length: dimensions}, (_, i) => (
@@ -25,6 +26,7 @@ export function DimensionInput<T extends number[] | Float32Array>(
             const newArray = value.map((v, j) => (i === j ? newVal : v));
             onChange(newArray as T);
           }}
+          fraction={fraction}
           scale={scale}
         />
       )) }

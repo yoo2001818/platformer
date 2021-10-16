@@ -4,7 +4,7 @@ const MAT3_BUFFER = mat3.create();
 
 // TODO: This is all YZX
 
-export function quaternionToEulerXYZ(
+export function quaternionToEulerYZX(
   out: Float32Array,
   inQuat: Float32Array,
 ): Float32Array {
@@ -23,7 +23,7 @@ export function quaternionToEulerXYZ(
   return out;
 }
 
-export function quaternionFromEulerXYZ(
+export function quaternionFromEulerYZX(
   out: Float32Array,
   euler: Float32Array,
 ): Float32Array {
