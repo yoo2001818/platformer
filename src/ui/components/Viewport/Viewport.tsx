@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import styled from '@emotion/styled';
+import {useRecoilValue} from 'recoil';
 
 import {COLORS} from '../../styles';
 import {useEngine} from '../../hooks/useEngine';
@@ -7,6 +8,8 @@ import {GLRenderer} from '../../../render/gl/GLRenderer';
 import {Renderer} from '../../../render/Renderer';
 import {RENDER_PHASE, UPDATE_PHASE} from '../../../core/Engine';
 import {OrbitCameraController} from '../../../input/OrbitCameraController';
+import {selectedEntity} from '../../states/selection';
+import {useEntity} from '../../hooks/useEntity';
 
 import {TestEffect} from './TestEffect';
 
@@ -19,7 +22,10 @@ export function Viewport(
 ): React.ReactElement {
   const {className} = props;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rendererRef = useRef<Renderer | null>(null);
   const engine = useEngine();
+  const selectedEntityHandle = useRecoilValue(selectedEntity);
+  const selectedEntityVal = useEntity(selectedEntityHandle);
   useEffect(() => {
     const canvasElem = canvasRef.current;
     if (canvasElem == null) {
@@ -38,9 +44,6 @@ export function Viewport(
     }
     const glRenderer = new GLRenderer(gl);
     const renderer = new Renderer(glRenderer, engine.entityStore);
-    renderer.gizmoEffects = [
-      new TestEffect(renderer),
-    ];
     glRenderer.setViewport();
 
     const orbitController = new OrbitCameraController(
@@ -52,6 +55,8 @@ export function Viewport(
 
     engine.registerSystem(UPDATE_PHASE, (v) => orbitController.update(v));
     engine.registerSystem(RENDER_PHASE, (v) => renderer.render(v));
+
+    rendererRef.current = renderer;
 
     let animId: number;
     let lastTime = 0;
@@ -78,6 +83,12 @@ export function Viewport(
       cancelAnimationFrame(animId);
     };
   }, [engine]);
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    if (renderer != null) {
+
+    }
+  }, [selectedEntityVal]);
   return (
     <Canvas className={className} ref={canvasRef} tabIndex={0} />
   );
