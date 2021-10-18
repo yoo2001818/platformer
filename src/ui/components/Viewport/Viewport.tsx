@@ -11,7 +11,7 @@ import {OrbitCameraController} from '../../../input/OrbitCameraController';
 import {selectedEntity} from '../../states/selection';
 import {useEntity} from '../../hooks/useEntity';
 
-import {TestEffect} from './TestEffect';
+import {SelectedEffect} from './SelectedEffect';
 
 export interface ViewportProps {
   className?: string;
@@ -86,7 +86,9 @@ export function Viewport(
   useEffect(() => {
     const renderer = rendererRef.current;
     if (renderer != null) {
-
+      const selectedEffect = new SelectedEffect(renderer);
+      selectedEffect.setEntity(selectedEntityVal);
+      renderer.gizmoEffects = [selectedEffect];
     }
   }, [selectedEntityVal]);
   return (
