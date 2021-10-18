@@ -278,6 +278,9 @@ export class DeferredPipeline implements Pipeline {
         `,
         /* glsl */`
           #version 100
+          #ifndef WEBGL2
+          #extension GL_EXT_frag_depth : enable
+          #endif
           precision highp float;
 
           ${FXAA}
@@ -293,7 +296,11 @@ export class DeferredPipeline implements Pipeline {
             vec2 uv = vPosition * 0.5 + 0.5;
             gl_FragColor = vec4(tonemap(fxaa(uBuffer, uv, uResolution).xyz), 1.0);
             // gl_FragColor = vec4(tonemap(texture2D(uBuffer, uv).xyz), 1.0);
-            // gl_FragDepth = texture2D(uDepthBuffer, uv).x;
+            #ifdef WEBGL2
+            gl_FragDepth = texture2D(uDepthBuffer, uv).x;
+            #elif defined(GL_EXT_frag_depth)
+            gl_FragDepth = texture2D(uDepthBuffer, uv).x;
+            #endif
           }
         `,
       );
@@ -545,7 +552,7 @@ export class DeferredPipeline implements Pipeline {
         uResolution: [width, height],
       },
       state: {
-        depth: false,
+        depth: 'always',
       },
     });
   }

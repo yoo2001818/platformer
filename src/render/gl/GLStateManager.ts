@@ -295,12 +295,26 @@ export class GLStateManager {
       if (!arrayEqual(options.scissor, state.scissor.scissor)) {
         const scissor = options.scissor;
         gl.scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+        state.scissor.scissor = scissor;
       }
     } else if (state.scissor.enabled) {
       gl.disable(gl.SCISSOR_TEST);
       state.scissor.enabled = false;
     }
     // TODO scissor
-    // TODO polygonOffset
+    if (options.polygonOffset) {
+      if (!state.polygonOffset.enabled) {
+        gl.enable(gl.POLYGON_OFFSET_FILL);
+        state.polygonOffset.enabled = true;
+      }
+      if (!arrayEqual(options.polygonOffset, state.polygonOffset.offset)) {
+        const po = options.polygonOffset;
+        gl.polygonOffset(po[0], po[1]);
+        state.polygonOffset.offset = po;
+      }
+    } else if (state.polygonOffset.enabled) {
+      gl.disable(gl.POLYGON_OFFSET_FILL);
+      state.polygonOffset.enabled = false;
+    }
   }
 }

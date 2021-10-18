@@ -64,6 +64,10 @@ export class SelectedEffect implements GizmoEffect {
           uView: cameraData.getView(camera),
           uProjection: cameraData.getProjection(renderer.getAspectRatio()),
         },
+        state: {
+          depth: 'lequal',
+          polygonOffset: [-1, 0],
+        },
       });
     });
   }
