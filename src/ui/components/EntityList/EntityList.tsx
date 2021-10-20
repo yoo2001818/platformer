@@ -14,7 +14,6 @@ export function EntityList(): React.ReactElement {
     const result: Entity[] = [];
     engine.entityStore
       .query()
-      .without('parent')
       .forEach((entity) => {
         result.push(entity);
       });
