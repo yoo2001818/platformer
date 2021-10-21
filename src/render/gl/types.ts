@@ -128,6 +128,7 @@ export interface GLStateOptions {
   viewport?: false | [number, number, number, number];
   scissor?: false | [number, number, number, number];
   polygonOffset?: false | [number, number];
+  lineWidth?: number;
 }
 
 export interface DrawOptions {

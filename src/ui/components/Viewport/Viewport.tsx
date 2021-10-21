@@ -86,6 +86,7 @@ export function Viewport(
   useEffect(() => {
     const renderer = rendererRef.current;
     if (renderer != null) {
+      renderer.gizmoEffects.forEach((v) => v.dispose());
       const selectedEffect = new SelectedEffect(renderer);
       selectedEffect.setEntity(selectedEntityVal);
       renderer.gizmoEffects = [selectedEffect];

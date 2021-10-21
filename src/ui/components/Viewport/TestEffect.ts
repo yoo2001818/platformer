@@ -42,4 +42,7 @@ export class TestEffect implements GizmoEffect {
       uniforms: {},
     });
   }
+
+  dispose(): void {
+  }
 }
