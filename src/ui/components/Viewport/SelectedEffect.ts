@@ -1,7 +1,9 @@
 import {Camera} from '../../../3d/Camera';
 import {Transform} from '../../../3d/Transform';
 import {Entity} from '../../../core/Entity';
+import {wireframe} from '../../../geom/wireframe';
 import {GizmoEffect} from '../../../render/effect/GizmoEffect';
+import {GLGeometry} from '../../../render/gl/GLGeometry';
 import {GLShader} from '../../../render/gl/GLShader';
 import {Mesh} from '../../../render/Mesh';
 import {Renderer} from '../../../render/Renderer';
@@ -56,8 +58,11 @@ export class SelectedEffect implements GizmoEffect {
       return;
     }
     mesh.geometries.forEach((geom) => {
+      const lineGeom = renderer.getResource(`wireframe~${geom.id}`, () => {
+        return new GLGeometry(wireframe(geom.options));
+      });
       renderer.glRenderer.draw({
-        geometry: geom.getGLGeometry(renderer),
+        geometry: lineGeom,
         shader: TEST_SHADER,
         uniforms: {
           uModel: transform.getMatrixWorld(),
@@ -66,7 +71,7 @@ export class SelectedEffect implements GizmoEffect {
         },
         state: {
           depth: 'lequal',
-          polygonOffset: [-1, 0],
+          polygonOffset: [-1, -1],
         },
       });
     });
