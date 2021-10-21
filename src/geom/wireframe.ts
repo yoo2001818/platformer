@@ -1,7 +1,4 @@
-import {GeometryOptions} from './types';
-
-const TRIANGLES = 4;
-const LINES = 1;
+import {GeometryOptions, LINES, TRIANGLES} from './types';
 
 export function wireframe(input: GeometryOptions): GeometryOptions {
   if (input.mode != null && input.mode !== TRIANGLES) {

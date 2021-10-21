@@ -1,4 +1,4 @@
-import {GeometryAttribute} from '../../geom/types';
+import {GeometryAttribute, TRIANGLES} from '../../geom/types';
 
 import {GLArrayBuffer} from './GLArrayBuffer';
 import {GLBuffer} from './GLBuffer';
@@ -43,8 +43,6 @@ interface BakedGeometryOptions {
   count: number;
   offset: number;
 }
-
-const TRIANGLES = 4;
 
 export class GLGeometry {
   options!: BakedGeometryOptions;
