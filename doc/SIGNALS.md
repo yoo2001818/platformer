@@ -62,4 +62,64 @@ objects?
 Is it better to make trees of listeners to quickly determine the invalidated
 listeners?
 
+Well..... it depends. Usually, signal implementations are 'top-down' - each
+changes directly triggers underlying listeners. The diffing methods are
+'bottom-up' - each listeners directly determines the changes.
 
+Obviously it won't matter if the number of changes / listeners are balanced
+enough. However I'd say it's pretty okay to assume that top-down approach
+is better, because it can very quickly find which listeners need to be
+updated. Bottom-up approach does not have this luxury and instead have to
+naively scan all the state to determine whether if the listener needs to be
+triggered or not.
+
+If we decide to use signals, the problem boils down to determine which signals
+have changed quickly.
+
+## Change detection
+Whether if we want to implement change detection top-down or bottom-up, we need
+to implement a method to detect the changes.
+
+In order to do this, we have to add a version number, and list of listeners to
+each "signals" - minimal subscribable units.
+
+Whenever the data is changed, it should update the version number. This way,
+other systems can read this version number and determine if it has changed.
+
+## The version number
+However, the version number itself can be painful to determine. It has to be
+monotonically increasing; this is easily implemented in single-core CPU,
+therefore it is trivial for JavaScript environment, but what about multi-core
+environment?
+
+We can use mutex, or any synchronization primitives to make it monotonic, but
+this pretty much defeats the purpose of multi-core.
+
+If we can see what each system tries to read/write, i.e. "topics", the version
+number can instead use frame number / system number, because it doesn't have to
+be updated/read every time.
+
+## Data structure
+Each component, and each entity, should store its own version number.
+Whenever we change the data, we need to update these version numbers.
+
+Furthermore, we need to quickly find which entity/component has changed.
+
+This can be quickly determined using trees, each branch nodes storing
+max(versionId) for its children.
+
+This way, the signals can scan for differences whenever they want, quickly
+enough because we don't have to traverse everything.
+
+## The topic structure
+The topics, and the corresponding listeners can be one of the following:
+- An Entity.
+- An Entity's Component.
+- An EntityChunk.
+- An EntityChunk's Component.
+- An EntityGroup.
+- An EntityGroup's Component.
+- A Component.
+
+Because their needs are wildly different, the optimial structure / algorithm
+would differ between these topics.
