@@ -123,3 +123,71 @@ The topics, and the corresponding listeners can be one of the following:
 
 Because their needs are wildly different, the optimial structure / algorithm
 would differ between these topics.
+
+The signal propagation hierarchy would be something like this - the main signal
+emitter will scan through this structure and emit the associated listeners.
+
+- EntityStore's components' skip-list to...
+- EntityGroup's components' skip-list to...
+- EntityChunk's components' skip-list to...
+- Entity's components' skip-list
+
+- EntityStore's skip-list to...
+- EntityGroup's skip-list to...
+- EntityChunk's skip-list to Entity
+
+Because of this obnoxiously large number of indices, I don't think this is
+*that* efficient at updating...
+
+However, if we construct everything using skip-lists, this will only incur
+O(log n) for each edit. ... Which is a lot, actually! O(n log n) is bearable,
+but still, we want to find a faster way to do this.
+
+To make skip-lists more efficient, we must process them in bulk, update only
+when necessary, etc.
+
+However if we think about that too much, nothing can be done, so let's just
+move on with O(n log n). Ouch.
+
+## What contains the version data?
+Okay, we determined that we should manage skip-lists - I don't know, regular
+arrays would suffice at this point - but, what should contain the version data?
+
+The engine allows any data to be stored within the component, so it wouldn't
+be possible to store the version information inside the component. Plus it will
+get messy if we do that.
+
+AFAIK Rust game libraries has luxury of mutable refs, so they can determine
+if the data has changed by checking if the code has used mutable refs.
+
+But we don't have that. We certainly don't want to store version info inside
+the component too.
+
+Well, there's only one solution. Let's store them inside the Entity,
+EntityChunk, EntityGroup. EntityChunk would most benefit from skip-lists due
+to the number of Entity it contains.
+
+If the game logic calls the following, the version number will be retrieved from
+the engine, and the numbers will set to the component, etc, which will propagate
+to the EntityGroup.
+
+Since we already reference EntityChunk and EntityGroup, hopefully we won't be
+invalidating any CPU cache. (We won't know, due to the nature of JS.)
+
+The following chain will update the entity and associated structures' version
+numbers -
+
+- The entity's component's version
+- EntityChunk's component's version
+- EntityGroup's component's version
+
+- The entity's version
+- EntityChunk's version
+- EnttiyGroup's version
+
+Well, that's a lot. Still, update and propagate the updates. Preferably we
+would have two propagation methods here.
+
+- _propagateAllUpdates(version) - Update *all* components. Used for entity
+  addition/removal.
+- _propagateComponentUpdates(compId, version) - Update only entities
