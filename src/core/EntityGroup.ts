@@ -8,12 +8,16 @@ export class EntityGroup {
   hashCodes: number[];
   chunks: EntityChunk[];
   availableChunks: EntityChunk[];
+  version: number;
+  componentVersions: number[];
 
   constructor(store: EntityStore, hashCodes: number[], protoEntity: Entity) {
     this.store = store;
     this.hashCodes = hashCodes;
     this.chunks = [];
     this.availableChunks = [];
+    this.version = 0;
+    this.componentVersions = [];
     this.init(protoEntity);
   }
 

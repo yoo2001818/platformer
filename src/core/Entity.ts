@@ -7,6 +7,8 @@ export class Entity {
   handle: EntityHandle;
   deleted: boolean;
   floating: boolean;
+  version: number;
+  componentVersions: number[];
   componentMap: unknown[];
   hashCodes: number[];
   chunk: EntityChunk | null;
@@ -17,6 +19,8 @@ export class Entity {
     this.handle = new EntityHandle(id, 0);
     this.deleted = false;
     this.floating = true;
+    this.version = 0;
+    this.componentVersions = [];
     this.componentMap = [];
     this.hashCodes = [];
     this.chunk = null;
@@ -102,6 +106,16 @@ export class Entity {
     return component.get(this);
   }
 
+  getMutate<TReadValue>(
+    component: Component<TReadValue, any> | string,
+  ): TReadValue | null {
+    if (typeof component === 'string') {
+      return this.getMutate(this.store.getComponent(component));
+    }
+    this.markChanged(component);
+    return this.get(component);
+  }
+
   set<TWriteValue>(
     component: Component<any, TWriteValue> | string,
     value: TWriteValue,
@@ -109,13 +123,26 @@ export class Entity {
     if (typeof component === 'string') {
       return this.set(this.store.getComponent(component), value);
     }
+    this.markChanged(component);
     return component.set(this, value);
+  }
+
+  markChanged(component: Component<any, any> | string): void {
+    if (typeof component === 'string') {
+      this.markChanged(this.store.getComponent(component));
+    } else {
+      const currentVersion = this.store.nextVersion();
+      this.version = currentVersion;
+      this.componentVersions[component.getIndex()!] = currentVersion;
+      // TODO: Propagate changes
+    }
   }
 
   delete(component: Component<any> | string): void {
     if (typeof component === 'string') {
       return this.delete(this.store.getComponent(component));
     }
+    this.markChanged(component);
     return component.delete(this);
   }
 

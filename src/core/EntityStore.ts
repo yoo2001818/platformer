@@ -18,6 +18,8 @@ export class EntityStore {
 
   groups: Map<number, EntityGroup[]>;
 
+  version: number;
+
   // FIXME: This should be specified differently; it is only used for
   // createEntities
   futureResolver: ((future: EntityFuture) => Entity) | null;
@@ -31,6 +33,8 @@ export class EntityStore {
     this.floatingEntities = [];
 
     this.groups = new Map();
+
+    this.version = 1;
 
     this.futureResolver = null;
   }
@@ -246,5 +250,10 @@ export class EntityStore {
 
   toJSON(): unknown {
     return this.getEntities().map((v) => v.toJSON());
+  }
+
+  nextVersion(): number {
+    this.version += 1;
+    return this.version;
   }
 }

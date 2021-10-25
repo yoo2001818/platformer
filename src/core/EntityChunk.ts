@@ -12,6 +12,8 @@ export class EntityChunk {
   size: number;
   maxOffset: number;
   defragNeeded: boolean;
+  version: number;
+  componentVersions: number[];
 
   constructor(group: EntityGroup, maxSize: number, protoEntity: Entity) {
     this.group = group;
@@ -23,6 +25,8 @@ export class EntityChunk {
     this.size = 0;
     this.maxOffset = 0;
     this.defragNeeded = false;
+    this.version = 0;
+    this.componentVersions = [];
     this.init(protoEntity);
   }
 
