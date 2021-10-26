@@ -3,6 +3,7 @@ import {Entity} from './Entity';
 import type {EntityGroup} from './EntityGroup';
 
 export class EntityChunk {
+  chunkOffset: number;
   group: EntityGroup;
   entities: (Entity | null)[];
   assignedOffsets: boolean[];
@@ -15,8 +16,14 @@ export class EntityChunk {
   version: number;
   componentVersions: number[];
 
-  constructor(group: EntityGroup, maxSize: number, protoEntity: Entity) {
+  constructor(
+    group: EntityGroup,
+    chunkOffset: number,
+    maxSize: number,
+    protoEntity: Entity,
+  ) {
     this.group = group;
+    this.chunkOffset = chunkOffset;
     this.entities = Array.from({length: maxSize}, () => null);
     this.assignedOffsets = Array.from({length: maxSize}, () => false);
     this.releasedOffsets = [];
@@ -158,5 +165,11 @@ export class EntityChunk {
     //     callback(entity, offset);
     //   }
     // });
+  }
+
+  _propagateUpdates(offset: number, version: number, index: number): void {
+    this.version = version;
+    this.componentVersions[index] = version;
+    this.group._propagateUpdates(this.chunkOffset, version, index);
   }
 }

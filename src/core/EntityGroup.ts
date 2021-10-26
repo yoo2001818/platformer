@@ -38,7 +38,8 @@ export class EntityGroup {
       return chunk;
     }
     const nextSize = this._getNextSize();
-    const newChunk = new EntityChunk(this, nextSize, entity);
+    const nextOffset = this.chunks.length;
+    const newChunk = new EntityChunk(this, nextOffset, nextSize, entity);
     newChunk.allocate(entity);
     this.chunks.push(newChunk);
     this.availableChunks.push(newChunk);
@@ -78,5 +79,10 @@ export class EntityGroup {
 
   forEach(callback: (entity: Entity) => void): void {
     this.forEachChunk((chunk) => chunk.forEach(callback));
+  }
+
+  _propagateUpdates(offset: number, version: number, index: number): void {
+    this.version = version;
+    this.componentVersions[index] = version;
   }
 }

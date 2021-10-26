@@ -191,3 +191,45 @@ would have two propagation methods here.
 - _propagateAllUpdates(version) - Update *all* components. Used for entity
   addition/removal.
 - _propagateComponentUpdates(compId, version) - Update only entities
+
+## Signal Implementation
+Unfortunately, there are too many layers in this! We need a way to generalize
+signal handling logic, while allowing the nodes to traverse down, and ignoring
+any unused listeners, etc.
+
+Let's just pretend there are no listeners, but listeners call the EntityStore,
+etc, to determine which entities has changed.
+
+In this case, we need propagation logic and comparsion logic, which will boil
+down to:
+
+- `_propagate(version)`
+- `forEachChanged(version, callback)`
+
+The comparsion logic needs to aware of its children, of course. Due to this
+requirement, I think we'd be better with implementing this as an interface.
+
+If we have these, we can implement listeners too, using these two methods.
+
+First, we need to attach listeners to each signals.
+
+- `signal.add()`
+- `signal.remove()`
+- `getSignal(component).add()`
+- `getSignal(component).remove()`
+
+Then, we need a way to propagate the number of underlying listeners, so that we
+can skip the unnecessary items. This is easily implemented by attaching
+listeners to the parent when the signal is activated.
+
+The engine will always emit the signal each frame - the EntityGroup listens
+for that when necessary, check if it should fire, ..., which finally reaches the
+entity.
+
+But due to the nature of this mechanics, we won't be able to attach listeners
+to every entity, but we only can attach to each topic, which is managed to
+Engine, EntityGroup, etc.
+
+This makes sense, because the signal doesn't have to bubble - the signal itself
+only emits once per every frame. The affected entities can be found using
+`forEachChanged` - so there's no reason to do this.

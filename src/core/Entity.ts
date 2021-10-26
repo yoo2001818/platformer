@@ -132,9 +132,12 @@ export class Entity {
       this.markChanged(this.store.getComponent(component));
     } else {
       const currentVersion = this.store.nextVersion();
+      const index = component.getIndex()!;
       this.version = currentVersion;
-      this.componentVersions[component.getIndex()!] = currentVersion;
-      // TODO: Propagate changes
+      this.componentVersions[index] = currentVersion;
+      if (this.chunk != null) {
+        this.chunk._propagateUpdates(this.chunkOffset, currentVersion, index);
+      }
     }
   }
 
