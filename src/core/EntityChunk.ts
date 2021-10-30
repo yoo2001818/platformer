@@ -1,6 +1,7 @@
 import type {Component} from './components';
 import {Entity} from './Entity';
 import type {EntityGroup} from './EntityGroup';
+import {UpstreamSignal} from './UpstreamSignal';
 
 export class EntityChunk {
   chunkOffset: number;
@@ -15,6 +16,7 @@ export class EntityChunk {
   defragNeeded: boolean;
   version: number;
   componentVersions: number[];
+  signal: UpstreamSignal;
 
   constructor(
     group: EntityGroup,
@@ -34,6 +36,10 @@ export class EntityChunk {
     this.defragNeeded = false;
     this.version = 0;
     this.componentVersions = [];
+    this.signal = new UpstreamSignal(
+      () => this.group.signal,
+      () => this.version,
+    );
     this.init(protoEntity);
   }
 

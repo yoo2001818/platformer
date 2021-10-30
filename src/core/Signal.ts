@@ -13,7 +13,7 @@ export class Signal {
   }
 
   add(listener: () => void): void {
-    if (this.listeners.size === 0) {
+    if (!this.isActive()) {
       this._onActivate?.();
     }
     this.listeners.add(listener);
@@ -21,12 +21,16 @@ export class Signal {
 
   remove(listener: () => void): void {
     this.listeners.delete(listener);
-    if (this.listeners.size === 0) {
+    if (!this.isActive()) {
       this._onDeactivate?.();
     }
   }
 
   emit(): void {
     this.listeners.forEach((listener) => listener());
+  }
+
+  isActive(): boolean {
+    return this.listeners.size > 0;
   }
 }

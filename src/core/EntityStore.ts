@@ -5,6 +5,7 @@ import {EntityFuture} from './EntityFuture';
 import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
 import {EntityQuery} from './EntityQuery';
+import {Signal} from './Signal';
 import {sortEntity} from './sortEntity';
 import {getHashCode} from './utils/getHashCode';
 
@@ -19,6 +20,8 @@ export class EntityStore {
   groups: Map<number, EntityGroup[]>;
 
   version: number;
+
+  signal: Signal;
 
   // FIXME: This should be specified differently; it is only used for
   // createEntities
@@ -35,6 +38,8 @@ export class EntityStore {
     this.groups = new Map();
 
     this.version = 1;
+
+    this.signal = new Signal();
 
     this.futureResolver = null;
   }

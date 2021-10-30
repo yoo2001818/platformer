@@ -2,6 +2,7 @@ import type {Component} from './components';
 import type {EntityChunk} from './EntityChunk';
 import {EntityHandle} from './EntityHandle';
 import type {EntityStore} from './EntityStore';
+import {UpstreamSignal} from './UpstreamSignal';
 
 export class Entity {
   handle: EntityHandle;
@@ -14,6 +15,7 @@ export class Entity {
   chunk: EntityChunk | null;
   chunkOffset: number;
   store: EntityStore;
+  signal: UpstreamSignal;
 
   constructor(store: EntityStore, id: number) {
     this.handle = new EntityHandle(id, 0);
@@ -26,6 +28,15 @@ export class Entity {
     this.chunk = null;
     this.chunkOffset = 0;
     this.store = store;
+    this.signal = new UpstreamSignal(
+      () => {
+        if (this.chunk != null) {
+          return this.chunk.signal;
+        }
+        return this.store.signal;
+      },
+      () => this.version,
+    );
   }
 
   _markUndeleted(): void {
@@ -42,10 +53,12 @@ export class Entity {
   _markFloating(): void {
     this.store._handleFloat(this);
     this.floating = true;
+    this.signal.updateUpstream();
   }
 
   _markUnfloating(): void {
     this.floating = false;
+    this.signal.updateUpstream();
   }
 
   _getRawMap<T>(component: Component<any>, initialValue: T): T {

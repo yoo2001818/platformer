@@ -2,6 +2,7 @@ import {Component} from './components';
 import {Entity} from './Entity';
 import {EntityChunk} from './EntityChunk';
 import {EntityStore} from './EntityStore';
+import {UpstreamSignal} from './UpstreamSignal';
 
 export class EntityGroup {
   store: EntityStore;
@@ -10,6 +11,7 @@ export class EntityGroup {
   availableChunks: EntityChunk[];
   version: number;
   componentVersions: number[];
+  signal: UpstreamSignal;
 
   constructor(store: EntityStore, hashCodes: number[], protoEntity: Entity) {
     this.store = store;
@@ -18,6 +20,10 @@ export class EntityGroup {
     this.availableChunks = [];
     this.version = 0;
     this.componentVersions = [];
+    this.signal = new UpstreamSignal(
+      () => this.store.signal,
+      () => this.version,
+    );
     this.init(protoEntity);
   }
 
