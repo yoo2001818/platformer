@@ -1,7 +1,9 @@
 import type {Component} from './components';
+import {ComponentSignalMapper} from './ComponentSignalMapper';
 import type {EntityChunk} from './EntityChunk';
 import {EntityHandle} from './EntityHandle';
 import type {EntityStore} from './EntityStore';
+import {Signal} from './Signal';
 import {UpstreamSignal} from './UpstreamSignal';
 
 export class Entity {
@@ -16,6 +18,7 @@ export class Entity {
   chunkOffset: number;
   store: EntityStore;
   signal: UpstreamSignal;
+  componentSignals: ComponentSignalMapper;
 
   constructor(store: EntityStore, id: number) {
     this.handle = new EntityHandle(id, 0);
@@ -36,6 +39,11 @@ export class Entity {
         return this.store.signal;
       },
       () => this.version,
+    );
+    this.componentSignals = new ComponentSignalMapper(
+      store,
+      this.signal,
+      this.componentVersions,
     );
   }
 
@@ -227,5 +235,9 @@ export class Entity {
       }
     });
     return result;
+  }
+
+  getComponentSignal(component: Component<any, any> | string | number): Signal {
+    return this.componentSignals.get(component);
   }
 }

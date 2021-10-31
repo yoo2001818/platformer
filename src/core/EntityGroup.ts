@@ -3,6 +3,8 @@ import {Entity} from './Entity';
 import {EntityChunk} from './EntityChunk';
 import {EntityStore} from './EntityStore';
 import {UpstreamSignal} from './UpstreamSignal';
+import {ComponentSignalMapper} from './ComponentSignalMapper';
+import {Signal} from './Signal';
 
 export class EntityGroup {
   store: EntityStore;
@@ -12,6 +14,7 @@ export class EntityGroup {
   version: number;
   componentVersions: number[];
   signal: UpstreamSignal;
+  componentSignals: ComponentSignalMapper;
 
   constructor(store: EntityStore, hashCodes: number[], protoEntity: Entity) {
     this.store = store;
@@ -23,6 +26,11 @@ export class EntityGroup {
     this.signal = new UpstreamSignal(
       () => this.store.signal,
       () => this.version,
+    );
+    this.componentSignals = new ComponentSignalMapper(
+      store,
+      this.signal,
+      this.componentVersions,
     );
     this.init(protoEntity);
   }
@@ -90,5 +98,9 @@ export class EntityGroup {
   _propagateUpdates(offset: number, version: number, index: number): void {
     this.version = version;
     this.componentVersions[index] = version;
+  }
+
+  getComponentSignal(component: Component<any, any> | string | number): Signal {
+    return this.componentSignals.get(component);
   }
 }

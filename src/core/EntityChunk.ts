@@ -2,6 +2,8 @@ import type {Component} from './components';
 import {Entity} from './Entity';
 import type {EntityGroup} from './EntityGroup';
 import {UpstreamSignal} from './UpstreamSignal';
+import {ComponentSignalMapper} from './ComponentSignalMapper';
+import {Signal} from './Signal';
 
 export class EntityChunk {
   chunkOffset: number;
@@ -17,6 +19,7 @@ export class EntityChunk {
   version: number;
   componentVersions: number[];
   signal: UpstreamSignal;
+  componentSignals: ComponentSignalMapper;
 
   constructor(
     group: EntityGroup,
@@ -39,6 +42,11 @@ export class EntityChunk {
     this.signal = new UpstreamSignal(
       () => this.group.signal,
       () => this.version,
+    );
+    this.componentSignals = new ComponentSignalMapper(
+      store,
+      this.signal,
+      this.componentVersions,
     );
     this.init(protoEntity);
   }
@@ -177,5 +185,9 @@ export class EntityChunk {
     this.version = version;
     this.componentVersions[index] = version;
     this.group._propagateUpdates(this.chunkOffset, version, index);
+  }
+
+  getComponentSignal(component: Component<any, any> | string | number): Signal {
+    return this.componentSignals.get(component);
   }
 }
