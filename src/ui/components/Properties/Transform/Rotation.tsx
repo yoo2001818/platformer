@@ -11,12 +11,12 @@ import {
 
 export interface TransformPropertiesRotationProps {
   value: Transform;
+  onChange: () => void;
 }
 
 export function TransformPropertiesRotation(
   props: TransformPropertiesRotationProps,
 ): React.ReactElement {
-  const {value} = props;
   const [type, setType] = useState('yzx');
   return (
     <>
@@ -31,10 +31,10 @@ export function TransformPropertiesRotation(
         />
       </FormRow>
       { type === 'quaternion' && (
-        <TransformPropertiesRotationQuaternion value={value} />
+        <TransformPropertiesRotationQuaternion {...props} />
       ) }
       { type === 'yzx' && (
-        <TransformPropertiesRotationEuler value={value} />
+        <TransformPropertiesRotationEuler {...props} />
       ) }
     </>
   );
@@ -43,13 +43,16 @@ export function TransformPropertiesRotation(
 function TransformPropertiesRotationQuaternion(
   props: TransformPropertiesRotationProps,
 ): React.ReactElement {
-  const {value} = props;
+  const {value, onChange} = props;
   return (
     <FormRow>
       <DimensionInput
         dimensions={4}
         value={value.getRotation()}
-        onChange={(arr) => value.setRotation(arr)}
+        onChange={(arr) => {
+          value.setRotation(arr);
+          onChange();
+        }}
       />
     </FormRow>
   );
@@ -59,7 +62,7 @@ function TransformPropertiesRotationQuaternion(
 function TransformPropertiesRotationEuler(
   props: TransformPropertiesRotationProps,
 ): React.ReactElement {
-  const {value} = props;
+  const {value, onChange} = props;
   const rotation = value.getRotation();
   const euler = new Float32Array(3);
   quaternionToEulerYZX(euler, rotation);
@@ -69,7 +72,8 @@ function TransformPropertiesRotationEuler(
     const out = new Float32Array(4);
     quaternionFromEulerYZX(out, euler);
     value.setRotation(out);
-  }, [value]);
+    onChange();
+  }, [value, onChange]);
   return (
     <FormRow>
       <DimensionInput
