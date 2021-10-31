@@ -44,7 +44,7 @@ export class EntityChunk {
       () => this.version,
     );
     this.componentSignals = new ComponentSignalMapper(
-      store,
+      this.group.store,
       this.signal,
       this.componentVersions,
     );

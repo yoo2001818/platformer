@@ -22,6 +22,9 @@ export class Engine {
 
     const sorter = () => this.entityStore.sort();
     this.registerSystem(AFTER_UPDATE_PHASE, sorter);
+
+    const emitter = () => this.entityStore.emitSignal();
+    this.registerSystem(AFTER_UPDATE_PHASE, emitter);
   }
 
   registerSystem(phase: number, callback: SystemFunction): void {

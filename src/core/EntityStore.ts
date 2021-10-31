@@ -20,6 +20,7 @@ export class EntityStore {
   groups: Map<number, EntityGroup[]>;
 
   version: number;
+  prevVersion: number;
 
   signal: Signal;
 
@@ -38,6 +39,7 @@ export class EntityStore {
     this.groups = new Map();
 
     this.version = 1;
+    this.prevVersion = 1;
 
     this.signal = new Signal();
 
@@ -260,5 +262,12 @@ export class EntityStore {
   nextVersion(): number {
     this.version += 1;
     return this.version;
+  }
+
+  emitSignal(): void {
+    if (this.prevVersion !== this.version) {
+      this.signal.emit();
+      this.prevVersion = this.version;
+    }
   }
 }

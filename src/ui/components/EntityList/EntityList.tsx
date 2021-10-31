@@ -10,15 +10,19 @@ import {EntityListItem} from './Item';
 
 export function EntityList(): React.ReactElement {
   const [selected, setSelected] = useRecoilState(selectedEntity);
-  const entities = useEngineValue((engine) => {
-    const result: Entity[] = [];
-    engine.entityStore
-      .query()
-      .forEach((entity) => {
-        result.push(entity);
-      });
-    return result;
-  });
+  const entities = useEngineValue(
+    (engine) => {
+      const result: Entity[] = [];
+      engine.entityStore
+        .query()
+        .forEach((entity) => {
+          result.push(entity);
+        });
+      return result;
+    },
+    (engine) => [engine.entityStore.signal],
+    [],
+  );
   return (
     <EntityListUl>
       { entities.map((entity, i) => (

@@ -92,7 +92,7 @@ export class OrbitCameraController {
       const offsetY = e.clientY - this.mouseY;
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
-      const transform = this.entity.get<Transform>('transform')!;
+      const transform = this.entity.getMutate<Transform>('transform')!;
       if (e.shiftKey) {
         // Do translation instead - we'd need two vectors to make translation
         // relative to the camera rotation
@@ -149,7 +149,7 @@ export class OrbitCameraController {
       const offsetY = e.changedTouches[0].pageY - this.mouseY;
       this.mouseX = e.changedTouches[0].pageX;
       this.mouseY = e.changedTouches[0].pageY;
-      const transform = this.entity.get<Transform>('transform')!;
+      const transform = this.entity.getMutate<Transform>('transform')!;
       // rotation....
       transform.getRotation();
       const rot = quat.create();
@@ -309,6 +309,7 @@ export class OrbitCameraController {
       vec3.add(transform.getPosition(), transform.getPosition(), this.center);
       transform.markChanged();
       this.hasChanged = false;
+      this.entity.markChanged('transform');
     }
   }
 }

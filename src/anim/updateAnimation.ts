@@ -68,7 +68,7 @@ export function updateAnimation(
         const t = Math.min(1, Math.max(0, (currentTime - tmin) / (tmax - tmin)));
         // Blend the target
         const target = animation.targets[channel.target];
-        const transform = target.entity.get<Transform>('transform')!;
+        const transform = target.entity.getMutate<Transform>('transform')!;
         switch (target.path) {
           case 'position': {
             const prev = transform.getPosition();

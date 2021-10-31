@@ -1,24 +1,27 @@
 import {useEffect, useState} from 'react';
 
-import {AFTER_RENDER_PHASE, Engine} from '../../core/Engine';
+import {Engine} from '../../core/Engine';
+import {Signal} from '../../core/Signal';
 
 import {useEngine} from './useEngine';
 
-// TODO: Run diff-checking. Seriously.
 export function useEngineValue<T>(
   callback: (engine: Engine) => T,
+  getSignals: (engine: Engine, value: T) => (Signal | null | undefined)[],
+  deps: any[],
 ): T {
   const engine = useEngine();
   const [_, setVersion] = useState(0);
   useEffect(() => {
-    const system = () => {
+    const signals = getSignals(engine, callback(engine));
+    const handler = () => {
       setVersion((v) => v + 1);
     };
-    engine.registerSystem(AFTER_RENDER_PHASE, system);
+    signals.forEach((signal) => signal?.add(handler));
     return () => {
-      engine.unregisterSystem(AFTER_RENDER_PHASE, system);
+      signals.forEach((signal) => signal?.remove(handler));
     };
-  }, []);
+  }, [engine, ...deps]);
   return callback(engine);
 }
 
