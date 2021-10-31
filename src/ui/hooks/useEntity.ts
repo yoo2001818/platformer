@@ -14,7 +14,15 @@ export function useEntity(entity: Entity | EntityHandle | null): Entity | null {
       }
       return engine.entityStore.get(entity);
     },
-    (_, entity) => [entity?.signal],
+    (_, entity) => {
+      if (entity == null) {
+        return {signals: [], getVersion: () => 0};
+      }
+      return {
+        signals: [entity.signal],
+        getVersion: () => entity.version,
+      };
+    },
     [entity],
   );
 }

@@ -20,7 +20,19 @@ export function EntityList(): React.ReactElement {
         });
       return result;
     },
-    (engine) => [engine.entityStore.signal],
+    (engine) => {
+      const {entityStore} = engine;
+      const nameComp = entityStore.getComponent('name');
+      return {
+        signals: [entityStore.signal],
+        getVersion: () => {
+          return Math.max(
+            entityStore.componentVersions[nameComp.getIndex()!] ?? 0,
+            entityStore.structureVersion,
+          );
+        },
+      };
+    },
     [],
   );
   return (

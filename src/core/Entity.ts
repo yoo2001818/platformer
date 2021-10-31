@@ -254,4 +254,16 @@ export class Entity {
   getComponentSignal(component: Component<any, any> | string | number): Signal {
     return this.componentSignals.get(component);
   }
+
+  getComponentVersion(
+    component: Component<any, any> | string | number,
+  ): number {
+    if (typeof component === 'string') {
+      return this.getComponentVersion(this.store.getComponent(component));
+    }
+    if (typeof component === 'number') {
+      return this.componentVersions[component] ?? 0;
+    }
+    return this.getComponentVersion(component.getIndex()!);
+  }
 }

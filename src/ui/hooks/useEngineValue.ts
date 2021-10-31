@@ -5,17 +5,27 @@ import {Signal} from '../../core/Signal';
 
 import {useEngine} from './useEngine';
 
+export interface SignalComparator {
+  signals: (Signal | null | undefined)[];
+  getVersion: () => number;
+}
+
 export function useEngineValue<T>(
   callback: (engine: Engine) => T,
-  getSignals: (engine: Engine, value: T) => (Signal | null | undefined)[],
+  getSignals: (engine: Engine, value: T) => SignalComparator,
   deps: any[],
 ): T {
   const engine = useEngine();
   const [_, setVersion] = useState(0);
   useEffect(() => {
-    const signals = getSignals(engine, callback(engine));
+    const {signals, getVersion} = getSignals(engine, callback(engine));
+    let prevVersion = engine.entityStore.version;
     const handler = () => {
-      setVersion((v) => v + 1);
+      const currVersion = getVersion();
+      if (prevVersion !== currVersion) {
+        setVersion((v) => v + 1);
+        prevVersion = currVersion;
+      }
     };
     signals.forEach((signal) => signal?.add(handler));
     return () => {

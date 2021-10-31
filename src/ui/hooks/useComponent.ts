@@ -33,9 +33,12 @@ export function useComponent<T>(
     (engine) => {
       const entityVal = getEntity(engine, entity);
       if (entityVal == null) {
-        return [];
+        return {signals: [], getVersion: () => 0};
       }
-      return [entityVal.getComponentSignal(component)];
+      return {
+        signals: [entityVal?.getComponentSignal(component)],
+        getVersion: () => entityVal.getComponentVersion(component),
+      };
     },
     [entity],
   );
