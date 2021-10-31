@@ -11,6 +11,7 @@ export class Entity {
   deleted: boolean;
   floating: boolean;
   version: number;
+  structureVersion: number;
   componentVersions: number[];
   componentMap: unknown[];
   hashCodes: number[];
@@ -25,6 +26,7 @@ export class Entity {
     this.deleted = false;
     this.floating = true;
     this.version = 0;
+    this.structureVersion = 0;
     this.componentVersions = [];
     this.componentMap = [];
     this.hashCodes = [];
@@ -61,11 +63,13 @@ export class Entity {
   _markFloating(): void {
     this.store._handleFloat(this);
     this.floating = true;
+    this.markStructureChanged();
     this.signal.updateUpstream();
   }
 
   _markUnfloating(): void {
     this.floating = false;
+    this.markStructureChanged();
     this.signal.updateUpstream();
   }
 
@@ -91,6 +95,7 @@ export class Entity {
 
   _setHashCode(index: number, hashCode: number): void {
     if (this.hashCodes[index] !== hashCode) {
+      this.markStructureChanged();
       this.float();
     }
     this.hashCodes[index] = hashCode;
@@ -159,6 +164,15 @@ export class Entity {
       if (this.chunk != null) {
         this.chunk._propagateUpdates(this.chunkOffset, currentVersion, index);
       }
+    }
+  }
+
+  markStructureChanged(): void {
+    const currentVersion = this.store.nextVersion();
+    this.version = currentVersion;
+    this.structureVersion = currentVersion;
+    if (this.chunk != null) {
+      this.chunk._propagateStructureUpdates(this.chunkOffset, currentVersion);
     }
   }
 

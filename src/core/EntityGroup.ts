@@ -12,6 +12,7 @@ export class EntityGroup {
   chunks: EntityChunk[];
   availableChunks: EntityChunk[];
   version: number;
+  structureVersion: number;
   componentVersions: number[];
   signal: UpstreamSignal;
   componentSignals: ComponentSignalMapper;
@@ -22,6 +23,7 @@ export class EntityGroup {
     this.chunks = [];
     this.availableChunks = [];
     this.version = 0;
+    this.structureVersion = 0;
     this.componentVersions = [];
     this.signal = new UpstreamSignal(
       () => this.store.signal,
@@ -57,6 +59,7 @@ export class EntityGroup {
     newChunk.allocate(entity);
     this.chunks.push(newChunk);
     this.availableChunks.push(newChunk);
+    this.markStructureChanged();
     return newChunk;
   }
 
@@ -98,9 +101,21 @@ export class EntityGroup {
   _propagateUpdates(offset: number, version: number, index: number): void {
     this.version = version;
     this.componentVersions[index] = version;
+    this.store._propagateUpdates(0, version, index);
+  }
+
+  _propagateStructureUpdates(offset: number, version: number): void {
+    this.version = version;
+    this.structureVersion = version;
+    this.store._propagateStructureUpdates(0, version);
   }
 
   getComponentSignal(component: Component<any, any> | string | number): Signal {
     return this.componentSignals.get(component);
+  }
+
+  markStructureChanged(): void {
+    const currentVersion = this.store.nextVersion();
+    this._propagateStructureUpdates(0, currentVersion);
   }
 }

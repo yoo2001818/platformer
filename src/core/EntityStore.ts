@@ -22,6 +22,9 @@ export class EntityStore {
   version: number;
   prevVersion: number;
 
+  structureVersion: number;
+  componentVersions: number[];
+
   signal: Signal;
 
   // FIXME: This should be specified differently; it is only used for
@@ -40,6 +43,8 @@ export class EntityStore {
 
     this.version = 1;
     this.prevVersion = 1;
+    this.structureVersion = 0;
+    this.componentVersions = [];
 
     this.signal = new Signal();
 
@@ -269,5 +274,13 @@ export class EntityStore {
       this.signal.emit();
       this.prevVersion = this.version;
     }
+  }
+
+  _propagateUpdates(offset: number, version: number, index: number): void {
+    this.componentVersions[index] = version;
+  }
+
+  _propagateStructureUpdates(offset: number, version: number): void {
+    this.structureVersion = version;
   }
 }

@@ -17,6 +17,7 @@ export class EntityChunk {
   maxOffset: number;
   defragNeeded: boolean;
   version: number;
+  structureVersion: number;
   componentVersions: number[];
   signal: UpstreamSignal;
   componentSignals: ComponentSignalMapper;
@@ -38,6 +39,7 @@ export class EntityChunk {
     this.maxOffset = 0;
     this.defragNeeded = false;
     this.version = 0;
+    this.structureVersion = 0;
     this.componentVersions = [];
     this.signal = new UpstreamSignal(
       () => this.group.signal,
@@ -187,7 +189,18 @@ export class EntityChunk {
     this.group._propagateUpdates(this.chunkOffset, version, index);
   }
 
+  _propagateStructureUpdates(offset: number, version: number): void {
+    this.version = version;
+    this.structureVersion = version;
+    this.group._propagateStructureUpdates(this.chunkOffset, version);
+  }
+
   getComponentSignal(component: Component<any, any> | string | number): Signal {
     return this.componentSignals.get(component);
+  }
+
+  markStructureChanged(): void {
+    const currentVersion = this.group.store.nextVersion();
+    this._propagateStructureUpdates(0, currentVersion);
   }
 }
