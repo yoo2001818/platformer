@@ -37,9 +37,6 @@ export class Atom<T> {
   }
 }
 
-export function createAtom<T>(
-  name: string,
-  defaultState: T,
-): AtomDescriptor<T> {
-  return {name, defaultState};
+export function atom<T>(descriptor: AtomDescriptor<T>): AtomDescriptor<T> {
+  return descriptor;
 }

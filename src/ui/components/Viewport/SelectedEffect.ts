@@ -1,6 +1,5 @@
 import {Camera} from '../../../3d/Camera';
 import {Transform} from '../../../3d/Transform';
-import {Entity} from '../../../core/Entity';
 import {quad} from '../../../geom/quad';
 import {GizmoEffect} from '../../../render/effect/GizmoEffect';
 import {GLFrameBuffer} from '../../../render/gl/GLFrameBuffer';
@@ -10,6 +9,7 @@ import {GLShader} from '../../../render/gl/GLShader';
 import {GLTexture2D} from '../../../render/gl/GLTexture2D';
 import {Mesh} from '../../../render/Mesh';
 import {Renderer} from '../../../render/Renderer';
+import {selectedEntity} from '../../states/selection';
 
 const QUAD = new GLGeometry(quad());
 const OFF_SHADER = new GLShader(
@@ -74,14 +74,12 @@ const LINE_SHADER = new GLShader(
 
 export class SelectedEffect implements GizmoEffect {
   renderer: Renderer;
-  entity: Entity | null;
   lineTex: GLTexture2D;
   lineDepth: GLRenderBuffer;
   lineFrameBuffer: GLFrameBuffer;
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
-    this.entity = null;
     // Since WebGL only supports 1px for lineWidth, we have to find another
     // way to implement outlines.
     // The most feasible way to do this is, to render the object in the
@@ -118,13 +116,11 @@ export class SelectedEffect implements GizmoEffect {
     this.lineFrameBuffer.dispose();
   }
 
-  setEntity(entity: Entity | null): void {
-    this.entity = entity;
-  }
-
   render(deltaTime?: number): void {
-    const {entity, renderer} = this;
-    const {glRenderer} = renderer;
+    const {renderer} = this;
+    const {glRenderer, entityStore} = renderer;
+    const entityHandle = entityStore.getAtom(selectedEntity).state;
+    const entity = entityStore.get(entityHandle);
     if (entity == null) {
       return;
     }

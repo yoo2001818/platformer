@@ -1,13 +1,12 @@
-import {atom} from 'recoil';
-
+import {atom} from '../../core/Atom';
 import {EntityHandle} from '../../core/EntityHandle';
 
 export const selectedEntity = atom<EntityHandle | null>({
-  key: 'selectedEntity',
-  default: null,
+  name: 'selectedEntity',
+  defaultState: null,
 });
 
 export const editorCamera = atom<EntityHandle | null>({
-  key: 'editorCamera',
-  default: null,
+  name: 'editorCamera',
+  defaultState: null,
 });

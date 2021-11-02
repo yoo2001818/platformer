@@ -131,7 +131,10 @@ export class EntityStore {
     return result;
   }
 
-  get(handle: EntityHandle): Entity | null {
+  get(handle: EntityHandle | null): Entity | null {
+    if (handle == null) {
+      return null;
+    }
     if (this.entities.length <= handle.id) {
       return null;
     }

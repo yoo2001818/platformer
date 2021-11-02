@@ -1,15 +1,15 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import {useRecoilState} from 'recoil';
 
 import {Entity} from '../../../core/Entity';
 import {useEngineValue} from '../../hooks/useEngineValue';
 import {selectedEntity} from '../../states/selection';
+import {useAtom} from '../../hooks/useAtom';
 
 import {EntityListItem} from './Item';
 
 export function EntityList(): React.ReactElement {
-  const [selected, setSelected] = useRecoilState(selectedEntity);
+  const [selected, setSelected] = useAtom(selectedEntity);
   const entities = useEngineValue(
     (engine) => {
       const result: Entity[] = [];
