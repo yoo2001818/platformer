@@ -1,3 +1,4 @@
+import {Atom, AtomDescriptor} from './Atom';
 import {Component} from './components/Component';
 import {Entity} from './Entity';
 import {EntityChunk} from './EntityChunk';
@@ -18,6 +19,8 @@ export class EntityStore {
   floatingEntities: Entity[];
 
   groups: Map<number, EntityGroup[]>;
+
+  atoms: Map<string, Atom<any>>;
 
   version: number;
   prevVersion: number;
@@ -40,6 +43,8 @@ export class EntityStore {
     this.floatingEntities = [];
 
     this.groups = new Map();
+
+    this.atoms = new Map();
 
     this.version = 1;
     this.prevVersion = 1;
@@ -262,6 +267,15 @@ export class EntityStore {
 
   toJSON(): unknown {
     return this.getEntities().map((v) => v.toJSON());
+  }
+
+  getAtom<T>(descriptor: AtomDescriptor<T>): Atom<T> {
+    let atom = this.atoms.get(descriptor.name);
+    if (atom == null) {
+      atom = new Atom(descriptor, this);
+      this.atoms.set(descriptor.name, atom);
+    }
+    return atom;
   }
 
   nextVersion(): number {
