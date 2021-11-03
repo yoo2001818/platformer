@@ -1,6 +1,5 @@
 import React, {useRef} from 'react';
 import {css, Global} from '@emotion/react';
-import {RecoilRoot} from 'recoil';
 
 import {create3DComponents} from '../../3d/create3DComponents';
 import {Engine} from '../../core/Engine';
@@ -99,56 +98,54 @@ export function App(): React.ReactElement {
     engine.current = initEngine();
   }
   return (
-    <RecoilRoot>
-      <EngineProvider engine={engine.current}>
-        <Global
-          styles={css`
-            html, body, #root {
-              width: 100%;
-              height: 100%;
-              margin: 0;
-            }
-          `}
-        />
-        <LayoutTree>
-          <SplitList direction="horizontal">
-            <SplitCell size={0.8}>
-              <Panel>
-                <PanelHeader>
-                  Viewport
-                </PanelHeader>
-                <PanelContent>
-                  <Viewport />
-                </PanelContent>
-              </Panel>
-            </SplitCell>
-            <SplitCell size={0.2}>
-              <SplitList direction="vertical">
-                <SplitCell size={0.4}>
-                  <Panel>
-                    <PanelHeader>
-                      Hierarchy
-                    </PanelHeader>
-                    <PanelContent>
-                      <EntityList />
-                    </PanelContent>
-                  </Panel>
-                </SplitCell>
-                <SplitCell size={0.6}>
-                  <Panel>
-                    <PanelHeader>
-                      Properties
-                    </PanelHeader>
-                    <PanelContent>
-                      <EntityProperties />
-                    </PanelContent>
-                  </Panel>
-                </SplitCell>
-              </SplitList>
-            </SplitCell>
-          </SplitList>
-        </LayoutTree>
+    <EngineProvider engine={engine.current}>
+      <Global
+        styles={css`
+          html, body, #root {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+          }
+        `}
+      />
+      <LayoutTree>
+        <SplitList direction="horizontal">
+          <SplitCell size={0.8}>
+            <Panel>
+              <PanelHeader>
+                Viewport
+              </PanelHeader>
+              <PanelContent>
+                <Viewport />
+              </PanelContent>
+            </Panel>
+          </SplitCell>
+          <SplitCell size={0.2}>
+            <SplitList direction="vertical">
+              <SplitCell size={0.4}>
+                <Panel>
+                  <PanelHeader>
+                    Hierarchy
+                  </PanelHeader>
+                  <PanelContent>
+                    <EntityList />
+                  </PanelContent>
+                </Panel>
+              </SplitCell>
+              <SplitCell size={0.6}>
+                <Panel>
+                  <PanelHeader>
+                    Properties
+                  </PanelHeader>
+                  <PanelContent>
+                    <EntityProperties />
+                  </PanelContent>
+                </Panel>
+              </SplitCell>
+            </SplitList>
+          </SplitCell>
+        </SplitList>
+      </LayoutTree>
     </EngineProvider>
-    </RecoilRoot>
   );
 }
