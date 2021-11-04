@@ -9,6 +9,7 @@ import {RENDER_PHASE, UPDATE_PHASE} from '../../../core/Engine';
 import {OrbitCameraController} from '../../../input/OrbitCameraController';
 
 import {SelectedEffect} from './SelectedEffect';
+import {GizmoPosRotScaleEffect} from './GizmoPosRotScaleEffect';
 
 export interface ViewportProps {
   className?: string;
@@ -40,7 +41,10 @@ export function Viewport(
     const glRenderer = new GLRenderer(gl);
     const renderer = new Renderer(glRenderer, engine.entityStore);
     glRenderer.setViewport();
-    renderer.gizmoEffects = [new SelectedEffect(renderer)];
+    renderer.gizmoEffects = [
+      new SelectedEffect(renderer),
+      new GizmoPosRotScaleEffect(renderer),
+    ];
 
     const orbitController = new OrbitCameraController(
       canvasElem,
