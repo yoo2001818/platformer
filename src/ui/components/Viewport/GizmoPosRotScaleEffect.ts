@@ -21,7 +21,7 @@ const ARROW_SHADER = new GLShader(
     void main() {
       // Determine the w value at the mid point
       vec4 midPos = uProjection * uView * uModel * vec4(0.0, 0.0, 0.0, 1.0);
-      gl_Position = uProjection * uView * uModel * vec4(aPosition * 0.01 * midPos.w, 1.0);
+      gl_Position = uProjection * uView * uModel * vec4(aPosition * 0.03 * midPos.w, 1.0);
     }
   `,
   /* glsl */`
