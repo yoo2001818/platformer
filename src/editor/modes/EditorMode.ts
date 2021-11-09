@@ -1,4 +1,6 @@
+import {Engine} from '../../core/Engine';
+
 export interface EditorMode {
-  bind(): void;
+  bind(engine: Engine): void;
   destroy(): void;
 }
