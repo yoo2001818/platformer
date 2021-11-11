@@ -20,6 +20,7 @@ export class Engine {
     this.entityStore = new EntityStore();
     this.systems = [];
     this.resources = new Map();
+    this.models = new Map();
 
     const sorter = () => this.entityStore.sort();
     this.registerSystem(AFTER_UPDATE_PHASE, sorter);
