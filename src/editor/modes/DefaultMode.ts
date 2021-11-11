@@ -13,4 +13,8 @@ export class DefaultMode implements EditorMode {
     throw new Error('Method not implemented.');
   }
 
+  update(deltaTime?: number): void {
+    throw new Error('Method not implemented.');
+  }
+
 }

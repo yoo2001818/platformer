@@ -14,6 +14,7 @@ export class Engine {
   entityStore: EntityStore;
   systems: Set<SystemFunction>[];
   resources: Map<string, any>;
+  models: Map<string, any>;
 
   constructor() {
     this.entityStore = new EntityStore();
@@ -39,6 +40,14 @@ export class Engine {
       return;
     }
     this.systems[phase].delete(callback);
+  }
+
+  registerModel(name: string, value: any): void {
+    this.models.set(name, value);
+  }
+
+  getModel<T>(name: string): T {
+    return this.models.get(name) as T;
   }
 
   setResource(name: string, value: any): void {
