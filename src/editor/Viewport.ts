@@ -16,13 +16,19 @@ export class Viewport {
   attach(engine: Engine): void {
     this.engine = engine;
     const viewportModel = engine.getModel<ViewportModel>('viewport');
-    const callbacks =
-      ['mousedown', 'keydown', 'touchstart', 'wheel'].map((name) => {
-        const callback =
-          (...args: any[]) => viewportModel.emitter.emit(name, args);
-        this.canvas.addEventListener(name, callback);
-        return {name, callback};
-      });
+    const callbacks = [
+      'mousedown',
+      'mousemove',
+      'keydown',
+      'keyup',
+      'touchstart',
+      'wheel',
+    ].map((name) => {
+      const callback =
+        (...args: any[]) => viewportModel.emitter.emit(name, args);
+      this.canvas.addEventListener(name, callback);
+      return {name, callback};
+    });
     this.unattachFn = () => {
       callbacks.forEach(({name, callback}) => {
         this.canvas.removeEventListener(name, callback);

@@ -25,5 +25,6 @@ export class EventEmitter {
 
   emit(type: string, args: any[]): void {
     this._getListeners(type).forEach((listener) => listener(...args));
+    this._getListeners('all').forEach((listener) => listener(type, ...args));
   }
 }

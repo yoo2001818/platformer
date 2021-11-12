@@ -6,15 +6,15 @@ export class DefaultMode implements EditorMode {
 
   bind(engine: Engine): void {
     // Set up events and appropriate effects. Preferably call viewportModel?
-    throw new Error('Method not implemented.');
   }
 
   destroy(): void {
-    throw new Error('Method not implemented.');
   }
 
   update(deltaTime?: number): void {
-    throw new Error('Method not implemented.');
+  }
+
+  processEvent(type: string, ...args: any[]): void {
   }
 
 }
