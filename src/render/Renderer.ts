@@ -49,6 +49,10 @@ export class Renderer {
     this.pipeline = pipeline;
   }
 
+  setGizmoEffects(effects: GizmoEffect[]): void {
+    this.gizmoEffects = effects;
+  }
+
   getAspectRatio(): number {
     return this.glRenderer.getAspectRatio();
   }
