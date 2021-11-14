@@ -5,7 +5,6 @@ import {EditorMode} from './EditorMode';
 export class DefaultMode implements EditorMode {
 
   bind(engine: Engine): void {
-    // Set up events and appropriate effects. Preferably call viewportModel?
   }
 
   destroy(): void {

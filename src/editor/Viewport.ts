@@ -1,15 +1,21 @@
 import {Engine} from '../core/Engine';
+import {Renderer} from '../render/Renderer';
 
 import {ViewportModel} from './models/ViewportModel';
 
 export class Viewport {
   engine: Engine | null;
   canvas: HTMLCanvasElement;
+  renderer: Renderer;
   unattachFn: (() => void) | null;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    renderer: Renderer,
+  ) {
     this.engine = null;
     this.canvas = canvas;
+    this.renderer = renderer;
     this.unattachFn = null;
   }
 
