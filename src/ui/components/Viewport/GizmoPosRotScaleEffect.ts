@@ -91,6 +91,10 @@ export class GizmoPosRotScaleEffect implements GizmoEffect {
     this.renderer = renderer;
   }
 
+  bind(): void {
+
+  }
+
   dispose(): void {
 
   }

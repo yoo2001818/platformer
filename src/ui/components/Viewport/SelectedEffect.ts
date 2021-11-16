@@ -110,6 +110,10 @@ export class SelectedEffect implements GizmoEffect {
     });
   }
 
+  bind(): void {
+
+  }
+
   dispose(): void {
     this.lineTex.dispose();
     this.lineDepth.dispose();

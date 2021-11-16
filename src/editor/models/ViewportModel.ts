@@ -1,5 +1,6 @@
 import {Engine} from '../../core/Engine';
 import {EventEmitter} from '../EventEmitter';
+import {Viewport} from '../Viewport';
 
 export class ViewportModel {
   engine: Engine;
@@ -12,11 +13,11 @@ export class ViewportModel {
     this.emitter = new EventEmitter();
   }
 
-  addViewport(viewport: unknown): void {
+  addViewport(viewport: Viewport): void {
     this.viewports.push(viewport);
   }
 
-  removeViewport(viewport: unknown): void {
+  removeViewport(viewport: Viewport): void {
     this.viewports = this.viewports.filter((v) => v !== viewport);
   }
 }

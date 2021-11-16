@@ -2,6 +2,7 @@ import {Engine} from '../core/Engine';
 import {Renderer} from '../render/Renderer';
 
 import {ViewportModel} from './models/ViewportModel';
+import {ViewportEffect} from './ViewportEffect';
 
 export class Viewport {
   engine: Engine | null;
@@ -40,6 +41,7 @@ export class Viewport {
         this.canvas.removeEventListener(name, callback);
       });
     };
+    this.renderer.gizmoEffects.push(new ViewportEffect(this));
   }
 
   unattach(): void {
