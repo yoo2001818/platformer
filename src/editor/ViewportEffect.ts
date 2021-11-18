@@ -1,22 +1,28 @@
 import {GizmoEffect} from '../render/effect/GizmoEffect';
 import {Renderer} from '../render/Renderer';
 
+import {ModeModel} from './models/ModeModel';
 import {Viewport} from './Viewport';
 
 export class ViewportEffect implements GizmoEffect {
+  viewport: Viewport;
+
   constructor(viewport: Viewport) {
+    this.viewport = viewport;
   }
 
   bind(renderer: Renderer): void {
-    throw new Error('Method not implemented.');
+    //
   }
 
   render(deltaTime?: number): void {
-    throw new Error('Method not implemented.');
+    const modeModel = this.viewport.engine!.getModel<ModeModel>('mode');
+    const effects = modeModel.mode.getEffects();
+    // Bind and dispose effects
   }
 
   dispose(): void {
-    throw new Error('Method not implemented.');
+    //
   }
 
 }
