@@ -1,8 +1,8 @@
 import {Renderer} from '../Renderer';
 
-export interface GizmoEffect {
+export interface GizmoEffect<T> {
   bind(renderer: Renderer): void;
-  render(deltaTime?: number): void;
+  render(options: T, deltaTime?: number): void;
   dispose(): void;
 }
 

@@ -18,8 +18,8 @@ export interface Constructable<T> {
   new(): T;
 }
 
-export interface RenderNode {
+export interface RenderNode<TProps> {
   type: 'gizmo';
-  component: Constructable<GizmoEffect>;
-  props: {[key: string]: unknown;};
+  component: Constructable<GizmoEffect<TProps>>;
+  props: TProps;
 }
