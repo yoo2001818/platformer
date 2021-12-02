@@ -23,3 +23,8 @@ export interface RenderNode<TProps> {
   component: Constructable<GizmoEffect<TProps>>;
   props: TProps;
 }
+
+export interface EditorStateHandler {
+  render(): RenderNode<unknown>[];
+  processEvent(type: string, event: Event): void;
+}
