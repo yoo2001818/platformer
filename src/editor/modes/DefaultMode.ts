@@ -1,5 +1,5 @@
 import {Engine} from '../../core/Engine';
-import {GizmoEffect} from '../../render/effect/GizmoEffect';
+import {RenderNode} from '../ModeState';
 
 import {EditorMode} from './EditorMode';
 
@@ -17,7 +17,7 @@ export class DefaultMode implements EditorMode {
   processEvent(type: string, ...args: any[]): void {
   }
 
-  getEffects(): GizmoEffect[] {
+  getEffects(): RenderNode<unknown>[] {
     return [];
   }
 

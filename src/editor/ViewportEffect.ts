@@ -4,9 +4,9 @@ import {Renderer} from '../render/Renderer';
 import {ModeModel} from './models/ModeModel';
 import {Viewport} from './Viewport';
 
-export class ViewportEffect implements GizmoEffect {
+export class ViewportEffect implements GizmoEffect<unknown> {
   viewport: Viewport;
-  prevEffects: GizmoEffect[];
+  prevEffects: GizmoEffect<unknown>[];
 
   constructor(viewport: Viewport) {
     this.viewport = viewport;
@@ -19,7 +19,7 @@ export class ViewportEffect implements GizmoEffect {
 
   render(deltaTime?: number): void {
     const modeModel = this.viewport.engine!.getModel<ModeModel>('mode');
-    const effects = modeModel.mode.getEffects();
+    const effects = modeModel.mode.getEffects(this.viewport);
     // Bind and dispose effects
     effects.forEach((effect) => {
       //
