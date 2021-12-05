@@ -2,11 +2,12 @@ import {GizmoEffect} from '../render/effect/GizmoEffect';
 import {Renderer} from '../render/Renderer';
 
 import {ModeModel} from './models/ModeModel';
+import {RenderNode} from './ModeState';
 import {Viewport} from './Viewport';
 
 export class ViewportEffect implements GizmoEffect<unknown> {
   viewport: Viewport;
-  prevEffects: GizmoEffect<unknown>[];
+  prevEffects: RenderNode<any>[];
 
   constructor(viewport: Viewport) {
     this.viewport = viewport;
@@ -20,7 +21,7 @@ export class ViewportEffect implements GizmoEffect<unknown> {
   render(deltaTime?: number): void {
     const modeModel = this.viewport.engine!.getModel<ModeModel>('mode');
     const effects = modeModel.mode.getEffects(this.viewport);
-    // Bind and dispose effects
+    // Run diff checks; we'll use Map for this purpose
     effects.forEach((effect) => {
       //
     });
