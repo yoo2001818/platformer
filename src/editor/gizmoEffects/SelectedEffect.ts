@@ -1,15 +1,15 @@
-import {Camera} from '../../../3d/Camera';
-import {Transform} from '../../../3d/Transform';
-import {quad} from '../../../geom/quad';
-import {GizmoEffect} from '../../../render/effect/GizmoEffect';
-import {GLFrameBuffer} from '../../../render/gl/GLFrameBuffer';
-import {GLGeometry} from '../../../render/gl/GLGeometry';
-import {GLRenderBuffer} from '../../../render/gl/GLRenderBuffer';
-import {GLShader} from '../../../render/gl/GLShader';
-import {GLTexture2D} from '../../../render/gl/GLTexture2D';
-import {Mesh} from '../../../render/Mesh';
-import {Renderer} from '../../../render/Renderer';
-import {selectedEntity} from '../../states/selection';
+import {Camera} from '../../3d/Camera';
+import {Transform} from '../../3d/Transform';
+import {quad} from '../../geom/quad';
+import {GizmoEffect} from '../../render/effect/GizmoEffect';
+import {GLFrameBuffer} from '../../render/gl/GLFrameBuffer';
+import {GLGeometry} from '../../render/gl/GLGeometry';
+import {GLRenderBuffer} from '../../render/gl/GLRenderBuffer';
+import {GLShader} from '../../render/gl/GLShader';
+import {GLTexture2D} from '../../render/gl/GLTexture2D';
+import {Mesh} from '../../render/Mesh';
+import {Renderer} from '../../render/Renderer';
+import {selectedEntity} from '../../ui/states/selection';
 
 const QUAD = new GLGeometry(quad());
 const OFF_SHADER = new GLShader(
@@ -72,13 +72,13 @@ const LINE_SHADER = new GLShader(
   `,
 );
 
-export class SelectedEffect implements GizmoEffect {
-  renderer: Renderer;
-  lineTex: GLTexture2D;
-  lineDepth: GLRenderBuffer;
-  lineFrameBuffer: GLFrameBuffer;
+export class SelectedEffect implements GizmoEffect<any> {
+  renderer: Renderer | null = null;
+  lineTex: GLTexture2D | null = null;
+  lineDepth: GLRenderBuffer | null = null;
+  lineFrameBuffer: GLFrameBuffer | null = null;
 
-  constructor(renderer: Renderer) {
+  bind(renderer: Renderer): void {
     this.renderer = renderer;
     // Since WebGL only supports 1px for lineWidth, we have to find another
     // way to implement outlines.
@@ -110,25 +110,21 @@ export class SelectedEffect implements GizmoEffect {
     });
   }
 
-  bind(): void {
-
-  }
-
   dispose(): void {
-    this.lineTex.dispose();
-    this.lineDepth.dispose();
-    this.lineFrameBuffer.dispose();
+    this.lineTex!.dispose();
+    this.lineDepth!.dispose();
+    this.lineFrameBuffer!.dispose();
   }
 
-  render(deltaTime?: number): void {
+  render(props: any, deltaTime?: number): void {
     const {renderer} = this;
-    const {glRenderer, entityStore} = renderer;
+    const {glRenderer, entityStore} = renderer!;
     const entityHandle = entityStore.getAtom(selectedEntity).state;
     const entity = entityStore.get(entityHandle);
     if (entity == null) {
       return;
     }
-    const camera = renderer.camera!;
+    const camera = renderer!.camera!;
     const cameraData = camera.get<Camera>('camera')!;
 
     const mesh = entity.get<Mesh>('mesh');
@@ -142,12 +138,12 @@ export class SelectedEffect implements GizmoEffect {
     mesh.geometries.forEach((geom) => {
       glRenderer.draw({
         frameBuffer: this.lineFrameBuffer,
-        geometry: geom.getGLGeometry(renderer),
+        geometry: geom.getGLGeometry(renderer!),
         shader: OFF_SHADER,
         uniforms: {
           uModel: transform.getMatrixWorld(),
           uView: cameraData.getView(camera),
-          uProjection: cameraData.getProjection(renderer.getAspectRatio()),
+          uProjection: cameraData.getProjection(renderer!.getAspectRatio()),
         },
       });
     });

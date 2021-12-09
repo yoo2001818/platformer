@@ -9,7 +9,7 @@ import {RENDER_PHASE, UPDATE_PHASE} from '../../../core/Engine';
 import {OrbitCameraController} from '../../../input/OrbitCameraController';
 
 import {SelectedEffect} from './SelectedEffect';
-import {GizmoPosRotScaleEffect} from './GizmoPosRotScaleEffect';
+import {GizmoPosRotScaleEffect} from '../../../editor/gizmoEffects/GizmoPosRotScaleEffect';
 
 export interface ViewportProps {
   className?: string;

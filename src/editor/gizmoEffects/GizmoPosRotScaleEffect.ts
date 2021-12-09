@@ -1,16 +1,16 @@
 import {mat4} from 'gl-matrix';
 
-import {Camera} from '../../../3d/Camera';
-import {Transform} from '../../../3d/Transform';
-import {combine} from '../../../geom/combine';
-import {cone} from '../../../geom/cone';
-import {cylinder} from '../../../geom/cylinder';
-import {transform} from '../../../geom/transform';
-import {GizmoEffect} from '../../../render/effect/GizmoEffect';
-import {GLGeometry} from '../../../render/gl/GLGeometry';
-import {GLShader} from '../../../render/gl/GLShader';
-import {Renderer} from '../../../render/Renderer';
-import {selectedEntity} from '../../states/selection';
+import {Camera} from '../../3d/Camera';
+import {Transform} from '../../3d/Transform';
+import {combine} from '../../geom/combine';
+import {cone} from '../../geom/cone';
+import {cylinder} from '../../geom/cylinder';
+import {transform} from '../../geom/transform';
+import {GizmoEffect} from '../../render/effect/GizmoEffect';
+import {GLGeometry} from '../../render/gl/GLGeometry';
+import {GLShader} from '../../render/gl/GLShader';
+import {Renderer} from '../../render/Renderer';
+import {selectedEntity} from '../../ui/states/selection';
 
 const arrow = combine([
   transform(cone(12), {
@@ -84,15 +84,11 @@ const ARROW_SHADER = new GLShader(
   `,
 );
 
-export class GizmoPosRotScaleEffect implements GizmoEffect {
-  renderer: Renderer;
+export class GizmoPosRotScaleEffect implements GizmoEffect<any> {
+  renderer: Renderer | null = null;
 
-  constructor(renderer: Renderer) {
+  bind(renderer: Renderer): void {
     this.renderer = renderer;
-  }
-
-  bind(): void {
-
   }
 
   dispose(): void {
@@ -101,13 +97,13 @@ export class GizmoPosRotScaleEffect implements GizmoEffect {
 
   render(): void {
     const {renderer} = this;
-    const {glRenderer, entityStore} = renderer;
+    const {glRenderer, entityStore} = renderer!;
     const entityHandle = entityStore.getAtom(selectedEntity).state;
     const entity = entityStore.get(entityHandle);
     if (entity == null) {
       return;
     }
-    const camera = renderer.camera!;
+    const camera = renderer!.camera!;
     const cameraData = camera.get<Camera>('camera')!;
 
     const transform = entity.get<Transform>('transform');
@@ -124,7 +120,7 @@ export class GizmoPosRotScaleEffect implements GizmoEffect {
       uniforms: {
         uModel: modelMat,
         uView: cameraData.getView(camera),
-        uProjection: cameraData.getProjection(renderer.getAspectRatio()),
+        uProjection: cameraData.getProjection(renderer!.getAspectRatio()),
       },
       state: {
         depth: false,

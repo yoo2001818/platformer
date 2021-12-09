@@ -1,5 +1,7 @@
 import {Engine} from '../../core/Engine';
-import {RenderNode} from '../ModeState';
+import {GizmoPosRotScaleEffect} from '../gizmoEffects/GizmoPosRotScaleEffect';
+import {SelectedEffect} from '../gizmoEffects/SelectedEffect';
+import {gizmoItem, RenderNode} from '../ModeState';
 
 import {EditorMode} from './EditorMode';
 
@@ -18,7 +20,10 @@ export class DefaultMode implements EditorMode {
   }
 
   getEffects(): RenderNode<unknown>[] {
-    return [];
+    return [
+      gizmoItem(SelectedEffect, {}),
+      gizmoItem(GizmoPosRotScaleEffect, {}),
+    ];
   }
 
 }

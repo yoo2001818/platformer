@@ -23,3 +23,14 @@ export interface RenderNode<TProps> {
   component: Constructable<GizmoEffect<TProps>>;
   props: TProps;
 }
+
+export function gizmoItem<TProps>(
+  component: Constructable<GizmoEffect<TProps>>,
+  props: TProps,
+): RenderNode<TProps> {
+  return {
+    type: 'gizmo',
+    component,
+    props,
+  };
+}
