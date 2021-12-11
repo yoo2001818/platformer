@@ -16,7 +16,7 @@ export class Renderer {
   camera: Entity | null;
   resources: Map<string | number, unknown>;
   shadowMapManager: ShadowMapManager;
-  gizmoEffects: GizmoEffect[];
+  gizmoEffects: GizmoEffect<any>[];
   frameId: number;
   frameVersion = -1;
 
@@ -49,7 +49,7 @@ export class Renderer {
     this.pipeline = pipeline;
   }
 
-  setGizmoEffects(effects: GizmoEffect[]): void {
+  setGizmoEffects(effects: GizmoEffect<any>[]): void {
     this.gizmoEffects = effects;
   }
 
@@ -91,7 +91,8 @@ export class Renderer {
     this.frameVersion = transformComp.globalVersion;
     pipeline.render(deltaTime);
     this.gizmoEffects.forEach((effect) => {
-      effect.render();
+      effect.bind(this);
+      effect.render({});
     });
   }
 }

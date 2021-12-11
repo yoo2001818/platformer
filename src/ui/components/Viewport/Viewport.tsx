@@ -7,9 +7,8 @@ import {GLRenderer} from '../../../render/gl/GLRenderer';
 import {Renderer} from '../../../render/Renderer';
 import {RENDER_PHASE, UPDATE_PHASE} from '../../../core/Engine';
 import {OrbitCameraController} from '../../../input/OrbitCameraController';
-
-import {SelectedEffect} from './SelectedEffect';
-import {GizmoPosRotScaleEffect} from '../../../editor/gizmoEffects/GizmoPosRotScaleEffect';
+import {ViewportModel} from '../../../editor/models/ViewportModel';
+import {Viewport as RendererViewport} from '../../../editor/Viewport';
 
 export interface ViewportProps {
   className?: string;
@@ -41,10 +40,9 @@ export function Viewport(
     const glRenderer = new GLRenderer(gl);
     const renderer = new Renderer(glRenderer, engine.entityStore);
     glRenderer.setViewport();
-    renderer.gizmoEffects = [
-      new SelectedEffect(renderer),
-      new GizmoPosRotScaleEffect(renderer),
-    ];
+
+    const viewport = new RendererViewport(canvasElem, renderer);
+    engine.getModel<ViewportModel>('viewport').addViewport(viewport);
 
     const orbitController = new OrbitCameraController(
       canvasElem,

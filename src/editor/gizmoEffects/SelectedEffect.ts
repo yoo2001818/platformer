@@ -79,6 +79,9 @@ export class SelectedEffect implements GizmoEffect<any> {
   lineFrameBuffer: GLFrameBuffer | null = null;
 
   bind(renderer: Renderer): void {
+    if (this.renderer === renderer) {
+      return;
+    }
     this.renderer = renderer;
     // Since WebGL only supports 1px for lineWidth, we have to find another
     // way to implement outlines.

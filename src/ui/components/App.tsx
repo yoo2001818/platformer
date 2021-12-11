@@ -16,6 +16,7 @@ import {SkyboxMaterial} from '../../render/material/SkyboxMaterial';
 import {Geometry} from '../../render/Geometry';
 import {quad} from '../../geom/quad';
 import {EnvironmentLight} from '../../render/light/EnvironmentLight';
+import {initModels} from '../../editor/initModels';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
@@ -32,6 +33,7 @@ function initEngine(): Engine {
     name: 'Test',
     transform: {position: [0, 1, 0]},
   });
+  initModels(engine);
   const camera = engine.entityStore.create({
     name: 'Camera',
     transform: new Transform()

@@ -14,10 +14,12 @@ export class ViewportModel {
   }
 
   addViewport(viewport: Viewport): void {
+    viewport.attach(this.engine);
     this.viewports.push(viewport);
   }
 
   removeViewport(viewport: Viewport): void {
+    viewport.unattach();
     this.viewports = this.viewports.filter((v) => v !== viewport);
   }
 }

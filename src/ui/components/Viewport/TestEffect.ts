@@ -28,15 +28,15 @@ const TEST_SHADER = new GLShader(
   `,
 );
 
-export class TestEffect implements GizmoEffect {
-  renderer: Renderer;
+export class TestEffect implements GizmoEffect<{}> {
+  renderer: Renderer | null = null;
 
-  constructor(renderer: Renderer) {
+  bind(renderer: Renderer): void {
     this.renderer = renderer;
   }
 
-  render(deltaTime?: number): void {
-    this.renderer.glRenderer.draw({
+  render(props: {}, deltaTime?: number): void {
+    this.renderer!.glRenderer.draw({
       geometry: TEST_QUAD,
       shader: TEST_SHADER,
       uniforms: {},
@@ -44,5 +44,6 @@ export class TestEffect implements GizmoEffect {
   }
 
   dispose(): void {
+    this.renderer = null;
   }
 }

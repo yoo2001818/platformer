@@ -21,8 +21,8 @@ export class DefaultMode implements EditorMode {
 
   getEffects(): RenderNode<unknown>[] {
     return [
-      gizmoItem(SelectedEffect, {}),
-      gizmoItem(GizmoPosRotScaleEffect, {}),
+      gizmoItem(SelectedEffect, {key: 'selected'}),
+      gizmoItem(GizmoPosRotScaleEffect, {key: 'posRotScale'}),
     ];
   }
 
