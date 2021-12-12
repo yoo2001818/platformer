@@ -1,5 +1,6 @@
 import {Camera} from '../../3d/Camera';
 import {Transform} from '../../3d/Transform';
+import {Entity} from '../../core/Entity';
 import {quad} from '../../geom/quad';
 import {GizmoEffect} from '../../render/effect/GizmoEffect';
 import {GLFrameBuffer} from '../../render/gl/GLFrameBuffer';
@@ -72,7 +73,11 @@ const LINE_SHADER = new GLShader(
   `,
 );
 
-export class SelectedEffect implements GizmoEffect<any> {
+export interface SelectedEffectProps {
+  entity: Entity | null;
+}
+
+export class SelectedEffect implements GizmoEffect<SelectedEffectProps> {
   renderer: Renderer | null = null;
   lineTex: GLTexture2D | null = null;
   lineDepth: GLRenderBuffer | null = null;
@@ -119,7 +124,7 @@ export class SelectedEffect implements GizmoEffect<any> {
     this.lineFrameBuffer!.dispose();
   }
 
-  render(props: any, deltaTime?: number): void {
+  render(props: SelectedEffectProps, deltaTime?: number): void {
     const {renderer} = this;
     const {glRenderer, entityStore} = renderer!;
     const entityHandle = entityStore.getAtom(selectedEntity).state;
