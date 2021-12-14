@@ -10,7 +10,6 @@ import {GLShader} from '../../render/gl/GLShader';
 import {GLTexture2D} from '../../render/gl/GLTexture2D';
 import {Mesh} from '../../render/Mesh';
 import {Renderer} from '../../render/Renderer';
-import {selectedEntity} from '../../ui/states/selection';
 
 const QUAD = new GLGeometry(quad());
 const OFF_SHADER = new GLShader(
@@ -126,9 +125,8 @@ export class SelectedEffect implements GizmoEffect<SelectedEffectProps> {
 
   render(props: SelectedEffectProps, deltaTime?: number): void {
     const {renderer} = this;
-    const {glRenderer, entityStore} = renderer!;
-    const entityHandle = entityStore.getAtom(selectedEntity).state;
-    const entity = entityStore.get(entityHandle);
+    const {glRenderer} = renderer!;
+    const {entity} = props;
     if (entity == null) {
       return;
     }

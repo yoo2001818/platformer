@@ -2,6 +2,7 @@ import {mat4} from 'gl-matrix';
 
 import {Camera} from '../../3d/Camera';
 import {Transform} from '../../3d/Transform';
+import {Entity} from '../../core/Entity';
 import {combine} from '../../geom/combine';
 import {cone} from '../../geom/cone';
 import {cylinder} from '../../geom/cylinder';
@@ -10,7 +11,6 @@ import {GizmoEffect} from '../../render/effect/GizmoEffect';
 import {GLGeometry} from '../../render/gl/GLGeometry';
 import {GLShader} from '../../render/gl/GLShader';
 import {Renderer} from '../../render/Renderer';
-import {selectedEntity} from '../../ui/states/selection';
 
 const arrow = combine([
   transform(cone(12), {
@@ -84,7 +84,12 @@ const ARROW_SHADER = new GLShader(
   `,
 );
 
-export class GizmoPosRotScaleEffect implements GizmoEffect<any> {
+export interface GizmoPosRotScaleEffectProps {
+  entity: Entity | null;
+}
+
+export class GizmoPosRotScaleEffect
+implements GizmoEffect<GizmoPosRotScaleEffectProps> {
   renderer: Renderer | null = null;
 
   bind(renderer: Renderer): void {
@@ -95,11 +100,10 @@ export class GizmoPosRotScaleEffect implements GizmoEffect<any> {
 
   }
 
-  render(): void {
+  render(props: GizmoPosRotScaleEffectProps): void {
     const {renderer} = this;
-    const {glRenderer, entityStore} = renderer!;
-    const entityHandle = entityStore.getAtom(selectedEntity).state;
-    const entity = entityStore.get(entityHandle);
+    const {glRenderer} = renderer!;
+    const {entity} = props;
     if (entity == null) {
       return;
     }

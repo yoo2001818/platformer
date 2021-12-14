@@ -21,12 +21,12 @@ export interface Constructable<T> {
 export interface RenderNode<TProps> {
   type: 'gizmo';
   component: Constructable<GizmoEffect<TProps>>;
-  props: TProps;
+  props: TProps & {key?: unknown;};
 }
 
 export function gizmoItem<TProps>(
   component: Constructable<GizmoEffect<TProps>>,
-  props: TProps,
+  props: TProps & {key?: unknown;},
 ): RenderNode<TProps> {
   return {
     type: 'gizmo',
