@@ -26,6 +26,9 @@ export class Viewport {
     const callbacks = [
       'mousedown',
       'mousemove',
+      'mouseup',
+      'click',
+      'contextmenu',
       'keydown',
       'keyup',
       'touchstart',

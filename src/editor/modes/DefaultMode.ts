@@ -21,6 +21,16 @@ export class DefaultMode implements EditorMode {
   }
 
   processEvent(type: string, ...args: any[]): void {
+    switch (type) {
+      case 'click': {
+        const event: MouseEvent = args[0];
+        // TODO: Implement mouse picking or whatever
+        console.log(event);
+        break;
+      }
+      default:
+        break;
+    }
   }
 
   getEffects(): RenderNode<unknown>[] {
