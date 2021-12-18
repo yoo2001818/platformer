@@ -39,7 +39,6 @@ export function Viewport(
     }
     const glRenderer = new GLRenderer(gl);
     const renderer = new Renderer(glRenderer, engine.entityStore);
-    glRenderer.setViewport();
 
     const viewport = new RendererViewport(canvasElem, renderer);
     engine.getModel<ViewportModel>('viewport').addViewport(viewport);
@@ -52,7 +51,18 @@ export function Viewport(
     );
 
     engine.registerSystem(UPDATE_PHASE, (v) => orbitController.update(v));
-    engine.registerSystem(RENDER_PHASE, (v) => renderer.render(v));
+    engine.registerSystem(RENDER_PHASE, (v) => {
+      // Check if the canvas size has been changed.
+      const clientRect = canvasElem.getBoundingClientRect();
+      if (
+        clientRect.width !== canvasElem.width ||
+        clientRect.height !== canvasElem.height
+      ) {
+        canvasElem.width = clientRect.width;
+        canvasElem.height = clientRect.height;
+      }
+      renderer.render(v);
+    });
 
     rendererRef.current = renderer;
 

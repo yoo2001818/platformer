@@ -74,7 +74,8 @@ export class Renderer {
   }
 
   render(deltaTime = 0.016): void {
-    const {camera, pipeline, entityStore} = this;
+    const {camera, pipeline, entityStore, glRenderer} = this;
+    glRenderer.setViewport();
     if (camera == null) {
       return;
     }
