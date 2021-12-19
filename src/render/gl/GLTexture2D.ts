@@ -49,6 +49,15 @@ export class GLTexture2D extends GLTexture {
     this.uploadFulfilled = 0;
   }
 
+  setSize(width: number, height: number): void {
+    if (
+      this.options.width !== width ||
+      this.options.height !== height
+    ) {
+      this.setOptions({...this.options, width, height});
+    }
+  }
+
   isReady(): boolean {
     return this._isReady(this.options, this.uploadFulfilled);
   }
