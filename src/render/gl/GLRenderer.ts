@@ -169,8 +169,8 @@ export class GLRenderer {
       readFb._blitBind(this, gl2.READ_FRAMEBUFFER);
       drawFb._blitBind(this, gl2.DRAW_FRAMEBUFFER);
       gl2.blitFramebuffer(
-        0, 0, readFb.options.width, readFb.options.height,
-        0, 0, drawFb.options.width, drawFb.options.height,
+        0, 0, readFb.inferredWidth!, readFb.inferredHeight!,
+        0, 0, drawFb.inferredWidth!, drawFb.inferredHeight!,
         mask,
         TEXTURE_PARAM_MAP[filter],
       );

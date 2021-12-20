@@ -81,6 +81,8 @@ export class GLTextureCube extends GLTexture {
     this.options = options;
     this.uploadFulfilled = [0, 0, 0, 0, 0, 0];
     this.mipmapGenerated = false;
+    this.inferredWidth = null;
+    this.inferredHeight = null;
   }
 
   isReady(): boolean {

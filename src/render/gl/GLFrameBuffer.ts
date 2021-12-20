@@ -15,8 +15,6 @@ export interface GLFrameBufferOptions {
   depth?: GLFrameBufferTarget;
   stencil?: GLFrameBufferTarget;
   depthStencil?: GLFrameBufferTarget;
-  width: number;
-  height: number;
 }
 
 export const COLOR_ATTACHMENT = 0x8CE0;
@@ -28,6 +26,8 @@ export class GLFrameBuffer {
   renderer: GLRenderer | null = null;
   framebuffer: WebGLFramebuffer | null = null;
   options: GLFrameBufferOptions;
+  inferredWidth: number | null = null;
+  inferredHeight: number | null = null;
 
   constructor(options: GLFrameBufferOptions) {
     this.options = options;
@@ -56,11 +56,10 @@ export class GLFrameBuffer {
       renderer.boundFrameBuffer = this;
     }
     if (renderer.boundFrameBuffer !== this) {
-      const {options} = this;
       const {gl} = renderer;
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
       renderer.boundFrameBuffer = this;
-      gl.viewport(0, 0, options.width, options.height);
+      gl.viewport(0, 0, this.getWidth()!, this.getHeight()!);
     }
   }
 
@@ -93,6 +92,8 @@ export class GLFrameBuffer {
       throw new Error('Renderer is not supplied');
     }
     const {gl} = renderer;
+    let texWidth: number | null = null;
+    let texHeight: number | null = null;
     if (attachment instanceof GLTexture) {
       const inst = attachment._getInstance(renderer);
       inst.bind(renderer);
@@ -103,6 +104,8 @@ export class GLFrameBuffer {
         inst.texture,
         0,
       );
+      texWidth = inst.getWidth();
+      texHeight = inst.getHeight();
     } else if ('texture' in attachment) {
       const {target, texture} = attachment;
       const inst = texture._getInstance(renderer);
@@ -114,6 +117,8 @@ export class GLFrameBuffer {
         inst.texture,
         0,
       );
+      texWidth = inst.getWidth();
+      texHeight = inst.getHeight();
     } else if (attachment instanceof GLRenderBuffer) {
       attachment.bind(renderer);
       gl.framebufferRenderbuffer(
@@ -122,7 +127,20 @@ export class GLFrameBuffer {
         gl.RENDERBUFFER,
         attachment.renderBuffer,
       );
+      texWidth = attachment.getWidth();
+      texHeight = attachment.getHeight();
+    } else {
+      throw new Error('FrameBuffer has received an invalid target object');
     }
+    if (this.inferredWidth != null && (
+      this.inferredWidth !== texWidth ||
+      this.inferredHeight !== texHeight
+    )) {
+      throw new Error('FrameBuffer has received two different resolutions; ' +
+        'The resolution between color, depth, stencil textures must match');
+    }
+    this.inferredWidth = texWidth;
+    this.inferredHeight = texHeight;
   }
 
   _set(options: GLFrameBufferOptions): void {
@@ -130,6 +148,8 @@ export class GLFrameBuffer {
     if (renderer == null) {
       throw new Error('Renderer is not supplied');
     }
+    this.inferredWidth = null;
+    this.inferredHeight = null;
     const {gl} = renderer;
     if (Array.isArray(options.color)) {
       options.color.forEach((item, index) => {
@@ -157,7 +177,11 @@ export class GLFrameBuffer {
     if (options.depthStencil != null) {
       this._setItem(DEPTH_STENCIL_ATTACHMENT, options.depthStencil);
     }
-    gl.viewport(0, 0, options.width, options.height);
+    if (this.inferredWidth == null || this.inferredHeight == null) {
+      throw new Error('No buffer was specified; If the texture is not loaded' +
+        ' yet, wait until the texture is ready.');
+    }
+    gl.viewport(0, 0, this.inferredWidth, this.inferredHeight);
   }
 
   set(options: GLFrameBufferOptions): void {
@@ -166,6 +190,14 @@ export class GLFrameBuffer {
       this.bind(this.renderer);
       this._set(options);
     }
+  }
+
+  getWidth(): number | null {
+    return this.inferredWidth;
+  }
+
+  getHeight(): number | null {
+    return this.inferredHeight;
   }
 
 }

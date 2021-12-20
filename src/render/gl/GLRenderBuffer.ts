@@ -54,6 +54,7 @@ export class GLRenderBuffer {
   renderer: GLRenderer | null = null;
   renderBuffer: WebGLRenderbuffer | null = null;
   options: GLRenderBufferOptions;
+  shouldRefresh = true;
 
   constructor(options: GLRenderBufferOptions) {
     this.options = options;
@@ -62,10 +63,21 @@ export class GLRenderBuffer {
   bind(renderer: GLRenderer): void {
     if (this.renderBuffer == null) {
       this.renderer = renderer;
-      const {options} = this;
-      const {gl, capabilities} = renderer;
+      const {gl} = renderer;
       const renderBuffer = gl.createRenderbuffer();
       gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
+      this.renderBuffer = renderBuffer;
+      renderer.boundRenderBuffer = this;
+      this.shouldRefresh = true;
+    }
+    if (renderer.boundRenderBuffer !== this) {
+      const {gl} = renderer;
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
+      renderer.boundRenderBuffer = this;
+    }
+    if (this.shouldRefresh) {
+      const {options} = this;
+      const {gl, capabilities} = renderer;
       if (capabilities.isWebGL2 && options.samples != null) {
         const gl2 = gl as WebGL2RenderingContext;
         gl2.renderbufferStorageMultisample(
@@ -83,14 +95,20 @@ export class GLRenderBuffer {
           options.height,
         );
       }
-      this.renderBuffer = renderBuffer;
-      renderer.boundRenderBuffer = this;
+      this.shouldRefresh = false;
     }
-    if (renderer.boundRenderBuffer !== this) {
-      const {gl} = renderer;
-      gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
-      renderer.boundRenderBuffer = this;
+  }
+
+  updateSize(width: number, height: number): boolean {
+    if (
+      this.options.width !== width ||
+      this.options.height !== height
+    ) {
+      this.options = {...this.options, width, height};
+      this.shouldRefresh = true;
+      return true;
     }
+    return false;
   }
 
   dispose(): void {
@@ -103,5 +121,13 @@ export class GLRenderBuffer {
       gl.deleteRenderbuffer(renderBuffer);
       this.renderBuffer = null;
     }
+  }
+
+  getWidth(): number {
+    return this.options.width;
+  }
+
+  getHeight(): number {
+    return this.options.height;
   }
 }

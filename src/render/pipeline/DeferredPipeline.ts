@@ -364,8 +364,6 @@ export class DeferredPipeline implements Pipeline {
     const width = glRenderer.getWidth();
     const height = glRenderer.getHeight();
     const defaultOpts: GLTexture2DOptions = {
-      width,
-      height,
       magFilter: 'nearest',
       minFilter: 'nearest',
       wrapS: 'clampToEdge',
@@ -380,6 +378,7 @@ export class DeferredPipeline implements Pipeline {
         type: 'unsignedInt248',
       });
     }
+    this.depthBuffer.updateSize(width, height);
     if (this.gBuffers == null) {
       this.gBuffers = [
         new GLTexture2D({
@@ -394,6 +393,7 @@ export class DeferredPipeline implements Pipeline {
         }),
       ];
     }
+    this.gBuffers.forEach((v) => v.updateSize(width, height));
     if (this.outBuffer == null) {
       this.outBuffer = new GLTexture2D({
         ...defaultOpts,
@@ -401,6 +401,7 @@ export class DeferredPipeline implements Pipeline {
         type: 'halfFloat',
       });
     }
+    this.outBuffer.updateSize(width, height);
     if (this.outDepthBuffer == null) {
       this.outDepthBuffer = new GLTexture2D({
         ...defaultOpts,
@@ -408,6 +409,7 @@ export class DeferredPipeline implements Pipeline {
         type: 'unsignedInt248',
       });
     }
+    this.outDepthBuffer.updateSize(width, height);
     if (this.frameBuffer == null) {
       this.frameBuffer = new GLFrameBuffer({
         width,
