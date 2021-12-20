@@ -69,6 +69,7 @@ export class StandardMaterial implements Material {
         attribute vec3 aColor;
         #ifdef USE_INSTANCING
         attribute mat4 aModel;
+        attribute float aEntityId;
         #endif
         #ifdef USE_ARMATURE
         attribute vec4 aSkinJoints;
@@ -83,6 +84,7 @@ export class StandardMaterial implements Material {
         uniform mat4 uProjection;
         #ifndef USE_INSTANCING
         uniform mat4 uModel;
+        uniform float uEntityId;
         #endif
         uniform vec2 uTexScale;
         #ifdef USE_ARMATURE
@@ -94,6 +96,7 @@ export class StandardMaterial implements Material {
         varying vec3 vNormal;
         varying vec2 vTexCoord;
         varying vec3 vColor;
+        varying float vEntityId;
 
         ${ARMATURE}
 
@@ -133,6 +136,7 @@ export class StandardMaterial implements Material {
           geometry,
           uniforms: {
             uModel: transform.getMatrixWorld(),
+            uEntityId: entity.handle.id,
             uArmatureMap: armatureMap,
             uArmatureMapSize: [
               armatureMap.getWidth(),
@@ -142,11 +146,12 @@ export class StandardMaterial implements Material {
         });
       });
     } else {
-      const buffer = new Float32Array(chunk.size * 16);
+      const buffer = new Float32Array(chunk.size * 17);
       let index = 0;
       chunk.forEach((entity) => {
         const transform = entity.get(transformComp);
-        buffer.set(transform!.getMatrixWorld(), index * 16);
+        buffer.set(transform!.getMatrixWorld(), index * 17);
+        buffer[index * 17 + 16] = entity.handle.id;
         index += 1;
       });
       // Pass instanced buffer to GPU
@@ -157,6 +162,11 @@ export class StandardMaterial implements Material {
       shader.setAttribute('aModel', {
         buffer: this.instancedBuffer,
         divisor: 1,
+      });
+      shader.setAttribute('aEntityId', {
+        buffer: this.instancedBuffer,
+        divisor: 1,
+        offset: chunk.size * 64,
       });
       shadowPipeline.draw({
         shader,

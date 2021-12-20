@@ -53,6 +53,7 @@ export class ShaderMaterial implements Material {
         geometry,
         uniforms: {
           uModel: transform.getMatrixWorld(),
+          uEntityId: entity.handle.id,
         },
       });
     });
