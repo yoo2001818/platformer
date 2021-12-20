@@ -26,6 +26,7 @@ export class GLFrameBuffer {
   renderer: GLRenderer | null = null;
   framebuffer: WebGLFramebuffer | null = null;
   options: GLFrameBufferOptions;
+  _targets: (GLTexture | GLRenderBuffer)[] = [];
   inferredWidth: number | null = null;
   inferredHeight: number | null = null;
 
@@ -55,6 +56,7 @@ export class GLFrameBuffer {
       this._set(this.options);
       renderer.boundFrameBuffer = this;
     }
+    this._refreshSize();
     if (renderer.boundFrameBuffer !== this) {
       const {gl} = renderer;
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
@@ -86,6 +88,21 @@ export class GLFrameBuffer {
     }
   }
 
+  _refreshSize(): void {
+    const {renderer} = this;
+    if (renderer == null) {
+      return;
+    }
+    this._targets.forEach((target) => {
+      // If not valid, bind the texture
+      if (!target.isValid()) {
+        target.bind(renderer);
+      }
+      this.inferredWidth = target.getWidth();
+      this.inferredHeight = target.getHeight();
+    });
+  }
+
   _setItem(fbTarget: number, attachment: GLFrameBufferTarget): void {
     const {renderer} = this;
     if (renderer == null) {
@@ -106,6 +123,7 @@ export class GLFrameBuffer {
       );
       texWidth = inst.getWidth();
       texHeight = inst.getHeight();
+      this._targets.push(inst);
     } else if ('texture' in attachment) {
       const {target, texture} = attachment;
       const inst = texture._getInstance(renderer);
@@ -119,6 +137,7 @@ export class GLFrameBuffer {
       );
       texWidth = inst.getWidth();
       texHeight = inst.getHeight();
+      this._targets.push(inst);
     } else if (attachment instanceof GLRenderBuffer) {
       attachment.bind(renderer);
       gl.framebufferRenderbuffer(
@@ -129,6 +148,7 @@ export class GLFrameBuffer {
       );
       texWidth = attachment.getWidth();
       texHeight = attachment.getHeight();
+      this._targets.push(attachment);
     } else {
       throw new Error('FrameBuffer has received an invalid target object');
     }
@@ -150,6 +170,7 @@ export class GLFrameBuffer {
     }
     this.inferredWidth = null;
     this.inferredHeight = null;
+    this._targets = [];
     const {gl} = renderer;
     if (Array.isArray(options.color)) {
       options.color.forEach((item, index) => {

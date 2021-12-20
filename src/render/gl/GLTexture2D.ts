@@ -67,6 +67,10 @@ export class GLTexture2D extends GLTexture {
   isReady(): boolean {
     return this._isReady(this.options, this.uploadFulfilled);
   }
+
+  isValid(): boolean {
+    return this.uploadFulfilled === 2;
+  }
 }
 
 export const TEXTURE_2D_PLACEHOLDER = new GLTexture2D({

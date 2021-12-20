@@ -96,6 +96,10 @@ export class GLTextureCube extends GLTexture {
       );
     });
   }
+
+  isValid(): boolean {
+    return this.uploadFulfilled.every((v) => v === 2);
+  }
 }
 
 export const TEXTURE_CUBE_PLACEHOLDER = new GLTextureCube({

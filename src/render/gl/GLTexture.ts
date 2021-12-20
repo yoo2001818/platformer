@@ -315,6 +315,10 @@ export class GLTexture {
     return false;
   }
 
+  isValid(): boolean {
+    return true;
+  }
+
   prepare(renderer: GLRenderer): void {
     //
   }

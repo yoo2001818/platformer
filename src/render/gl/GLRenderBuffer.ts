@@ -120,6 +120,7 @@ export class GLRenderBuffer {
       const {gl} = renderer;
       gl.deleteRenderbuffer(renderBuffer);
       this.renderBuffer = null;
+      this.shouldRefresh = true;
     }
   }
 
@@ -129,5 +130,9 @@ export class GLRenderBuffer {
 
   getHeight(): number {
     return this.options.height;
+  }
+
+  isValid(): boolean {
+    return !this.shouldRefresh;
   }
 }
