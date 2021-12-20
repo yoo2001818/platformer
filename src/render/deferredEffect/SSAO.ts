@@ -94,6 +94,7 @@ export class SSAO {
         source: null,
       });
     }
+    this.aoBuffer.updateSize(width, height);
     if (this.aoFrameBuffer == null) {
       this.aoFrameBuffer = new GLFrameBuffer({
         color: this.aoBuffer!,
@@ -114,6 +115,7 @@ export class SSAO {
         source: null,
       });
     }
+    this.aoOutBuffer.updateSize(width, height);
     if (this.aoOutFrameBuffer == null) {
       this.aoOutFrameBuffer = new GLFrameBuffer({
         color: this.aoOutBuffer!,

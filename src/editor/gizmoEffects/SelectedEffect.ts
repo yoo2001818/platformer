@@ -128,6 +128,8 @@ export class SelectedEffect implements GizmoEffect<SelectedEffectProps> {
     if (entity == null) {
       return;
     }
+    this.lineTex!.updateSize(glRenderer.getWidth(), glRenderer.getHeight());
+    this.lineDepth!.updateSize(glRenderer.getWidth(), glRenderer.getHeight());
     const camera = renderer!.camera!;
     const cameraData = camera.get<Camera>('camera')!;
 
