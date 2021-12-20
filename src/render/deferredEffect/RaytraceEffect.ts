@@ -366,8 +366,6 @@ export class RaytraceEffect implements DeferredEffect {
     }
     if (this.rayFrameBuffer == null) {
       this.rayFrameBuffer = new GLFrameBuffer({
-        width,
-        height,
         color: [
           this.rayBuffer!,
           this.directRayBuffer!,

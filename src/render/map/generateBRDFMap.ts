@@ -116,8 +116,6 @@ export function generateBRDFMap(): GLTexture {
 
     const fb = new GLFrameBuffer({
       color: texture,
-      width: 512,
-      height: 512,
     });
     renderer.draw({
       frameBuffer: fb,

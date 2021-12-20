@@ -75,8 +75,6 @@ export class MaterialInjector implements BVHTextureChildInjector {
     });
     this.frameBuffer = new GLFrameBuffer({
       color: this.texture,
-      width: 2,
-      height: 2,
     });
     this.entries = [];
   }
@@ -91,13 +89,7 @@ export class MaterialInjector implements BVHTextureChildInjector {
     const height = this.atlas.getHeight();
     if (this.atlas.isResized) {
       // Reset the texture...
-      this.texture.setOptions({
-        ...this.texture.options,
-        width,
-        height,
-      });
-      this.frameBuffer.options.width = width;
-      this.frameBuffer.options.height = height;
+      this.texture.updateSize(width, height);
     }
     this.entries.forEach((entry) => {
       const [texture, atlasItem] = entry;

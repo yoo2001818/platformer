@@ -124,8 +124,7 @@ export class GLTextureEquirectangular extends GLTexture {
 
         // Create a one-off framebuffer.
         const fb = new GLFrameBuffer({
-          width: options.height!,
-          height: options.height!,
+          color: {target: 0, texture: this},
         });
         fb.bind(renderer);
         // Draw to each side.
@@ -138,8 +137,6 @@ export class GLTextureEquirectangular extends GLTexture {
             // NOTE: This will cause circular loop; it is guarded using
             // a mutex.
             color: {target: i, texture: this},
-            width: options.height!,
-            height: options.height!,
           });
           EQUIRECTANGULAR_GEOMETRY.draw();
         });

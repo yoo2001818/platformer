@@ -412,16 +412,12 @@ export class DeferredPipeline implements Pipeline {
     this.outDepthBuffer.updateSize(width, height);
     if (this.frameBuffer == null) {
       this.frameBuffer = new GLFrameBuffer({
-        width,
-        height,
         depthStencil: this.depthBuffer!,
         color: this.gBuffers!,
       });
     }
     if (this.outFrameBuffer == null) {
       this.outFrameBuffer = new GLFrameBuffer({
-        width,
-        height,
         depthStencil: this.outDepthBuffer!,
         color: this.outBuffer!,
       });

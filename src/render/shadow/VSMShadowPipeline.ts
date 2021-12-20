@@ -110,27 +110,19 @@ export class VSMShadowPipeline implements ShadowPipeline {
     });
     if (capabilities.isWebGL2) {
       this.tempFrame1 = new GLFrameBuffer({
-        width: 512,
-        height: 512,
         depth: this.tempDepth1,
         color: this.tempBuffer1,
       });
     } else {
       this.tempFrame1 = new GLFrameBuffer({
-        width: 512,
-        height: 512,
         depth: this.tempDepth1,
         color: this.tempTexture2,
       });
     }
     this.tempFrame2 = new GLFrameBuffer({
-      width: 512,
-      height: 512,
       color: this.tempTexture2,
     });
     this.tempFrame3 = new GLFrameBuffer({
-      width: 512,
-      height: 512,
       color: this.tempTexture3,
     });
   }

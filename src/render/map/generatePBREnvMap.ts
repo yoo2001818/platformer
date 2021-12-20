@@ -160,8 +160,6 @@ export function generatePBREnvMap(
     });
     const fb = new GLFrameBuffer({
       color: target,
-      width,
-      height,
     });
     fb.bind(renderer);
 

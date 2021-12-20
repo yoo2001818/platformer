@@ -333,8 +333,6 @@ export class RaytracedPipeline implements Pipeline {
     }
     if (this.rayFrameBuffer == null) {
       this.rayFrameBuffer = new GLFrameBuffer({
-        width,
-        height,
         color: this.rayBuffer!,
       });
     }

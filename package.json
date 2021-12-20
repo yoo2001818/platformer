@@ -7,7 +7,8 @@
     "test": "jest",
     "webpack": "webpack",
     "start": "webpack serve",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
   },
   "author": "Duknam Yoo (yoo2001818@gmail.com)",
   "license": "MIT",

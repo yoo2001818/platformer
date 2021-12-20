@@ -112,8 +112,6 @@ export class SelectedEffect implements GizmoEffect<SelectedEffectProps> {
     this.lineFrameBuffer = new GLFrameBuffer({
       color: this.lineTex,
       depth: this.lineDepth,
-      width: glRenderer.getWidth(),
-      height: glRenderer.getHeight(),
     });
   }
 

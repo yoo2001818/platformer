@@ -90,13 +90,9 @@ export function generateCubePackMipMap(
     });
     const pingPongFBtoA = new GLFrameBuffer({
       color: pingPongA,
-      width,
-      height,
     });
     const pingPongFBtoB = new GLFrameBuffer({
       color: pingPongB,
-      width,
-      height,
     });
     for (let i = 0; i < maxLevel; i += 1) {
       const toB = i % 2 === 0;
@@ -195,8 +191,6 @@ export function generateCubePackEquirectangular(
     });
     const fb = new GLFrameBuffer({
       color: target,
-      width,
-      height,
     });
     renderer.draw({
       frameBuffer: fb,

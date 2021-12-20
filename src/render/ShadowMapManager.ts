@@ -25,8 +25,6 @@ export class ShadowMapManager {
       anistropic: 1,
     });
     this.frameBuffer = new GLFrameBuffer({
-      width: 1,
-      height: 1,
       color: this.texture,
     });
     this.atlas = new Atlas();
@@ -36,13 +34,7 @@ export class ShadowMapManager {
     if (this.atlas.isResized) {
       const width = this.atlas.getWidth();
       const height = this.atlas.getHeight();
-      this.texture.setOptions({
-        ...this.texture.options,
-        width,
-        height,
-      });
-      this.frameBuffer.options.width = width;
-      this.frameBuffer.options.height = height;
+      this.texture.updateSize(width, height);
       this.atlas.isResized = false;
     }
   }
