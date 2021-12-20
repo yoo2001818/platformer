@@ -54,12 +54,15 @@ export function Viewport(
     engine.registerSystem(RENDER_PHASE, (v) => {
       // Check if the canvas size has been changed.
       const clientRect = canvasElem.getBoundingClientRect();
+      const nextWidth = Math.floor(clientRect.width);
+      const nextHeight = Math.floor(clientRect.height);
       if (
-        clientRect.width !== canvasElem.width ||
-        clientRect.height !== canvasElem.height
+        nextWidth !== canvasElem.width ||
+        nextHeight !== canvasElem.height
       ) {
-        canvasElem.width = clientRect.width;
-        canvasElem.height = clientRect.height;
+        canvasElem.width = nextWidth;
+        canvasElem.height = nextHeight;
+        renderer.markSizeChanged();
       }
       renderer.render(v);
     });

@@ -205,4 +205,8 @@ export class GLRenderer {
       });
     }
   }
+
+  hasResourceChanged(): boolean {
+    return this.textureManager.hasPendingResolved();
+  }
 }

@@ -6,12 +6,14 @@ export class GLTextureManager {
   boundTextures: (GLTexture | null)[];
   boundVersion: number;
   activeId: number;
+  pendingTextures: Set<GLTexture>;
 
   constructor(renderer: GLRenderer) {
     this.renderer = renderer;
     this.boundTextures = [];
     this.boundVersion = 0;
     this.activeId = -1;
+    this.pendingTextures = new Set();
     this.init();
   }
 
@@ -26,6 +28,13 @@ export class GLTextureManager {
   }
 
   bind(original: GLTexture): number {
+    // The texture can return other instances when it's not ready. Therefore,
+    // we check the readiness in here.
+    if (!original.isReady()) {
+      this.addPending(original);
+    } else {
+      this.removePending(original);
+    }
     const texture = original._getInstance(this.renderer);
     // Check if the texture is already bound....
     if (
@@ -62,5 +71,25 @@ export class GLTextureManager {
     this.boundTextures[slotId] = texture;
     texture._bind(this.renderer, slotId, slotVersion);
     return slotId;
+  }
+
+  addPending(texture: GLTexture): void {
+    this.pendingTextures.add(texture);
+  }
+
+  removePending(texture: GLTexture): void {
+    this.pendingTextures.delete(texture);
+  }
+
+  hasPendingResolved(): boolean {
+    let hasResolved = false;
+    for (const entry of this.pendingTextures) {
+      if (entry.isReady()) {
+        console.log(entry, this.pendingTextures.size);
+        hasResolved = true;
+        this.pendingTextures.delete(entry);
+      }
+    }
+    return hasResolved;
   }
 }

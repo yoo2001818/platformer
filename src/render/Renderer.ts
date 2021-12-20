@@ -18,6 +18,7 @@ export class Renderer {
   shadowMapManager: ShadowMapManager;
   gizmoEffects: GizmoEffect<any>[];
   frameId: number;
+  frameTransformVersion = -1;
   frameVersion = -1;
 
   constructor(
@@ -69,7 +70,15 @@ export class Renderer {
   }
 
   setCamera(camera: Entity): void {
+    if (camera === this.camera) {
+      return;
+    }
     this.camera = camera;
+    this.frameTransformVersion = -1;
+    this.frameVersion = -1;
+  }
+
+  markSizeChanged(): void {
     this.frameVersion = -1;
   }
 
@@ -83,13 +92,15 @@ export class Renderer {
       entityStore.getComponent<TransformComponent>('transform')!;
 
     // Skip render if it's not needed
-    /*
-    if (transformComp.globalVersion === this.frameVersion) {
+    if (
+      this.frameVersion === entityStore.version &&
+      !glRenderer.hasResourceChanged()
+    ) {
       return;
     }
-    */
     this.frameId += 1;
-    this.frameVersion = transformComp.globalVersion;
+    this.frameTransformVersion = transformComp.globalVersion;
+    this.frameVersion = entityStore.version;
     pipeline.render(deltaTime);
     this.gizmoEffects.forEach((effect) => {
       effect.bind(this);
