@@ -5,7 +5,7 @@ import {GLTexture2D} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
 import {GLGeometry} from '../gl/GLGeometry';
 import {quad} from '../../geom/quad';
-import {PipelineShadowShaderBlock} from '../pipeline/Pipeline';
+import {MaterialVertexShaderBlock} from '../Material';
 import {Renderer} from '../Renderer';
 import {BAKE_VSM} from '../shader/shadow';
 import {AtlasItem} from '../Atlas';
@@ -127,7 +127,7 @@ export class VSMShadowPipeline implements ShadowPipeline {
     });
   }
 
-  getShader(id: string, onCreate: () => PipelineShadowShaderBlock): GLShader {
+  getShader(id: string, onCreate: () => MaterialVertexShaderBlock): GLShader {
     const {renderer} = this;
     return renderer.getResource(`shadow~vsm~${id}`, () => {
       const block = onCreate();

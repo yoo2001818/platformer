@@ -2,10 +2,10 @@ import {TransformComponent} from '../../3d/TransformComponent';
 import {EntityChunk} from '../../core/EntityChunk';
 import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
-import {Material} from '../Material';
+import {Material, MaterialVertexShaderBlock} from '../Material';
 import {Renderer} from '../Renderer';
-import {ShadowPipeline} from '../shadow/ShadowPipeline';
 import {createId} from '../utils/createId';
+import {DrawOptions} from '../gl/types';
 
 export type ShaderMaterialUniformSetter =
 | {[key: string]: unknown;}
@@ -31,16 +31,20 @@ export class ShaderMaterial implements Material {
     this.uniforms = uniforms;
   }
 
-  renderShadow(
+  renderVertex(
     chunk: EntityChunk,
     geometry: GLGeometry,
     renderer: Renderer,
-    shadowPipeline: ShadowPipeline,
+    onGetShader: (
+      id: string,
+      onCreate: (defines?: string) => MaterialVertexShaderBlock,
+    ) => GLShader,
+    onDraw: (options: DrawOptions) => void,
   ): void {
     const {entityStore} = renderer;
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
-    const shader = shadowPipeline.getShader(`shader-${this.id}`, () => ({
+    const shader = onGetShader(`shader-${this.id}`, () => ({
       vert: this.vert,
     }));
     chunk.forEach((entity) => {
@@ -48,7 +52,7 @@ export class ShaderMaterial implements Material {
       if (transform == null) {
         return;
       }
-      shadowPipeline.draw({
+      onDraw({
         shader,
         geometry,
         uniforms: {

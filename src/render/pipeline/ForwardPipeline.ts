@@ -167,7 +167,13 @@ export class ForwardPipeline implements Pipeline {
             throw new Error('Geometry is null');
           }
           const glGeometry = geometry.getGLGeometry(this.renderer);
-          material.renderShadow?.(chunk, glGeometry, this.renderer, shadowPipeline);
+          material.renderVertex?.(
+            chunk,
+            glGeometry,
+            this.renderer,
+            (id, onCreate) => shadowPipeline.getShader(id, onCreate),
+            (options) => shadowPipeline.draw(options),
+          );
         });
       }
     });

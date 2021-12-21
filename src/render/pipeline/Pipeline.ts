@@ -9,10 +9,6 @@ export interface PipelineShaderBlock {
   frag: string;
 }
 
-export interface PipelineShadowShaderBlock {
-  vert: string;
-}
-
 export interface Pipeline {
   dispose(): void;
   getDeferredShader(id: string, onCreate: () => PipelineShaderBlock): GLShader;

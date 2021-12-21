@@ -4,30 +4,24 @@ import {GLGeometry} from './gl/GLGeometry';
 import {GLShader} from './gl/GLShader';
 import {DrawOptions} from './gl/types';
 import {Renderer} from './Renderer';
-import {ShadowPipeline} from './shadow/ShadowPipeline';
+
+export interface MaterialVertexShaderBlock {
+  vert: string;
+}
 
 export interface Material {
   id: number;
   mode: 'forward' | 'deferred';
-  renderShadow?(
+  renderVertex?(
     chunk: EntityChunk,
     geometry: GLGeometry,
     renderer: Renderer,
-    shadowPipeline: ShadowPipeline,
-  ): void;
-  render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void;
-  dispose(): void;
-}
-
-// In order to merge renderShadow and render, we can separate it in two steps
-
-interface MaterialV2 {
-  renderVertex(
-    chunk: EntityChunk,
-    geometry: GLGeometry,
-    renderer: Renderer,
-    onGetShader: (id: string, vert: string) => GLShader,
+    onGetShader: (
+      id: string,
+      onCreate: (defines?: string) => MaterialVertexShaderBlock,
+    ) => GLShader,
     onDraw: (options: DrawOptions) => void,
   ): void;
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void;
+  dispose(): void;
 }
