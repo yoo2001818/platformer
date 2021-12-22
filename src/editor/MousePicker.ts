@@ -66,7 +66,7 @@ export class MousePicker {
             const vec4 encTable = vec4(1.0, 255.0, 65025.0, 16581375.0);
 
             void main() {
-              vec4 enc = vec4(mod(floor(vec4(vEntityId) / encTable), 255.0) / 255.0);
+              vec4 enc = vec4(mod(floor(vec4(vEntityId + 0.001) / encTable), 255.0) / 255.0);
               gl_FragColor = enc;
             }
           `,
