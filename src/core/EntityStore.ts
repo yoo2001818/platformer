@@ -148,6 +148,17 @@ export class EntityStore {
     return entity;
   }
 
+  getById(id: number): Entity | null {
+    const entity = this.entities[id];
+    if (entity == null) {
+      return null;
+    }
+    if (!entity.isValid()) {
+      return null;
+    }
+    return entity;
+  }
+
   delete(handle: EntityHandle): void {
     const entity = this.get(handle);
     if (entity == null) {

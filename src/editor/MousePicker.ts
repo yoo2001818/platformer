@@ -1,6 +1,7 @@
+import {Entity} from '../core/Entity';
 import {GLFrameBuffer} from '../render/gl/GLFrameBuffer';
 import {GLRenderBuffer} from '../render/gl/GLRenderBuffer';
-import { GLShader } from '../render/gl/GLShader';
+import {GLShader} from '../render/gl/GLShader';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {Renderer} from '../render/Renderer';
 
@@ -87,6 +88,20 @@ export class MousePicker {
   }
 
   getId(x: number, y: number): number {
-    throw new Error('Not implemented yet');
+    const buffer = new Uint8Array(4);
+    this.renderFb.bind(this.renderer.glRenderer);
+    this.renderFb.readPixels(x, y, 1, 1, 'rgba', 'unsignedByte', buffer);
+    // Try to map the value to ID
+    let value = buffer[0];
+    value = value * 255 + buffer[1];
+    value = value * 255 + buffer[2];
+    value = value * 255 + buffer[3];
+    return value;
+  }
+
+  getEntity(x: number, y: number): Entity | null {
+    const {entityStore} = this.renderer;
+    const id = this.getId(x, y);
+    return entityStore.getById(id);
   }
 }

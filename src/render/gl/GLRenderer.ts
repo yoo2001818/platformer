@@ -15,7 +15,7 @@ import {GLStateManager} from './GLStateManager';
 import {GLGeometry} from './GLGeometry';
 import {GLTexture} from './GLTexture';
 import {TEXTURE_PARAM_MAP} from './utils';
-import { convertFloatArray } from './uniform/utils';
+import {convertFloatArray} from './uniform/utils';
 
 const BLIT_QUAD = new GLGeometry(quad());
 const BLIT_SHADER = new ShaderBank(
