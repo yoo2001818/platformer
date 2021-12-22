@@ -20,7 +20,6 @@ import {PBR} from '../shader/pbr';
 import {INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
 import {SAMPLE} from '../shader/sample';
 import {FILMIC} from '../shader/tonemap';
-import {ShadowPipeline} from '../shadow/ShadowPipeline';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -76,7 +75,7 @@ export class RaytracedPipeline implements Pipeline {
     throw new Error('Raytraced pipeline cannot work on draw call');
   }
 
-  renderShadow(shadowPipeline: ShadowPipeline): void {
+  renderVertex(): void {
     throw new Error('Raytraced pipeline cannot work on shadows');
   }
 

@@ -6,10 +6,10 @@ import {DrawOptions} from '../gl/types';
 import {Light, LightShaderBlock} from '../light/Light';
 import {MeshComponent} from '../MeshComponent';
 import {Renderer} from '../Renderer';
-import {ShadowPipeline} from '../shadow/ShadowPipeline';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
+import {MaterialVertexShaderBlock} from '../Material';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -154,7 +154,13 @@ export class ForwardPipeline implements Pipeline {
     });
   }
 
-  renderShadow(shadowPipeline: ShadowPipeline): void {
+  renderVertex(
+    onGetShader: (
+      id: string,
+      onCreate: (defines?: string) => MaterialVertexShaderBlock,
+    ) => GLShader,
+    onDraw: (options: DrawOptions) => void,
+  ): void {
     const {entityStore} = this.renderer;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     entityStore.forEachChunkWith([meshComp], (chunk) => {
@@ -171,8 +177,8 @@ export class ForwardPipeline implements Pipeline {
             chunk,
             glGeometry,
             this.renderer,
-            (id, onCreate) => shadowPipeline.getShader(id, onCreate),
-            (options) => shadowPipeline.draw(options),
+            onGetShader,
+            onDraw,
           );
         });
       }

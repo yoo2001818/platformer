@@ -14,9 +14,9 @@ import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
 import {FXAA} from '../shader/fxaa';
-import {ShadowPipeline} from '../shadow/ShadowPipeline';
 import {SSAO} from '../deferredEffect/SSAO';
 import {DeferredEffect} from '../deferredEffect/DeferredEffect';
+import {MaterialVertexShaderBlock} from '../Material';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -424,7 +424,13 @@ export class DeferredPipeline implements Pipeline {
     }
   }
 
-  renderShadow(shadowPipeline: ShadowPipeline): void {
+  renderVertex(
+    onGetShader: (
+      id: string,
+      onCreate: (defines?: string) => MaterialVertexShaderBlock,
+    ) => GLShader,
+    onDraw: (options: DrawOptions) => void,
+  ): void {
     const {entityStore} = this.renderer;
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     entityStore.forEachChunkWith([meshComp], (chunk) => {
@@ -441,8 +447,8 @@ export class DeferredPipeline implements Pipeline {
             chunk,
             glGeometry,
             this.renderer,
-            (id, onCreate) => shadowPipeline.getShader(id, onCreate),
-            (options) => shadowPipeline.draw(options),
+            onGetShader,
+            onDraw,
           );
         });
       }

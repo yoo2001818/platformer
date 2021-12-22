@@ -1,6 +1,6 @@
 import {GLShader} from '../gl/GLShader';
 import {DrawOptions} from '../gl/types';
-import {ShadowPipeline} from '../shadow/ShadowPipeline';
+import {MaterialVertexShaderBlock} from '../Material';
 
 export interface PipelineShaderBlock {
   // void main()
@@ -15,6 +15,12 @@ export interface Pipeline {
   getForwardShader(id: string, onCreate: () => PipelineShaderBlock): GLShader;
   drawDeferred(options: DrawOptions): void;
   drawForward(options: DrawOptions): void;
-  renderShadow(shadowPipeline: ShadowPipeline): void;
+  renderVertex(
+    onGetShader: (
+      id: string,
+      onCreate: (defines?: string) => MaterialVertexShaderBlock,
+    ) => GLShader,
+    onDraw: (options: DrawOptions) => void,
+  ): void;
   render(deltaTime?: number): void;
 }

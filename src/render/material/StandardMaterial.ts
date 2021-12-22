@@ -133,6 +133,11 @@ export class StandardMaterial implements Material {
           #ifdef USE_NORMAL_MAP
           vTangent = vec4((model * vec4(aTangent.xyz, 0.0)).xyz, aTangent.w);
           #endif
+          #ifdef USE_INSTANCING
+          vEntityId = aEntityId;
+          #else
+          vEntityId = uEntityId;
+          #endif
         } 
       `,
     }));

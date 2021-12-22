@@ -249,7 +249,10 @@ export class DirectionalShadowLight implements Light {
             uProjection: lightProj,
             uView: lightView,
           });
-          pipeline.renderShadow(shadowPipeline);
+          pipeline.renderVertex(
+            (id, onCreate) => shadowPipeline.getShader(id, onCreate),
+            (options) => shadowPipeline.draw(options),
+          );
           shadowPipeline.finalize();
         }
       }
