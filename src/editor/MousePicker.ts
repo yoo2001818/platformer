@@ -63,12 +63,10 @@ export class MousePicker {
 
             varying float vEntityId;
             
-            const vec4 bitEnc = vec4(1.,255.,65025.,16581375.);
+            const vec4 encTable = vec4(1.0, 255.0, 65025.0, 16581375.0);
 
             void main() {
-              vec4 enc = bitEnc * vEntityId;
-              enc = fract(enc);
-              enc -= enc.yzww * vec2(1./255., 0.).xxxy;
+              vec4 enc = vec4(mod(floor(vec4(vEntityId) / encTable), 255.0) / 255.0);
               gl_FragColor = enc;
             }
           `,
@@ -92,10 +90,10 @@ export class MousePicker {
     this.renderFb.bind(this.renderer.glRenderer);
     this.renderFb.readPixels(x, y, 1, 1, 'rgba', 'unsignedByte', buffer);
     // Try to map the value to ID
-    let value = buffer[0];
-    value = value * 255 + buffer[1];
+    let value = buffer[3];
     value = value * 255 + buffer[2];
-    value = value * 255 + buffer[3];
+    value = value * 255 + buffer[1];
+    value = value * 255 + buffer[0];
     return value;
   }
 

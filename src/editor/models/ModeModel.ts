@@ -2,6 +2,7 @@ import {Engine} from '../../core/Engine';
 import {Signal} from '../../core/Signal';
 import {DefaultMode} from '../modes/DefaultMode';
 import {EditorMode} from '../modes/EditorMode';
+import {Viewport} from '../Viewport';
 
 import {ViewportModel} from './ViewportModel';
 
@@ -27,7 +28,7 @@ export class ModeModel {
     mode.bind(this.engine);
   }
 
-  processEvent(type: string, ...args: any[]): void {
-    this.mode.processEvent(type, ...args);
+  processEvent(type: string, viewport: Viewport, ...args: any[]): void {
+    this.mode.processEvent(type, viewport, ...args);
   }
 }

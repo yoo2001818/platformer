@@ -35,7 +35,7 @@ export class Viewport {
       'wheel',
     ].map((name) => {
       const callback =
-        (...args: any[]) => viewportModel.emitter.emit(name, args);
+        (...args: any[]) => viewportModel.emitter.emit(name, [this, ...args]);
       this.canvas.addEventListener(name, callback);
       return {name, callback};
     });
