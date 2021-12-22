@@ -167,8 +167,8 @@ export class StandardMaterial implements Material {
       let index = 0;
       chunk.forEach((entity) => {
         const transform = entity.get(transformComp);
-        buffer.set(transform!.getMatrixWorld(), index * 17);
-        buffer[index * 17 + 16] = entity.handle.id;
+        buffer.set(transform!.getMatrixWorld(), index * 16);
+        buffer[index + chunk.size * 16] = entity.handle.id;
         index += 1;
       });
       // Pass instanced buffer to GPU
