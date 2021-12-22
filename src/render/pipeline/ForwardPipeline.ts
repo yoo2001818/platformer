@@ -131,6 +131,25 @@ export class ForwardPipeline implements Pipeline {
     });
   }
 
+  getCameraUniforms(): {[key: string]: unknown;} {
+    const {camera} = this.renderer;
+
+    if (camera == null) {
+      throw new Error('Camera is not specified');
+    }
+
+    const cameraData = camera!.get<Camera>('camera')!;
+
+    const aspect = this.renderer.getAspectRatio();
+    return {
+      uInverseView: cameraData.getInverseView(camera!),
+      uInverseProjection: cameraData.getInverseProjection(aspect),
+      uView: cameraData.getView(camera!),
+      uProjection: cameraData.getProjection(aspect),
+      uViewPos: camera!.get<Transform>('transform')!.getPosition(),
+    };
+  }
+
   drawDeferred(options: DrawOptions): void {
     const {renderer: {glRenderer}} = this;
     glRenderer.draw({
@@ -186,25 +205,11 @@ export class ForwardPipeline implements Pipeline {
   }
 
   render(): void {
-    const {entityStore, camera, glRenderer} = this.renderer;
+    const {entityStore, glRenderer} = this.renderer;
 
     glRenderer.clear();
-
-    if (camera == null) {
-      throw new Error('Camera is not specified');
-    }
-
-    const cameraData = camera!.get<Camera>('camera')!;
-
     this._collectLights();
-    const aspect = this.renderer.getAspectRatio();
-    this.cameraUniforms = {
-      uInverseView: cameraData.getInverseView(camera!),
-      uInverseProjection: cameraData.getInverseProjection(aspect),
-      uView: cameraData.getView(camera!),
-      uProjection: cameraData.getProjection(aspect),
-      uViewPos: camera!.get<Transform>('transform')!.getPosition(),
-    };
+    this.cameraUniforms = this.getCameraUniforms();
 
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     entityStore.forEachChunkWith([meshComp], (chunk) => {

@@ -13,6 +13,7 @@ export interface Pipeline {
   dispose(): void;
   getDeferredShader(id: string, onCreate: () => PipelineShaderBlock): GLShader;
   getForwardShader(id: string, onCreate: () => PipelineShaderBlock): GLShader;
+  getCameraUniforms(): {[key: string]: unknown;};
   drawDeferred(options: DrawOptions): void;
   drawForward(options: DrawOptions): void;
   renderVertex(

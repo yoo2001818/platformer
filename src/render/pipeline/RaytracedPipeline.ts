@@ -266,6 +266,25 @@ export class RaytracedPipeline implements Pipeline {
     });
   }
 
+  getCameraUniforms(): {[key: string]: unknown;} {
+    const {camera} = this.renderer;
+
+    if (camera == null) {
+      throw new Error('Camera is not specified');
+    }
+
+    const cameraData = camera!.get<Camera>('camera')!;
+
+    const aspect = this.renderer.getAspectRatio();
+    return {
+      uInverseView: cameraData.getInverseView(camera!),
+      uInverseProjection: cameraData.getInverseProjection(aspect),
+      uView: cameraData.getView(camera!),
+      uProjection: cameraData.getProjection(aspect),
+      uViewPos: camera!.get<Transform>('transform')!.getPosition(),
+    };
+  }
+
   refreshRandomMap(): void {
     const tileWidth = 256;
     const tileHeight = 256;
@@ -342,25 +361,11 @@ export class RaytracedPipeline implements Pipeline {
   }
 
   render(deltaTime?: number): void {
-    const {entityStore, glRenderer, camera} = this.renderer;
-
-    if (camera == null) {
-      throw new Error('Camera is not specified');
-    }
+    const {entityStore, glRenderer} = this.renderer;
 
     const transformComp =
       entityStore.getComponent<TransformComponent>('transform')!;
-    const cameraData = camera!.get<Camera>('camera')!;
-    const cameraTransform = camera!.get<Transform>('transform')!;
-
-    const aspect = this.renderer.getAspectRatio();
-    this.cameraUniforms = {
-      uInverseView: cameraData.getInverseView(camera!),
-      uInverseProjection: cameraData.getInverseProjection(aspect),
-      uView: cameraData.getView(camera!),
-      uProjection: cameraData.getProjection(aspect),
-      uViewPos: cameraTransform.getPosition(),
-    };
+    this.cameraUniforms = this.getCameraUniforms();
 
     this.prepare();
 
