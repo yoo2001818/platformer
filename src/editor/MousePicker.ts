@@ -46,7 +46,11 @@ export class MousePicker {
     this.colorTex.updateSize(width, height);
     this.depthTex.updateSize(width, height);
     const cameraUniforms = pipeline.getCameraUniforms();
-    glRenderer.clear(this.renderFb);
+    glRenderer.clear(
+      this.renderFb,
+      undefined,
+      [1, 1, 1, 1],
+    );
     pipeline.renderVertex(
       (id, onCreate) => renderer.getResource(`mousepick~${id}`, () => {
         const block = onCreate();

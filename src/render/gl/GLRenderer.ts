@@ -15,6 +15,7 @@ import {GLStateManager} from './GLStateManager';
 import {GLGeometry} from './GLGeometry';
 import {GLTexture} from './GLTexture';
 import {TEXTURE_PARAM_MAP} from './utils';
+import { convertFloatArray } from './uniform/utils';
 
 const BLIT_QUAD = new GLGeometry(quad());
 const BLIT_SHADER = new ShaderBank(
@@ -109,12 +110,22 @@ export class GLRenderer {
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
 
-  clear(frameBuffer?: GLFrameBuffer | null, bits?: number): void {
+  clear(
+    frameBuffer?: GLFrameBuffer | null,
+    bits?: number,
+    clearColor?: string | number[] | Float32Array,
+  ): void {
     const {gl} = this;
     if (frameBuffer != null) {
       frameBuffer.bind(this);
     } else {
       this.unbindFrameBuffer();
+    }
+    if (clearColor != null) {
+      const colorVal = convertFloatArray(clearColor, 4);
+      gl.clearColor(colorVal[0], colorVal[1], colorVal[2], colorVal[3]);
+    } else {
+      gl.clearColor(0, 0, 0, 0);
     }
     gl.clear(
       bits ?? gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT,

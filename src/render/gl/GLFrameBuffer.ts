@@ -2,6 +2,11 @@ import {GLRenderBuffer} from './GLRenderBuffer';
 import {GLRenderer} from './GLRenderer';
 import {GLTexture} from './GLTexture';
 import {TEXTURE_CUBE_MAP_DIRS} from './GLTextureCube';
+import {
+  ATTRIBUTE_TYPE_MAP,
+  WEBGL1_ATTRIBUTE_TYPE_MAP,
+  WEBGL2_TEXTURE_FORMAT_MAP,
+} from './utils';
 
 export type GLFrameBufferTarget =
   | GLTexture
@@ -219,6 +224,59 @@ export class GLFrameBuffer {
 
   getHeight(): number | null {
     return this.inferredHeight;
+  }
+
+  readPixels(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    format:
+      | 'alpha'
+      | 'rgb'
+      | 'rgba'
+      | 'red'
+      | 'rg'
+      | 'redInteger'
+      | 'rgInteger'
+      | 'rgbInteger'
+      | 'rgbaInteger',
+    type:
+      | 'unsignedByte'
+      | 'unsignedShort565'
+      | 'unsignedShort4444'
+      | 'unsignedShort5551'
+      | 'float'
+      | 'byte'
+      | 'unsignedInt2101010'
+      | 'halfFloat'
+      | 'short'
+      | 'unsignedShort'
+      | 'int'
+      | 'unsignedInt'
+      | 'unsignedInt10F11F11F'
+      | 'unsignedInt5999',
+    pixels: ArrayBufferView,
+    dstOffset = 0,
+  ): void {
+    if (this.renderer == null) {
+      throw new Error('Framebuffer must be bound first');
+    }
+    this.bind(this.renderer);
+    const {gl, capabilities} = this.renderer;
+    const attributeMap = capabilities.isWebGL2
+      ? ATTRIBUTE_TYPE_MAP
+      : WEBGL1_ATTRIBUTE_TYPE_MAP;
+    gl.readPixels(
+      x,
+      y,
+      width,
+      height,
+      WEBGL2_TEXTURE_FORMAT_MAP[format],
+      attributeMap[type],
+      pixels,
+      dstOffset,
+    );
   }
 
 }
