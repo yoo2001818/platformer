@@ -9,6 +9,8 @@ import {RENDER_PHASE, UPDATE_PHASE} from '../../../core/Engine';
 import {OrbitCameraController} from '../../../input/OrbitCameraController';
 import {ViewportModel} from '../../../editor/models/ViewportModel';
 import {Viewport as RendererViewport} from '../../../editor/Viewport';
+import {Transform} from '../../../3d/Transform';
+import {Camera} from '../../../3d/Camera';
 
 export interface ViewportProps {
   className?: string;
@@ -43,12 +45,26 @@ export function Viewport(
     const viewport = new RendererViewport(canvasElem, renderer);
     engine.getModel<ViewportModel>('viewport').addViewport(viewport);
 
+    const camera = engine.entityStore.create({
+      name: 'Editor Camera',
+      transform: new Transform(),
+      camera: new Camera({
+        type: 'perspective',
+        fov: 70 / 180 * Math.PI,
+        far: 1000,
+        near: 0.3,
+      }),
+    });
+    renderer.setCamera(camera);
+
     const orbitController = new OrbitCameraController(
       canvasElem,
       canvasElem,
       null,
       3,
     );
+
+    orbitController.setEntity(camera);
 
     engine.registerSystem(UPDATE_PHASE, (v) => orbitController.update(v));
     engine.registerSystem(RENDER_PHASE, (v) => {
@@ -75,12 +91,6 @@ export function Viewport(
     function update(time: number) {
       const delta = time - lastTime;
       lastTime = time;
-
-      // Look up any entity with camera for now..
-      engine.entityStore.query().with('camera').forEach((camera) => {
-        renderer.setCamera(camera);
-        orbitController.setEntity(camera);
-      });
 
       engine.update(delta / 1000);
 
