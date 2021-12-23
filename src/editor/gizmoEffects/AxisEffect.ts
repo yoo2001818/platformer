@@ -62,7 +62,6 @@ export class AxisEffect implements GizmoEffect<AxisEffectProps> {
     const {renderer} = this;
     const {glRenderer, pipeline} = renderer!;
     const {entity, axis, color} = props;
-    console.log(props);
     if (entity == null) {
       return;
     }

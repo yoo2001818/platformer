@@ -67,3 +67,22 @@ export function intersectRayTriangle(
     return false;
   }
 }
+
+export function intersectRayPlane(
+  outputPos: vec3,
+  normal: vec3,
+  center: vec3,
+  origin: vec3,
+  dir: vec3,
+): boolean {
+  const denom = vec3.dot(normal, dir);
+  if (Math.abs(denom) > 0.000001) {
+    vec3.sub(outputPos, center, origin);
+    const t = vec3.dot(outputPos, normal) / denom;
+    if (t >= 0) {
+      vec3.scaleAndAdd(outputPos, origin, dir, t);
+      return true;
+    }
+  }
+  return false;
+}

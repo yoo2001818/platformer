@@ -1,6 +1,7 @@
 import {mat4, vec2, vec3, vec4} from 'gl-matrix';
 
 import {Camera} from '../../3d/Camera';
+import {intersectRayPlane} from '../../3d/collision';
 import {Transform} from '../../3d/Transform';
 import {Engine} from '../../core/Engine';
 import {selectedEntity} from '../../ui/states/selection';
@@ -69,12 +70,19 @@ export class TranslateMode implements EditorMode {
     return cameraData.getProjectionView(camera, aspect);
   }
 
-  _getCameraInverseProjectionView(): mat4 {
+  _getCameraInverseProjection(): mat4 {
     const {renderer} = this.belongingViewport;
     const camera = renderer.camera!;
     const cameraData = camera.get<Camera>('camera')!;
     const aspect = renderer.getAspectRatio();
-    return cameraData.getInverseProjectionView(camera, aspect);
+    return cameraData.getInverseProjection(aspect);
+  }
+
+  _getCameraInverseView(): mat4 {
+    const {renderer} = this.belongingViewport;
+    const camera = renderer.camera!;
+    const cameraData = camera.get<Camera>('camera')!;
+    return cameraData.getInverseView(camera);
   }
 
   destroy(): void {
@@ -98,37 +106,51 @@ export class TranslateMode implements EditorMode {
     if (this.alignAxis == null) {
       // TODO
     } else {
-      // Project current model position to projection space
-      const originPos = vec4.fromValues(0, 0, 0, 1);
-      vec3.copy(originPos as vec3, this.initialPos);
-      vec4.transformMat4(originPos, originPos, this._getCameraProjectionView());
-      vec4.scale(originPos, originPos, 1 / originPos[3]);
-      // Determine the axis projected dir
-      const deltaPos = vec4.fromValues(0, 0, 0, 1);
-      vec3.add(deltaPos as vec3, this.initialPos, this.alignAxis);
-      vec4.transformMat4(deltaPos, deltaPos, this._getCameraProjectionView());
-      vec4.scale(deltaPos, deltaPos, 1 / deltaPos[3]);
-      vec4.sub(deltaPos, deltaPos, originPos);
-      // Determine the cursor - origin projected
-      const cursorDelta = vec2.create();
-      vec2.sub(cursorDelta, ndcPos, originPos as vec2);
-      // Calculate dist value
-      const l2 = vec2.sqrDist(originPos as vec2, deltaPos as vec2);
-      const dist = vec2.dot(cursorDelta, deltaPos as vec2) / l2;
-      // Using the dist value, calculate new cursor pos
-      const nextAxisPos = vec2.create();
-      vec2.scaleAndAdd(nextAxisPos, originPos as vec2, deltaPos as vec2, dist);
-      // Reverse project the next axis
-      const nextPos =
-        vec4.fromValues(nextAxisPos[0], nextAxisPos[1], originPos[2], 1);
-      vec4.transformMat4(
-        nextPos,
-        nextPos,
-        this._getCameraInverseProjectionView(),
+      // Construct a plane out of camera eye and initial pos
+      const invProj = this._getCameraInverseProjection();
+      const invView = this._getCameraInverseView();
+      const camCenter = vec3.create();
+      vec3.transformMat4(camCenter, camCenter, invView);
+      const camDiff = vec3.create();
+      vec3.sub(camDiff, camCenter, this.initialPos);
+      vec3.normalize(camDiff, camDiff);
+      const planeNormal = vec3.create();
+      vec3.scaleAndAdd(
+        planeNormal,
+        camDiff,
+        this.alignAxis,
+        -vec3.dot(camDiff, this.alignAxis),
       );
-      vec4.scale(nextPos, nextPos, 1 / nextPos[3]);
-      console.log(nextPos);
-      transform.setPosition(nextPos as vec3);
+
+      // Create a ray pointing to the clicked position
+      const rayDir = vec4.fromValues(
+        ndcPos[0] - this.cursorDiff[0],
+        ndcPos[1] - this.cursorDiff[1],
+        1,
+        1,
+      );
+      vec4.transformMat4(rayDir, rayDir, invProj);
+      vec4.scale(rayDir, rayDir, 1 / rayDir[3]);
+      vec4.transformMat4(rayDir, rayDir, invView);
+
+      // Shoot the ray to the plane
+      const resultPos = vec3.create();
+      const hasCollision = intersectRayPlane(
+        resultPos,
+        planeNormal,
+        this.initialPos,
+        camCenter,
+        rayDir as vec3,
+      );
+      if (hasCollision) {
+        // Restrict the vector to allowed values
+        for (let i = 0; i < 3; i += 1) {
+          if (this.alignAxis[i] === 0) {
+            resultPos[i] = this.initialPos[i];
+          }
+        }
+        transform.setPositionWorld(resultPos);
+      }
     }
   }
 
