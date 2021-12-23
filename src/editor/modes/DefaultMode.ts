@@ -1,3 +1,5 @@
+import {vec2} from 'gl-matrix';
+
 import {Engine} from '../../core/Engine';
 import {GizmoPosRotScaleEffect} from '../gizmoEffects/GizmoPosRotScaleEffect';
 import {SelectedEffect} from '../gizmoEffects/SelectedEffect';
@@ -78,6 +80,17 @@ export class DefaultMode implements EditorMode {
         const targetY = Math.floor(
           canvasBounds.height - (event.clientY - canvasBounds.top),
         );
+        // Get NDC of the canvas
+        const ndc = vec2.fromValues(
+          (targetX / canvasBounds.width - 0.5) * 2,
+          (targetY / canvasBounds.height - 0.5) * 2,
+        );
+        // Check the gizmo position
+        const gizmoPosRotScaleEffect =
+          viewport.getEffect<GizmoPosRotScaleEffect>('posRotScale');
+        if (gizmoPosRotScaleEffect != null) {
+          console.log(gizmoPosRotScaleEffect.testIntersect(ndc));
+        }
         // Run mouse picking
         const picker = this._getMousePicker(viewport);
         picker.render();

@@ -62,6 +62,14 @@ export class ViewportEffect implements GizmoEffect<unknown> {
     this.prevEffects = nextEffects;
   }
 
+  get<T extends GizmoEffect<any>>(key: string): T | null {
+    const entry = this.prevEffects.find((v) => v.key === key);
+    if (entry != null) {
+      return entry.instance as T;
+    }
+    return null;
+  }
+
   dispose(): void {
     // Dispose all effects
     this.prevEffects.forEach(({instance}) => {

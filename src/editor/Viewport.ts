@@ -1,4 +1,5 @@
 import {Engine} from '../core/Engine';
+import {GizmoEffect} from '../render/effect/GizmoEffect';
 import {Renderer} from '../render/Renderer';
 
 import {ViewportModel} from './models/ViewportModel';
@@ -8,6 +9,7 @@ export class Viewport {
   engine: Engine | null;
   canvas: HTMLCanvasElement;
   renderer: Renderer;
+  viewportEffect: ViewportEffect;
   unattachFn: (() => void) | null;
 
   constructor(
@@ -18,6 +20,7 @@ export class Viewport {
     this.canvas = canvas;
     this.renderer = renderer;
     this.unattachFn = null;
+    this.viewportEffect = new ViewportEffect(this);
   }
 
   attach(engine: Engine): void {
@@ -44,7 +47,7 @@ export class Viewport {
         this.canvas.removeEventListener(name, callback);
       });
     };
-    this.renderer.gizmoEffects.push(new ViewportEffect(this));
+    this.renderer.gizmoEffects.push(this.viewportEffect);
   }
 
   unattach(): void {
@@ -52,5 +55,9 @@ export class Viewport {
       this.unattachFn();
       this.unattachFn = null;
     }
+  }
+
+  getEffect<T extends GizmoEffect<any>>(key: string): T | null {
+    return this.viewportEffect.get(key);
   }
 }
