@@ -191,6 +191,11 @@ export class Transform {
     return this;
   }
 
+  setPositionWorld(position: vec3): this {
+    // FIXME: Implement this
+    return this.setPosition(position);
+  }
+
   setScale(scale: vec3): this {
     this.markChanged();
     vec3.copy(this.scale, scale);

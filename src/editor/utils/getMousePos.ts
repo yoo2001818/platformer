@@ -27,3 +27,12 @@ export function getNDCPos(
   );
   return outputNDC;
 }
+
+export function getMouseEventNDCPos(
+  viewport: Viewport,
+  event: MouseEvent,
+  outputNDC: vec2,
+): vec2 {
+  const pixels = getMouseEventPos(viewport, event);
+  return getNDCPos(viewport, pixels, outputNDC);
+}

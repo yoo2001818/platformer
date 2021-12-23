@@ -61,4 +61,21 @@ export class Camera {
     const transform = entity.get<Transform>('transform')!;
     return transform.getMatrixWorld();
   }
+
+  getProjectionView(entity: Entity, aspect: number): mat4 {
+    const view = this.getView(entity);
+    const projection = this.getProjection(aspect);
+    const output = mat4.create();
+    mat4.mul(output, projection, view);
+    return output;
+  }
+
+
+  getInverseProjectionView(entity: Entity, aspect: number): mat4 {
+    const inverseView = this.getInverseView(entity);
+    const inverseProjection = this.getInverseProjection(aspect);
+    const output = mat4.create();
+    mat4.mul(output, inverseView, inverseProjection);
+    return output;
+  }
 }
