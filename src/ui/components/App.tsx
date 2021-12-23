@@ -1,11 +1,10 @@
-import React, {useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {css, Global} from '@emotion/react';
 
 import {create3DComponents} from '../../3d/create3DComponents';
 import {Engine} from '../../core/Engine';
 import {parseGLTF} from '../../loader/gltf';
 import {Transform} from '../../3d/Transform';
-import {Camera} from '../../3d/Camera';
 import {PointLight} from '../../render/light/PointLight';
 import {GLTexture2D} from '../../render/gl/GLTexture2D';
 import {createImage} from '../../render/utils/createImage';
@@ -34,20 +33,6 @@ function initEngine(): Engine {
     transform: {position: [0, 1, 0]},
   });
   initModels(engine);
-  const camera = engine.entityStore.create({
-    name: 'Camera',
-    transform: new Transform()
-      .rotateY(Math.PI / 2)
-      // .rotateY(Math.PI / 4)
-      // .rotateX(-Math.PI * 0.4 / 4)
-      .translate([0, 0, 40]),
-    camera: new Camera({
-      type: 'perspective',
-      fov: 70 / 180 * Math.PI,
-      far: 1000,
-      near: 0.3,
-    }),
-  });
   engine.entityStore.create({
     name: 'PointLight',
     transform: new Transform()
@@ -88,9 +73,6 @@ function initEngine(): Engine {
     transform: new Transform(),
     light: new EnvironmentLight({texture: pbrTexture, power: 1}),
   });
-  engine.setResource('viewportOptions', {
-    camera,
-  });
   return engine;
 }
 
@@ -99,6 +81,27 @@ export function App(): React.ReactElement {
   if (engine.current == null) {
     engine.current = initEngine();
   }
+  useEffect(() => {
+    const engineVal = engine.current!;
+
+    let animId: number;
+    let lastTime = 0;
+
+    function update(time: number) {
+      const delta = time - lastTime;
+      lastTime = time;
+
+      engineVal.update(delta / 1000);
+
+      animId = requestAnimationFrame(update);
+    }
+
+    animId = requestAnimationFrame(update);
+
+    return () => {
+      cancelAnimationFrame(animId);
+    };
+  }, []);
   return (
     <EngineProvider engine={engine.current}>
       <Global

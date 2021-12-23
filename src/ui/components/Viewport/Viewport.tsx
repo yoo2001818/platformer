@@ -28,9 +28,6 @@ export function Viewport(
     if (canvasElem == null) {
       return;
     }
-    const clientRect = canvasElem.getBoundingClientRect();
-    canvasElem.width = clientRect.width;
-    canvasElem.height = clientRect.height;
     // Initialize WebGL environment
     const gl =
       canvasElem.getContext('webgl2') || canvasElem.getContext('webgl') ||
@@ -84,25 +81,6 @@ export function Viewport(
     });
 
     rendererRef.current = renderer;
-
-    let animId: number;
-    let lastTime = 0;
-
-    function update(time: number) {
-      const delta = time - lastTime;
-      lastTime = time;
-
-      engine.update(delta / 1000);
-
-      animId = requestAnimationFrame(update);
-    }
-
-    animId = requestAnimationFrame(update);
-
-    // eslint-disable-next-line consistent-return
-    return () => {
-      cancelAnimationFrame(animId);
-    };
   }, [engine]);
   return (
     <Canvas className={className} ref={canvasRef} tabIndex={0} />
