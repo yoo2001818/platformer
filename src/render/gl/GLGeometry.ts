@@ -73,6 +73,10 @@ export class GLGeometry {
         } else {
           dataArr = value;
         }
+        let size = 1;
+        if ('size' in value) {
+          size = value.size;
+        }
         // Flatten the array..
         const array = flattenBuffer(dataArr);
         const type = inferBufferType(dataArr);
@@ -80,7 +84,7 @@ export class GLGeometry {
         const offset = bufferPos;
         bufferInserts.push(array);
         bufferPos += array.byteLength;
-        inferredSize = array.byteLength / TYPE_LENGTHS[type];
+        inferredSize = array.byteLength / TYPE_LENGTHS[type] / size;
         return {
           buffer,
           type,

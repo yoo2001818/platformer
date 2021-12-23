@@ -28,6 +28,7 @@ export class ModeModel {
     this.mode.destroy();
     this.mode = mode;
     mode.bind(this.engine);
+    this.engine.entityStore.nextVersion();
   }
 
   processEvent(type: string, viewport: Viewport, ...args: any[]): void {

@@ -180,14 +180,13 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
 
   render(props: GizmoPosRotScaleEffectProps): void {
     const {renderer} = this;
-    const {glRenderer} = renderer!;
+    const {glRenderer, pipeline} = renderer!;
     const {entity, highlightAxis} = props;
     this.lastEntity = entity;
     if (entity == null) {
       return;
     }
-    const camera = renderer!.camera!;
-    const cameraData = camera.get<Camera>('camera')!;
+    const camUniforms = pipeline.getCameraUniforms();
 
     const transform = entity.get<Transform>('transform');
     if (transform == null) {
@@ -210,9 +209,8 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
       geometry: ARROW_MODEL,
       shader: ARROW_SHADER,
       uniforms: {
+        ...camUniforms,
         uModel: modelMat,
-        uView: cameraData.getView(camera),
-        uProjection: cameraData.getProjection(renderer!.getAspectRatio()),
         uScale: this.scale,
         uColor: colorMat,
       },

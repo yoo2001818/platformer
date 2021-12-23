@@ -1,4 +1,4 @@
-import {vec2} from 'gl-matrix';
+import {vec2, vec3} from 'gl-matrix';
 
 import {Engine} from '../../core/Engine';
 import {GizmoPosRotScaleEffect} from '../gizmoEffects/GizmoPosRotScaleEffect';
@@ -10,8 +10,10 @@ import {MousePicker} from '../MousePicker';
 import {CameraController} from '../CameraController';
 import {ViewportModel} from '../models/ViewportModel';
 import {getMouseEventPos, getNDCPos} from '../utils/getMousePos';
+import {ModeModel} from '../models/ModeModel';
 
 import {EditorMode} from './EditorMode';
+import {TranslateMode} from './TranslateMode';
 
 export class DefaultMode implements EditorMode {
   engine: Engine | null = null;
@@ -30,7 +32,6 @@ export class DefaultMode implements EditorMode {
       mousePicker.dispose();
     }
     this.mousePickMap.clear();
-    this.cameraControllerMap.clear();
   }
 
   _getMousePicker(viewport: Viewport): MousePicker {
@@ -97,8 +98,15 @@ export class DefaultMode implements EditorMode {
         // Check the gizmo position
         const gizmoPosRotScaleEffect =
           viewport.getEffect<GizmoPosRotScaleEffect>('posRotScale');
+        const modeModel = this.engine!.getModel<ModeModel>('mode');
         if (gizmoPosRotScaleEffect != null) {
-          console.log(gizmoPosRotScaleEffect.testIntersect(ndcPos));
+          const hoveringAxis = gizmoPosRotScaleEffect.testIntersect(ndcPos);
+          if (hoveringAxis != null) {
+            const axis = vec3.create();
+            axis[hoveringAxis] = 1;
+            modeModel.setMode(new TranslateMode(this, ndcPos, axis));
+            break;
+          }
         }
         // Run mouse picking
         const picker = this._getMousePicker(viewport);
