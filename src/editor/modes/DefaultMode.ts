@@ -5,12 +5,14 @@ import {gizmoItem, RenderNode} from '../ModeState';
 import {selectedEntity} from '../../ui/states/selection';
 import {Viewport} from '../Viewport';
 import {MousePicker} from '../MousePicker';
+import {CameraController} from '../CameraController';
 
 import {EditorMode} from './EditorMode';
 
 export class DefaultMode implements EditorMode {
   engine: Engine | null = null;
   mousePickMap: Map<Viewport, MousePicker> = new Map();
+  cameraControllerMap: Map<Viewport, CameraController> = new Map();
 
   bind(engine: Engine): void {
     this.engine = engine;
@@ -23,9 +25,7 @@ export class DefaultMode implements EditorMode {
       mousePicker.dispose();
     }
     this.mousePickMap.clear();
-  }
-
-  update(deltaTime?: number): void {
+    this.cameraControllerMap.clear();
   }
 
   _getMousePicker(viewport: Viewport): MousePicker {
@@ -38,7 +38,26 @@ export class DefaultMode implements EditorMode {
     return newEntry;
   }
 
+  _getCameraController(viewport: Viewport): CameraController {
+    const entry = this.cameraControllerMap.get(viewport);
+    if (entry != null) {
+      return entry;
+    }
+    const newEntry = new CameraController();
+    this.cameraControllerMap.set(viewport, newEntry);
+    return newEntry;
+  }
+
+  update(deltaTime = 0.016): void {
+    for (const [viewport, controller] of this.cameraControllerMap.entries()) {
+      controller.setEntity(viewport.renderer.camera);
+      controller.update(deltaTime);
+    }
+  }
+
   processEvent(type: string, viewport: Viewport, ...args: any[]): void {
+    const camController = this._getCameraController(viewport);
+    camController.processEvent(type, viewport, ...args);
     switch (type) {
       case 'click': {
         const {entityStore} = this.engine!;
