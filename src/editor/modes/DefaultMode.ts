@@ -6,6 +6,7 @@ import {selectedEntity} from '../../ui/states/selection';
 import {Viewport} from '../Viewport';
 import {MousePicker} from '../MousePicker';
 import {CameraController} from '../CameraController';
+import {ViewportModel} from '../models/ViewportModel';
 
 import {EditorMode} from './EditorMode';
 
@@ -49,9 +50,15 @@ export class DefaultMode implements EditorMode {
   }
 
   update(deltaTime = 0.016): void {
-    for (const [viewport, controller] of this.cameraControllerMap.entries()) {
-      controller.setEntity(viewport.renderer.camera);
-      controller.update(deltaTime);
+    const {engine} = this;
+    if (engine == null) {
+      return;
+    }
+    const viewportModel = engine.getModel<ViewportModel>('viewport');
+    for (const viewport of viewportModel.viewports) {
+      const camController = this._getCameraController(viewport);
+      camController.setEntity(viewport.renderer.camera);
+      camController.update(deltaTime);
     }
   }
 
@@ -59,9 +66,12 @@ export class DefaultMode implements EditorMode {
     const camController = this._getCameraController(viewport);
     camController.processEvent(type, viewport, ...args);
     switch (type) {
-      case 'click': {
+      case 'mousedown': {
         const {entityStore} = this.engine!;
         const event: MouseEvent = args[0];
+        if (event.button !== 0) {
+          break;
+        }
         // Get relative position of the canvas
         const canvasBounds = viewport.canvas.getBoundingClientRect();
         const targetX = Math.floor(event.clientX - canvasBounds.left);

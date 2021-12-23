@@ -32,9 +32,9 @@ const arrow = combine([
 ]);
 
 const ARROW_MODEL = new GLGeometry(combine([
-  transform(arrow, {aColor: [1, 0, 0]}),
+  transform(arrow, {aColor: [1, 0.2, 0.2]}),
   transform(arrow, {
-    aColor: [0, 1, 0],
+    aColor: [0.2, 1, 0.2],
     aPosition: [
       0, 1, 0, 0,
       0, 0, 1, 0,
@@ -43,7 +43,7 @@ const ARROW_MODEL = new GLGeometry(combine([
     ],
   }),
   transform(arrow, {
-    aColor: [0, 0, 1],
+    aColor: [0.2, 0.2, 1],
     aPosition: [
       0, 0, 1, 0,
       1, 0, 0, 0,
@@ -65,12 +65,13 @@ const ARROW_SHADER = new GLShader(
     uniform mat4 uView;
     uniform mat4 uProjection;
     uniform mat4 uModel;
+    uniform float uScale;
     
     void main() {
       vColor = aColor;
       // Determine the w value at the mid point
       vec4 midPos = uProjection * uView * uModel * vec4(0.0, 0.0, 0.0, 1.0);
-      gl_Position = uProjection * uView * uModel * vec4(aPosition * 0.12 * midPos.w, 1.0);
+      gl_Position = uProjection * uView * uModel * vec4(aPosition * uScale * midPos.w, 1.0);
     }
   `,
   /* glsl */`
@@ -125,6 +126,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
         uModel: modelMat,
         uView: cameraData.getView(camera),
         uProjection: cameraData.getProjection(renderer!.getAspectRatio()),
+        uScale: 0.08,
       },
       state: {
         depth: false,

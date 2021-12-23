@@ -4,7 +4,7 @@ import {Viewport} from '../Viewport';
 
 export class ViewportModel {
   engine: Engine;
-  viewports: unknown[];
+  viewports: Viewport[];
   emitter: EventEmitter;
 
   constructor(engine: Engine) {
