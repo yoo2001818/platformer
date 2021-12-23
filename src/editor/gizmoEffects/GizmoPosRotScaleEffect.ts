@@ -32,9 +32,9 @@ const arrow = combine([
 ]);
 
 const ARROW_MODEL = new GLGeometry(combine([
-  transform(arrow, {aColor: [1, 0.2, 0.2]}),
+  transform(arrow, {aColor: [1, 0, 0]}),
   transform(arrow, {
-    aColor: [0.2, 1, 0.2],
+    aColor: [0, 1, 0],
     aPosition: [
       0, 1, 0, 0,
       0, 0, 1, 0,
@@ -43,7 +43,7 @@ const ARROW_MODEL = new GLGeometry(combine([
     ],
   }),
   transform(arrow, {
-    aColor: [0.2, 0.2, 1],
+    aColor: [0, 0, 1],
     aPosition: [
       0, 0, 1, 0,
       1, 0, 0, 0,
@@ -65,10 +65,11 @@ const ARROW_SHADER = new GLShader(
     uniform mat4 uView;
     uniform mat4 uProjection;
     uniform mat4 uModel;
+    uniform mat4 uColor;
     uniform float uScale;
     
     void main() {
-      vColor = aColor;
+      vColor = (uColor * vec4(aColor, 1.0)).rgb;
       mat4 mvp = uProjection * uView * uModel;
       // Determine the w value at the mid point
       vec4 midPos = mvp * vec4(0.0, 0.0, 0.0, 1.0);
@@ -120,6 +121,7 @@ function getDistanceSegmentPoint(
 
 export interface GizmoPosRotScaleEffectProps {
   entity: Entity | null;
+  highlightAxis?: number | null;
 }
 
 export class GizmoPosRotScaleEffect
@@ -148,7 +150,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
     return dist < 2 * 0.08 * this.scale;
   }
 
-  testIntersect(point: vec2): vec3 | null {
+  testIntersect(point: vec2): number | null {
     const {renderer, lastEntity} = this;
     if (lastEntity == null) {
       return null;
@@ -167,19 +169,19 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
     mat4.multiply(mvp, cameraData.getView(camera), mvp);
     mat4.multiply(mvp, cameraData.getProjection(aspect), mvp);
 
-    const item = [
-      vec3.fromValues(1, 0, 0),
-      vec3.fromValues(0, 1, 0),
-      vec3.fromValues(0, 0, 1),
-    ].find((dir) => this._testIntersectAxis(mvp, dir, point));
+    const item = [0, 1, 2].find((axis) => {
+      const dir = vec3.create();
+      dir[axis] = 1;
+      return this._testIntersectAxis(mvp, dir, point);
+    });
 
-    return item || null;
+    return item ?? null;
   }
 
   render(props: GizmoPosRotScaleEffectProps): void {
     const {renderer} = this;
     const {glRenderer} = renderer!;
-    const {entity} = props;
+    const {entity, highlightAxis} = props;
     this.lastEntity = entity;
     if (entity == null) {
       return;
@@ -195,6 +197,15 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
     const modelMat = mat4.create();
     mat4.translate(modelMat, modelMat, transform.getPositionWorld());
 
+    const colorMat = mat4.create();
+    mat4.translate(colorMat, colorMat, [0.2, 0.2, 0.2]);
+    if (highlightAxis != null) {
+      colorMat[highlightAxis * 4 + 0] += 0.3;
+      colorMat[highlightAxis * 4 + 1] += 0.3;
+      colorMat[highlightAxis * 4 + 2] += 0.3;
+    }
+    mat4.scale(colorMat, colorMat, [1, 0.6, 1]);
+
     glRenderer.draw({
       geometry: ARROW_MODEL,
       shader: ARROW_SHADER,
@@ -203,6 +214,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
         uView: cameraData.getView(camera),
         uProjection: cameraData.getProjection(renderer!.getAspectRatio()),
         uScale: this.scale,
+        uColor: colorMat,
       },
       state: {
         depth: false,

@@ -9,6 +9,7 @@ import {Viewport} from '../Viewport';
 import {MousePicker} from '../MousePicker';
 import {CameraController} from '../CameraController';
 import {ViewportModel} from '../models/ViewportModel';
+import {getMouseEventPos, getNDCPos} from '../utils/getMousePos';
 
 import {EditorMode} from './EditorMode';
 
@@ -16,6 +17,7 @@ export class DefaultMode implements EditorMode {
   engine: Engine | null = null;
   mousePickMap: Map<Viewport, MousePicker> = new Map();
   cameraControllerMap: Map<Viewport, CameraController> = new Map();
+  hoveringAxis: number | null = null;
 
   bind(engine: Engine): void {
     this.engine = engine;
@@ -68,33 +70,40 @@ export class DefaultMode implements EditorMode {
     const camController = this._getCameraController(viewport);
     camController.processEvent(type, viewport, ...args);
     switch (type) {
+      case 'mousemove': {
+        const {entityStore} = this.engine!;
+        const event: MouseEvent = args[0];
+        const pixelPos = getMouseEventPos(viewport, event);
+        const ndcPos = getNDCPos(viewport, pixelPos, vec2.create());
+        const gizmoPosRotScaleEffect =
+          viewport.getEffect<GizmoPosRotScaleEffect>('posRotScale');
+        if (gizmoPosRotScaleEffect != null) {
+          const hoveringAxis = gizmoPosRotScaleEffect.testIntersect(ndcPos);
+          if (hoveringAxis !== this.hoveringAxis) {
+            this.hoveringAxis = hoveringAxis;
+            entityStore.nextVersion();
+          }
+        }
+        break;
+      }
       case 'mousedown': {
         const {entityStore} = this.engine!;
         const event: MouseEvent = args[0];
         if (event.button !== 0) {
           break;
         }
-        // Get relative position of the canvas
-        const canvasBounds = viewport.canvas.getBoundingClientRect();
-        const targetX = Math.floor(event.clientX - canvasBounds.left);
-        const targetY = Math.floor(
-          canvasBounds.height - (event.clientY - canvasBounds.top),
-        );
-        // Get NDC of the canvas
-        const ndc = vec2.fromValues(
-          (targetX / canvasBounds.width - 0.5) * 2,
-          (targetY / canvasBounds.height - 0.5) * 2,
-        );
+        const pixelPos = getMouseEventPos(viewport, event);
+        const ndcPos = getNDCPos(viewport, pixelPos, vec2.create());
         // Check the gizmo position
         const gizmoPosRotScaleEffect =
           viewport.getEffect<GizmoPosRotScaleEffect>('posRotScale');
         if (gizmoPosRotScaleEffect != null) {
-          console.log(gizmoPosRotScaleEffect.testIntersect(ndc));
+          console.log(gizmoPosRotScaleEffect.testIntersect(ndcPos));
         }
         // Run mouse picking
         const picker = this._getMousePicker(viewport);
         picker.render();
-        const entity = picker.getEntity(targetX, targetY);
+        const entity = picker.getEntity(pixelPos[0], pixelPos[1]);
         if (entity != null) {
           entityStore.getAtom(selectedEntity).setState(entity.handle);
         }
@@ -116,6 +125,7 @@ export class DefaultMode implements EditorMode {
       }),
       gizmoItem(GizmoPosRotScaleEffect, {
         entity,
+        highlightAxis: this.hoveringAxis,
         key: 'posRotScale',
       }),
     ];
