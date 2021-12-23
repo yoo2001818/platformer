@@ -1,4 +1,4 @@
-import {Engine} from '../../core/Engine';
+import {Engine, UPDATE_PHASE} from '../../core/Engine';
 import {Signal} from '../../core/Signal';
 import {DefaultMode} from '../modes/DefaultMode';
 import {EditorMode} from '../modes/EditorMode';
@@ -17,9 +17,11 @@ export class ModeModel {
     this.mode = new DefaultMode();
     this.mode.bind(engine);
     this.processEvent = this.processEvent.bind(this);
+    this.update = this.update.bind(this);
 
     this.engine.getModel<ViewportModel>('viewport').emitter
       .on('all', this.processEvent);
+    this.engine.registerSystem(UPDATE_PHASE, this.update);
   }
 
   setMode(mode: EditorMode): void {
@@ -30,5 +32,9 @@ export class ModeModel {
 
   processEvent(type: string, viewport: Viewport, ...args: any[]): void {
     this.mode.processEvent(type, viewport, ...args);
+  }
+
+  update(deltaTime?: number): void {
+    this.mode.update(deltaTime);
   }
 }

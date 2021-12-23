@@ -5,8 +5,7 @@ import {COLORS} from '../../styles';
 import {useEngine} from '../../hooks/useEngine';
 import {GLRenderer} from '../../../render/gl/GLRenderer';
 import {Renderer} from '../../../render/Renderer';
-import {RENDER_PHASE, UPDATE_PHASE} from '../../../core/Engine';
-import {OrbitCameraController} from '../../../input/OrbitCameraController';
+import {RENDER_PHASE} from '../../../core/Engine';
 import {ViewportModel} from '../../../editor/models/ViewportModel';
 import {Viewport as RendererViewport} from '../../../editor/Viewport';
 import {Transform} from '../../../3d/Transform';
@@ -54,16 +53,6 @@ export function Viewport(
     });
     renderer.setCamera(camera);
 
-    const orbitController = new OrbitCameraController(
-      canvasElem,
-      canvasElem,
-      null,
-      3,
-    );
-
-    orbitController.setEntity(camera);
-
-    engine.registerSystem(UPDATE_PHASE, (v) => orbitController.update(v));
     engine.registerSystem(RENDER_PHASE, (v) => {
       // Check if the canvas size has been changed.
       const clientRect = canvasElem.getBoundingClientRect();
