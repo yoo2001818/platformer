@@ -15,6 +15,7 @@ import {SelectedDotEffect} from '../gizmoEffects/SelectedDotEffect';
 
 import {EditorMode} from './EditorMode';
 import {TranslateMode} from './TranslateMode';
+import {ScaleMode} from './ScaleMode';
 
 export class DefaultMode implements EditorMode {
   engine: Engine | null = null;
@@ -134,6 +135,11 @@ export class DefaultMode implements EditorMode {
           case 'KeyG':
             modeModel.setMode(
               new TranslateMode(this, viewport, this.lastMousePos, false, null),
+            );
+            break;
+          case 'KeyS':
+            modeModel.setMode(
+              new ScaleMode(this, viewport, this.lastMousePos, false, null),
             );
             break;
         }

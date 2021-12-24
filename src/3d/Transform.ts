@@ -202,6 +202,11 @@ export class Transform {
     return this;
   }
 
+  setScaleWorld(position: vec3): this {
+    // FIXME: Implement this
+    return this.setScale(position);
+  }
+
   setRotation(rotation: quat): this {
     this.markChanged();
     quat.copy(this.rotation, rotation);
