@@ -6,6 +6,7 @@ import {Transform} from '../../3d/Transform';
 import {Engine} from '../../core/Engine';
 import {selectedEntity} from '../../ui/states/selection';
 import {AxisEffect} from '../gizmoEffects/AxisEffect';
+import {SelectedDotEffect} from '../gizmoEffects/SelectedDotEffect';
 import {SelectedEffect} from '../gizmoEffects/SelectedEffect';
 import {ModeModel} from '../models/ModeModel';
 import {gizmoItem, RenderNode} from '../ModeState';
@@ -190,19 +191,23 @@ export class TranslateMode implements EditorMode {
         entity,
         axis: vec3.fromValues(1, 0, 0),
         color: '#ff3333',
-        key: 'axis',
+        key: 'axis1',
       }),
       this.alignAxis && this.alignAxis[1] > 0 && gizmoItem(AxisEffect, {
         entity,
         axis: vec3.fromValues(0, 1, 0),
         color: '#33ff33',
-        key: 'axis',
+        key: 'axis2',
       }),
       this.alignAxis && this.alignAxis[2] > 0 && gizmoItem(AxisEffect, {
         entity,
         axis: vec3.fromValues(0, 0, 1),
         color: '#3333ff',
-        key: 'axis',
+        key: 'axis3',
+      }),
+      gizmoItem(SelectedDotEffect, {
+        entity,
+        key: 'selectedDot',
       }),
     ].filter((v): v is RenderNode<any> => Boolean(v));
   }
