@@ -37,7 +37,7 @@ const quadPlane = transform(quad(1, 1), {
     0.1, 0, 0, 0,
     0, 0.1, 0, 0,
     0, 0, 0.1, 0,
-    0.4, 0.4, 0, 1,
+    0.3, 0.3, 0, 1,
   ],
 });
 
@@ -64,9 +64,9 @@ const ARROW_MODEL = new GLGeometry(combine([
 ]));
 
 const PLANE_MODEL = new GLGeometry(combine([
-  transform(quadPlane, {aColor: [1, 0, 0]}),
+  transform(quadPlane, {aColor: [0, 0, 1]}),
   transform(quadPlane, {
-    aColor: [0, 1, 0],
+    aColor: [1, 0, 0],
     aPosition: [
       0, 1, 0, 0,
       0, 0, 1, 0,
@@ -75,7 +75,7 @@ const PLANE_MODEL = new GLGeometry(combine([
     ],
   }),
   transform(quadPlane, {
-    aColor: [0, 0, 1],
+    aColor: [0, 1, 0],
     aPosition: [
       0, 0, 1, 0,
       1, 0, 0, 0,
@@ -182,6 +182,17 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
     return dist < 2 * 0.08 * this.scale;
   }
 
+  _testIntersectPlane(mvp: mat4, axis: vec3, point: vec2): boolean {
+    const widget = vec3.fromValues(0.3, 0.3, 0.3);
+    for (let i = 0; i < 3; i += 1) {
+      widget[i] *= 1 - axis[i];
+    }
+    const widgetNDC = vec4.create();
+    projectToScreen(mvp, widget, this.scale, widgetNDC);
+    const dist = vec2.dist(point, widgetNDC as vec2);
+    return dist < 2 * 0.1 * this.scale;
+  }
+
   testIntersect(point: vec2): number | null {
     const {renderer, lastEntity} = this;
     if (lastEntity == null) {
@@ -201,13 +212,21 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
     mat4.multiply(mvp, cameraData.getView(camera), mvp);
     mat4.multiply(mvp, cameraData.getProjection(aspect), mvp);
 
-    const item = [0, 1, 2].find((axis) => {
+    for (let i = 0; i < 6; i += 1) {
       const dir = vec3.create();
-      dir[axis] = 1;
-      return this._testIntersectAxis(mvp, dir, point);
-    });
+      dir[i % 3] = 1;
+      let result;
+      if (i >= 3) {
+        result = this._testIntersectPlane(mvp, dir, point);
+      } else {
+        result = this._testIntersectAxis(mvp, dir, point);
+      }
+      if (result) {
+        return i;
+      }
+    }
 
-    return item ?? null;
+    return null;
   }
 
   render(props: GizmoPosRotScaleEffectProps): void {
@@ -230,7 +249,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
 
     const colorMat = mat4.create();
     mat4.translate(colorMat, colorMat, [0.2, 0.2, 0.2]);
-    if (highlightAxis != null) {
+    if (highlightAxis != null && highlightAxis < 3) {
       colorMat[highlightAxis * 4 + 0] += 0.3;
       colorMat[highlightAxis * 4 + 1] += 0.3;
       colorMat[highlightAxis * 4 + 2] += 0.3;
@@ -259,7 +278,13 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
     });
 
     const planeColorMat = mat4.create();
-    mat4.copy(planeColorMat, colorMat);
+    mat4.translate(planeColorMat, planeColorMat, [0.2, 0.2, 0.2]);
+    if (highlightAxis != null && highlightAxis >= 3) {
+      planeColorMat[(highlightAxis % 3) * 4 + 0] += 0.3;
+      planeColorMat[(highlightAxis % 3) * 4 + 1] += 0.3;
+      planeColorMat[(highlightAxis % 3) * 4 + 2] += 0.3;
+    }
+    mat4.scale(planeColorMat, planeColorMat, [1, 0.6, 1]);
     planeColorMat[15] = 0.7;
 
     glRenderer.draw({

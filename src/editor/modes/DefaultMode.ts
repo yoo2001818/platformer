@@ -106,10 +106,14 @@ export class DefaultMode implements EditorMode {
           const hoveringAxis = gizmoPosRotScaleEffect.testIntersect(ndcPos);
           if (hoveringAxis != null) {
             const axis = vec3.create();
-            axis[hoveringAxis] = 1;
-            modeModel.setMode(
-              new TranslateMode(this, viewport, ndcPos, false, axis),
-            );
+            axis[hoveringAxis % 3] = 1;
+            modeModel.setMode(new TranslateMode(
+              this,
+              viewport,
+              ndcPos,
+              hoveringAxis >= 3,
+              axis,
+            ));
             break;
           }
         }
