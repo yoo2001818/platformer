@@ -21,6 +21,8 @@ export interface Material {
       onCreate: (defines?: string) => MaterialVertexShaderBlock,
     ) => GLShader,
     onDraw: (options: DrawOptions) => void,
+    startIndex?: number,
+    count?: number,
   ): void;
   render(chunk: EntityChunk, geometry: GLGeometry, renderer: Renderer): void;
   dispose(): void;

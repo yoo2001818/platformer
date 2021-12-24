@@ -47,6 +47,8 @@ export class StandardMaterial implements Material {
       onCreate: (defines?: string) => MaterialVertexShaderBlock,
     ) => GLShader,
     onDraw: (options: DrawOptions) => void,
+    startIndex?: number,
+    count?: number,
   ): void {
     const {entityStore, glRenderer} = renderer;
     const transformComp =

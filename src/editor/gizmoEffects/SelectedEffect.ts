@@ -12,28 +12,6 @@ import {Mesh} from '../../render/Mesh';
 import {Renderer} from '../../render/Renderer';
 
 const QUAD = new GLGeometry(quad());
-const OFF_SHADER = new GLShader(
-  /* glsl */`
-    precision highp float;
-
-    attribute vec3 aPosition;
-
-    uniform mat4 uView;
-    uniform mat4 uProjection;
-    uniform mat4 uModel;
-    
-    void main() {
-      gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
-    }
-  `,
-  /* glsl */`
-    precision highp float;
-
-    void main() {
-      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    }
-  `,
-);
 const LINE_SHADER = new GLShader(
   /* glsl */`
     precision highp float;
@@ -126,7 +104,7 @@ export class SelectedEffect implements GizmoEffect<SelectedEffectProps> {
     const {renderer} = this;
     const {glRenderer} = renderer!;
     const {entity} = props;
-    if (entity == null) {
+    if (entity == null || renderer == null) {
       return;
     }
     this.lineTex!.updateSize(glRenderer.getWidth(), glRenderer.getHeight());
@@ -142,17 +120,45 @@ export class SelectedEffect implements GizmoEffect<SelectedEffectProps> {
 
     // Render object onto the off-screen buffer.
     glRenderer.clear(this.lineFrameBuffer);
-    mesh.geometries.forEach((geom) => {
-      glRenderer.draw({
-        frameBuffer: this.lineFrameBuffer,
-        geometry: geom.getGLGeometry(renderer!),
-        shader: OFF_SHADER,
-        uniforms: {
-          uModel: transform.getMatrixWorld(),
-          uView: cameraData.getView(camera),
-          uProjection: cameraData.getProjection(renderer!.getAspectRatio()),
+    mesh.geometries.forEach((geometry, index) => {
+      const materialIndex = Math.min(mesh.materials.length - 1, index);
+      const material = mesh.materials[materialIndex];
+      if (material == null) {
+        throw new Error('Geometry is null');
+      }
+      const glGeometry = geometry.getGLGeometry(renderer);
+      material.renderVertex?.(
+        entity.chunk!,
+        glGeometry,
+        renderer,
+        (id, onCreate) => renderer.getResource(`effect~selected~${id}`, () => {
+          const block = onCreate();
+          return new GLShader(
+            block.vert,
+            /* glsl */`
+              #version 100
+              precision highp float;
+
+              void main() {
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+              }
+            `,
+          );
+        }),
+        (options) => {
+          glRenderer.draw({
+            ...options,
+            frameBuffer: this.lineFrameBuffer,
+            uniforms: {
+              ...options.uniforms,
+              uView: cameraData.getView(camera),
+              uProjection: cameraData.getProjection(renderer!.getAspectRatio()),
+            },
+          });
         },
-      });
+        entity.chunkOffset!,
+        1,
+      );
     });
 
     // Copy the rendered off-screen buffer to the screen.
