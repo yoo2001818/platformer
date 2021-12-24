@@ -6,6 +6,7 @@ import {Entity} from '../../core/Entity';
 import {combine} from '../../geom/combine';
 import {cone} from '../../geom/cone';
 import {cylinder} from '../../geom/cylinder';
+import {quad} from '../../geom/quad';
 import {transform} from '../../geom/transform';
 import {GizmoEffect} from '../../render/effect/GizmoEffect';
 import {GLGeometry} from '../../render/gl/GLGeometry';
@@ -31,6 +32,15 @@ const arrow = combine([
   }),
 ]);
 
+const quadPlane = transform(quad(1, 1), {
+  aPosition: [
+    0.1, 0, 0, 0,
+    0, 0.1, 0, 0,
+    0, 0, 0.1, 0,
+    0.4, 0.4, 0, 1,
+  ],
+});
+
 const ARROW_MODEL = new GLGeometry(combine([
   transform(arrow, {aColor: [1, 0, 0]}),
   transform(arrow, {
@@ -53,6 +63,28 @@ const ARROW_MODEL = new GLGeometry(combine([
   }),
 ]));
 
+const PLANE_MODEL = new GLGeometry(combine([
+  transform(quadPlane, {aColor: [1, 0, 0]}),
+  transform(quadPlane, {
+    aColor: [0, 1, 0],
+    aPosition: [
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      1, 0, 0, 0,
+      0, 0, 0, 1,
+    ],
+  }),
+  transform(quadPlane, {
+    aColor: [0, 0, 1],
+    aPosition: [
+      0, 0, 1, 0,
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 0, 1,
+    ],
+  }),
+]));
+
 const ARROW_SHADER = new GLShader(
   /* glsl */`
     precision highp float;
@@ -60,7 +92,7 @@ const ARROW_SHADER = new GLShader(
     attribute vec3 aPosition;
     attribute vec3 aColor;
 
-    varying vec3 vColor;
+    varying vec4 vColor;
 
     uniform mat4 uView;
     uniform mat4 uProjection;
@@ -69,7 +101,7 @@ const ARROW_SHADER = new GLShader(
     uniform float uScale;
     
     void main() {
-      vColor = (uColor * vec4(aColor, 1.0)).rgb;
+      vColor = uColor * vec4(aColor, 1.0);
       mat4 mvp = uProjection * uView * uModel;
       // Determine the w value at the mid point
       vec4 midPos = mvp * vec4(0.0, 0.0, 0.0, 1.0);
@@ -79,10 +111,10 @@ const ARROW_SHADER = new GLShader(
   /* glsl */`
     precision highp float;
 
-    varying vec3 vColor;
+    varying vec4 vColor;
 
     void main() {
-      gl_FragColor = vec4(vColor, 1.0);
+      gl_FragColor = vColor;
     }
   `,
 );
@@ -216,6 +248,39 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
       },
       state: {
         depth: false,
+        blend: {
+          equation: 'add',
+          func: [
+            ['srcAlpha', 'oneMinusSrcAlpha'],
+            ['one', 'one'],
+          ],
+        },
+      },
+    });
+
+    const planeColorMat = mat4.create();
+    mat4.copy(planeColorMat, colorMat);
+    planeColorMat[15] = 0.7;
+
+    glRenderer.draw({
+      geometry: PLANE_MODEL,
+      shader: ARROW_SHADER,
+      uniforms: {
+        ...camUniforms,
+        uModel: modelMat,
+        uScale: this.scale,
+        uColor: planeColorMat,
+      },
+      state: {
+        depth: false,
+        cull: false,
+        blend: {
+          equation: 'add',
+          func: [
+            ['srcAlpha', 'oneMinusSrcAlpha'],
+            ['one', 'one'],
+          ],
+        },
       },
     });
   }
