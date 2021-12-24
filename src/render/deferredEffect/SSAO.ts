@@ -71,7 +71,7 @@ export class SSAO {
 
   constructor(pipeline: DeferredPipeline) {
     this.pipeline = pipeline;
-    this.hemisphereBuffer = createHemisphere(24);
+    this.hemisphereBuffer = createHemisphere(16);
     this.noiseBuffer = createNoise(4);
   }
 
@@ -140,7 +140,7 @@ export class SSAO {
       `,
       /* glsl */`
         precision highp float;
-        #define NUM_SAMPLES 24
+        #define NUM_SAMPLES 16
 
         ${PBR}
         ${MATERIAL_INFO}
@@ -236,14 +236,20 @@ export class SSAO {
           vec2 texelSize = 1.0 / uResolution;
           float result = 0.0;
           vec2 hlim = vec2(float(-KERNEL_SIZE) * 0.5 + 0.5);
+          float original = texture2D(uAOBuffer, vPosition).r;
+          result += original;
+          float weight = 1.0;
           for (int i = 0; i < KERNEL_SIZE; ++i) {
             for (int j = 0; j < KERNEL_SIZE; ++j) {
               vec2 offset = (hlim + vec2(float(i), float(j))) * texelSize;
-              result += texture2D(uAOBuffer, vPosition + offset).r;
+              float value = texture2D(uAOBuffer, vPosition + offset).r;
+              float valueWeight = pow(1.0 - abs(original - value), 1.5);
+              result += value * valueWeight;
+              weight += valueWeight;
             }
           }
         
-          result = result / float(KERNEL_SIZE * KERNEL_SIZE);
+          result = result / weight;
           gl_FragColor = vec4(result, 0.0, 0.0, 0.0);
         }
       `,
@@ -266,7 +272,7 @@ export class SSAO {
           height / 4,
         ],
         uRadius: 0.2,
-        uBias: 0.005,
+        uBias: 0.01,
         uPower: 1.5,
         uHemisphereMap: this.hemisphereBuffer,
         uNoiseMap: this.noiseBuffer,
