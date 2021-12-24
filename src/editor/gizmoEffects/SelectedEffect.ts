@@ -93,6 +93,7 @@ export class SelectedEffect implements GizmoEffect<SelectedEffectProps> {
     // offscreen buffer and run sobel-like filter in the screen.
     // Therefore, we need screen-sized buffer to achieve this.
     const {glRenderer} = renderer;
+    const {capabilities} = glRenderer;
     this.lineTex = new GLTexture2D({
       width: glRenderer.getWidth(),
       height: glRenderer.getHeight(),
@@ -105,7 +106,7 @@ export class SelectedEffect implements GizmoEffect<SelectedEffectProps> {
       mipmap: false,
     });
     this.lineDepth = new GLRenderBuffer({
-      format: 'depthComponent24',
+      format: capabilities.isWebGL2 ? 'depthComponent24' : 'depthComponent16',
       width: glRenderer.getWidth(),
       height: glRenderer.getHeight(),
     });

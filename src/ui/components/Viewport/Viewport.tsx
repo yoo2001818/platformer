@@ -29,6 +29,7 @@ export function Viewport(
     }
     // Initialize WebGL environment
     const gl =
+      canvasElem.getContext('webgl2') ||
       canvasElem.getContext('webgl') ||
       canvasElem.getContext('experimental-webgl') as WebGLRenderingContext;
     if (gl == null) {

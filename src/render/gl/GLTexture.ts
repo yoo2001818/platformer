@@ -268,6 +268,20 @@ export class GLTexture {
       );
       this.inferredWidth = source.width;
       this.inferredHeight = source.height;
+      if (!capabilities.isWebGL2 && options.mipmap !== false) {
+        if (
+          Math.log2(source.width) % 1 !== 0 ||
+          Math.log2(source.height) % 1 !== 0
+        ) {
+          // NPOT texture detected; if mipmap is enabled, give up
+          this._setParameters(target, {
+            minFilter: 'linear',
+            wrapS: 'clampToEdge',
+            wrapT: 'clampToEdge',
+          });
+          options.mipmap = false;
+        }
+      }
     } else {
       const {width, height} = options;
       if (width == null || height == null) {
