@@ -27,7 +27,7 @@ import {Viewport} from './Viewport';
 function initEngine(): Engine {
   const engine = new Engine();
   engine.entityStore.registerComponents(create3DComponents());
-  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/pri-home5.gltf')).entities);
+  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/tree.gltf')).entities);
   engine.entityStore.create({
     name: 'Test',
     transform: {position: [0, 1, 0]},
@@ -36,7 +36,7 @@ function initEngine(): Engine {
   engine.entityStore.create({
     name: 'PointLight',
     transform: new Transform()
-      .translate([0, 1, 0]),
+      .translate([0, 0.2, 0.6]),
     light: new PointLight({color: '#ffffff', power: 5, radius: 10, range: 12}),
   });
   const skyboxTexture = new GLTexture2D({

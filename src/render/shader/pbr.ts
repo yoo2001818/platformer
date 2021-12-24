@@ -35,8 +35,8 @@ export const PBR = /* glsl */`
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - dotNL, 5.0);
   }
 
-  vec3 fresnelSchlick(float dotNL, vec3 F0) {
-    return F0 + (1.0 - F0) * pow(1.0 - dotNL, 5.0);
+  vec3 fresnelSchlick(float dotHV, vec3 F0) {
+    return F0 + (1.0 - F0) * pow(1.0 - dotHV, 5.0);
   }
 
   vec3 specCookTorr(float D, vec3 F, float G, float dotNL, float dotNV) {
@@ -59,9 +59,10 @@ export const PBR = /* glsl */`
     vec3 H = normalize(V + L);
 
     float dotNH = max(dot(N, H), 0.0);
+    float dotHV = max(dot(H, V), 0.0);
 
     float D = distributionGGX(dotNH, roughness);
-    vec3 F = fresnelSchlick(dotNL, reflection);
+    vec3 F = fresnelSchlick(dotHV, reflection);
     float G = geometrySmith(roughness, dotNV, dotNL);
 
     vec3 spec = specCookTorr(D, F, G, dotNL, dotNV);
