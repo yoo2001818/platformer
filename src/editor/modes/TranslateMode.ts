@@ -22,18 +22,21 @@ export class TranslateMode implements EditorMode {
   initialNDC: vec2;
   initialPos: vec3;
   cursorDiff: vec2;
+  isAlignAxisPlane: boolean;
   alignAxis: vec3 | null;
 
   constructor(
     prevMode: EditorMode,
     belongingViewport: Viewport,
     initialNDC: vec2,
+    isAlignAxisPlane: boolean,
     alignAxis: vec3 | null,
   ) {
     this.prevMode = prevMode;
     this.belongingViewport = belongingViewport;
     this.initialNDC = initialNDC;
     this.initialPos = vec3.create();
+    this.isAlignAxisPlane = isAlignAxisPlane;
     this.alignAxis = alignAxis;
     this.cursorDiff = vec2.create();
   }
@@ -104,54 +107,58 @@ export class TranslateMode implements EditorMode {
     if (transform == null) {
       return;
     }
+    // Construct a plane out of camera eye and initial pos
+    const invProj = this._getCameraInverseProjection();
+    const invView = this._getCameraInverseView();
+    const camCenter = vec3.create();
+    vec3.transformMat4(camCenter, camCenter, invView);
+    const camDiff = vec3.create();
+    vec3.sub(camDiff, camCenter, this.initialPos);
+    vec3.normalize(camDiff, camDiff);
+    const planeNormal = vec3.create();
     if (this.alignAxis == null) {
-      // TODO
+      vec3.copy(planeNormal, camDiff);
+    } else if (this.isAlignAxisPlane) {
+      vec3.copy(planeNormal, this.alignAxis);
     } else {
-      // Construct a plane out of camera eye and initial pos
-      const invProj = this._getCameraInverseProjection();
-      const invView = this._getCameraInverseView();
-      const camCenter = vec3.create();
-      vec3.transformMat4(camCenter, camCenter, invView);
-      const camDiff = vec3.create();
-      vec3.sub(camDiff, camCenter, this.initialPos);
-      vec3.normalize(camDiff, camDiff);
-      const planeNormal = vec3.create();
       vec3.scaleAndAdd(
         planeNormal,
         camDiff,
         this.alignAxis,
         -vec3.dot(camDiff, this.alignAxis),
       );
+    }
 
-      // Create a ray pointing to the clicked position
-      const rayDir = vec4.fromValues(
-        ndcPos[0] - this.cursorDiff[0],
-        ndcPos[1] - this.cursorDiff[1],
-        1,
-        1,
-      );
-      vec4.transformMat4(rayDir, rayDir, invProj);
-      vec4.scale(rayDir, rayDir, 1 / rayDir[3]);
-      vec4.transformMat4(rayDir, rayDir, invView);
+    // Create a ray pointing to the clicked position
+    const rayDir = vec4.fromValues(
+      ndcPos[0] - this.cursorDiff[0],
+      ndcPos[1] - this.cursorDiff[1],
+      1,
+      1,
+    );
+    vec4.transformMat4(rayDir, rayDir, invProj);
+    vec4.scale(rayDir, rayDir, 1 / rayDir[3]);
+    vec4.transformMat4(rayDir, rayDir, invView);
 
-      // Shoot the ray to the plane
-      const resultPos = vec3.create();
-      const hasCollision = intersectRayPlane(
-        resultPos,
-        planeNormal,
-        this.initialPos,
-        camCenter,
-        rayDir as vec3,
-      );
-      if (hasCollision) {
-        // Restrict the vector to allowed values
+    // Shoot the ray to the plane
+    const resultPos = vec3.create();
+    const hasCollision = intersectRayPlane(
+      resultPos,
+      planeNormal,
+      this.initialPos,
+      camCenter,
+      rayDir as vec3,
+    );
+    if (hasCollision) {
+      // Restrict the vector to allowed values
+      if (!this.isAlignAxisPlane && this.alignAxis != null) {
         for (let i = 0; i < 3; i += 1) {
           if (this.alignAxis[i] === 0) {
             resultPos[i] = this.initialPos[i];
           }
         }
-        transform.setPositionWorld(resultPos);
       }
+      transform.setPositionWorld(resultPos);
     }
   }
 
@@ -187,20 +194,23 @@ export class TranslateMode implements EditorMode {
         entity,
         key: 'selected',
       }),
-      this.alignAxis && this.alignAxis[0] > 0 && gizmoItem(AxisEffect, {
-        entity,
+      this.alignAxis && this.isAlignAxisPlane !== (this.alignAxis[0] > 0) &&
+      gizmoItem(AxisEffect, {
+        position: this.initialPos,
         axis: vec3.fromValues(1, 0, 0),
         color: '#ff3333',
         key: 'axis1',
       }),
-      this.alignAxis && this.alignAxis[1] > 0 && gizmoItem(AxisEffect, {
-        entity,
+      this.alignAxis && this.isAlignAxisPlane !== (this.alignAxis[1] > 0) &&
+      gizmoItem(AxisEffect, {
+        position: this.initialPos,
         axis: vec3.fromValues(0, 1, 0),
         color: '#33ff33',
         key: 'axis2',
       }),
-      this.alignAxis && this.alignAxis[2] > 0 && gizmoItem(AxisEffect, {
-        entity,
+      this.alignAxis && this.isAlignAxisPlane !== (this.alignAxis[2] > 0) &&
+      gizmoItem(AxisEffect, {
+        position: this.initialPos,
         axis: vec3.fromValues(0, 0, 1),
         color: '#3333ff',
         key: 'axis3',

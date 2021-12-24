@@ -43,7 +43,7 @@ const AXIS_GEOM = new GLGeometry({
 });
 
 export interface AxisEffectProps {
-  entity: Entity | null;
+  position: vec3;
   axis: vec3;
   color: string;
 }
@@ -61,23 +61,14 @@ export class AxisEffect implements GizmoEffect<AxisEffectProps> {
   render(props: AxisEffectProps): void {
     const {renderer} = this;
     const {glRenderer, pipeline} = renderer!;
-    const {entity, axis, color} = props;
-    if (entity == null) {
-      return;
-    }
+    const {position, axis, color} = props;
     const camUniforms = pipeline.getCameraUniforms();
 
-    const transform = entity.get<Transform>('transform');
-    if (transform == null) {
-      return;
-    }
-
-    const modelPos = transform.getPositionWorld();
     const modelMat = mat4.fromValues(
       axis[0] * 1000, axis[1] * 1000, axis[2] * 1000, 0,
       0, 0, 0, 0,
       0, 0, 0, 0,
-      modelPos[0], modelPos[1], modelPos[2], 1,
+      position[0], position[1], position[2], 1,
     );
 
     glRenderer.draw({

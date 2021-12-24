@@ -105,7 +105,9 @@ export class DefaultMode implements EditorMode {
           if (hoveringAxis != null) {
             const axis = vec3.create();
             axis[hoveringAxis] = 1;
-            modeModel.setMode(new TranslateMode(this, viewport, ndcPos, axis));
+            modeModel.setMode(
+              new TranslateMode(this, viewport, ndcPos, false, axis),
+            );
             break;
           }
         }
