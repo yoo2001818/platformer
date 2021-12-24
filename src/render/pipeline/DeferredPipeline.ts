@@ -299,7 +299,7 @@ export class DeferredPipeline implements Pipeline {
             #ifdef WEBGL2
             gl_FragDepth = texture2D(uDepthBuffer, uv).x;
             #elif defined(GL_EXT_frag_depth)
-            gl_FragDepth = texture2D(uDepthBuffer, uv).x;
+            gl_FragDepthEXT = texture2D(uDepthBuffer, uv).x;
             #endif
           }
         `,

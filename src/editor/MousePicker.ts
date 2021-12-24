@@ -25,7 +25,7 @@ export class MousePicker {
     this.depthTex = new GLRenderBuffer({
       width: 1,
       height: 1,
-      format: 'depth24stencil8',
+      format: 'depthStencil',
     });
     this.renderFb = new GLFrameBuffer({
       color: this.colorTex,
