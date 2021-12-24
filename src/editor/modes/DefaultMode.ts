@@ -21,6 +21,7 @@ export class DefaultMode implements EditorMode {
   mousePickMap: Map<Viewport, MousePicker> = new Map();
   cameraControllerMap: Map<Viewport, CameraController> = new Map();
   hoveringAxis: number | null = null;
+  lastMousePos: vec2 = vec2.create();
 
   bind(engine: Engine): void {
     this.engine = engine;
@@ -77,6 +78,7 @@ export class DefaultMode implements EditorMode {
         const event: MouseEvent = args[0];
         const pixelPos = getMouseEventPos(viewport, event);
         const ndcPos = getNDCPos(viewport, pixelPos, vec2.create());
+        vec2.copy(this.lastMousePos, ndcPos);
         const gizmoPosRotScaleEffect =
           viewport.getEffect<GizmoPosRotScaleEffect>('posRotScale');
         if (gizmoPosRotScaleEffect != null) {
@@ -117,6 +119,19 @@ export class DefaultMode implements EditorMode {
         const entity = picker.getEntity(pixelPos[0], pixelPos[1]);
         if (entity != null) {
           entityStore.getAtom(selectedEntity).setState(entity.handle);
+        }
+        break;
+      }
+      case 'keydown': {
+        const event: KeyboardEvent = args[0];
+        const modeModel = this.engine!.getModel<ModeModel>('mode');
+        console.log(event.code);
+        switch (event.code) {
+          case 'KeyG':
+            modeModel.setMode(
+              new TranslateMode(this, viewport, this.lastMousePos, false, null),
+            );
+            break;
         }
         break;
       }

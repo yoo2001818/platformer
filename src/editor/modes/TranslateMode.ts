@@ -21,6 +21,7 @@ export class TranslateMode implements EditorMode {
   prevMode: EditorMode;
   initialNDC: vec2;
   initialPos: vec3;
+  lastMousePos: vec2;
   cursorDiff: vec2;
   isAlignAxisPlane: boolean;
   alignAxis: vec3 | null;
@@ -36,9 +37,10 @@ export class TranslateMode implements EditorMode {
     this.belongingViewport = belongingViewport;
     this.initialNDC = initialNDC;
     this.initialPos = vec3.create();
+    this.lastMousePos = vec2.copy(vec2.create(), initialNDC);
+    this.cursorDiff = vec2.create();
     this.isAlignAxisPlane = isAlignAxisPlane;
     this.alignAxis = alignAxis;
-    this.cursorDiff = vec2.create();
   }
 
   bind(engine: Engine): void {
@@ -162,8 +164,23 @@ export class TranslateMode implements EditorMode {
     }
   }
 
+  setAxis(
+    isAlignAxisPlane: boolean,
+    alignAxis: vec3 | null,
+  ): void {
+    this.isAlignAxisPlane = isAlignAxisPlane;
+    this.alignAxis = alignAxis;
+    this._moveEntity(this.lastMousePos);
+  }
+
   processEvent(type: string, viewport: Viewport, ...args: any[]): void {
     if (viewport !== this.belongingViewport) {
+      return;
+    }
+    const {entityStore} = this.engine!;
+    const selectedEntityHandle = entityStore.getAtom(selectedEntity).state;
+    const entity = entityStore.get(selectedEntityHandle);
+    if (entity == null) {
       return;
     }
     switch (type) {
@@ -179,7 +196,42 @@ export class TranslateMode implements EditorMode {
       case 'mousemove': {
         const e: MouseEvent = args[0];
         const ndcPos = getMouseEventNDCPos(viewport, e, vec2.create());
+        vec2.copy(this.lastMousePos, ndcPos);
         this._moveEntity(ndcPos);
+        break;
+      }
+      case 'keydown': {
+        const event: KeyboardEvent = args[0];
+        const modeModel = this.engine!.getModel<ModeModel>('mode');
+        switch (event.code) {
+          case 'Escape': {
+            // Move the entity back to initial pos
+            const transform = entity.getMutate<Transform>('transform');
+            if (transform == null) {
+              return;
+            }
+            transform.setPositionWorld(this.initialPos);
+            modeModel.setMode(this.prevMode);
+            break;
+          }
+          case 'KeyC': {
+            // Clear axis info
+            this.setAxis(false, null);
+            break;
+          }
+          case 'KeyX': {
+            this.setAxis(event.shiftKey, vec3.fromValues(1, 0, 0));
+            break;
+          }
+          case 'KeyY': {
+            this.setAxis(event.shiftKey, vec3.fromValues(0, 1, 0));
+            break;
+          }
+          case 'KeyZ': {
+            this.setAxis(event.shiftKey, vec3.fromValues(0, 0, 1));
+            break;
+          }
+        }
         break;
       }
     }

@@ -1,7 +1,5 @@
 import {mat4, vec3} from 'gl-matrix';
 
-import {Transform} from '../../3d/Transform';
-import {Entity} from '../../core/Entity';
 import {LINES} from '../../geom/types';
 import {GizmoEffect} from '../../render/effect/GizmoEffect';
 import {GLGeometry} from '../../render/gl/GLGeometry';
