@@ -213,6 +213,11 @@ export class Transform {
     return this;
   }
 
+  setRotationWorld(rotation: quat): this {
+    // FIXME: Implement this
+    return this.setRotation(rotation);
+  }
+
   setMatrix(matrix: mat4): this {
     this.markMatrixChanged();
     mat4.copy(this.matrix, matrix);
