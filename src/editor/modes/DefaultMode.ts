@@ -11,6 +11,7 @@ import {CameraController} from '../CameraController';
 import {ViewportModel} from '../models/ViewportModel';
 import {getMouseEventPos, getNDCPos} from '../utils/getMousePos';
 import {ModeModel} from '../models/ModeModel';
+import {SelectedDotEffect} from '../gizmoEffects/SelectedDotEffect';
 
 import {EditorMode} from './EditorMode';
 import {TranslateMode} from './TranslateMode';
@@ -135,6 +136,10 @@ export class DefaultMode implements EditorMode {
         entity,
         highlightAxis: this.hoveringAxis,
         key: 'posRotScale',
+      }),
+      gizmoItem(SelectedDotEffect, {
+        entity,
+        key: 'selectedDot',
       }),
     ];
   }
