@@ -166,6 +166,8 @@ export class DefaultMode implements EditorMode {
         key: 'selected',
       }),
       gizmoItem(GizmoPosRotScaleEffect, {
+        // TODO: Really?
+        engine: this.engine!,
         entity,
         highlightAxis: this.hoveringAxis,
         key: 'posRotScale',

@@ -256,6 +256,7 @@ export class Transform {
     }
     const nextRotation = quat.create();
     mat4.getRotation(nextRotation, parentMat);
+    quat.normalize(nextRotation, nextRotation);
     quat.conjugate(nextRotation, nextRotation);
     quat.multiply(nextRotation, nextRotation, rotation);
     return this.setRotation(nextRotation);

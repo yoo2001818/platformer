@@ -1,7 +1,7 @@
 import {mat4, vec2, vec3, vec4} from 'gl-matrix';
 
 import {Camera} from '../../3d/Camera';
-import {Transform} from '../../3d/Transform';
+import {Engine} from '../../core/Engine';
 import {Entity} from '../../core/Entity';
 import {circleLine} from '../../geom/circleLine';
 import {combine} from '../../geom/combine';
@@ -13,6 +13,7 @@ import {GizmoEffect} from '../../render/effect/GizmoEffect';
 import {GLGeometry} from '../../render/gl/GLGeometry';
 import {GLShader} from '../../render/gl/GLShader';
 import {Renderer} from '../../render/Renderer';
+import {SelectionModel} from '../models/SelectionModel';
 
 const arrow = combine([
   transform(cone(12), {
@@ -184,6 +185,7 @@ function getDistanceSegmentPoint(
 }
 
 export interface GizmoPosRotScaleEffectProps {
+  engine: Engine;
   entity: Entity | null;
   highlightAxis?: number | null;
   showRotation?: boolean;
@@ -192,12 +194,11 @@ export interface GizmoPosRotScaleEffectProps {
 export class GizmoPosRotScaleEffect
 implements GizmoEffect<GizmoPosRotScaleEffectProps> {
   renderer: Renderer | null = null;
-  lastEntity: Entity | null = null;
+  lastProps: GizmoPosRotScaleEffectProps | null = null;
   scale = 0.08;
 
   bind(renderer: Renderer): void {
     this.renderer = renderer;
-    this.lastEntity = null;
   }
 
   dispose(): void {
@@ -227,21 +228,25 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
   }
 
   testIntersect(point: vec2): number | null {
-    const {renderer, lastEntity} = this;
-    if (lastEntity == null) {
+    const {renderer, lastProps} = this;
+    if (lastProps == null) {
       return null;
     }
+    const {entity, engine} = lastProps;
     const camera = renderer!.camera!;
     const cameraData = camera.get<Camera>('camera')!;
     const aspect = renderer!.getAspectRatio();
 
-    const transform = lastEntity.get<Transform>('transform');
-    if (transform == null) {
-      return null;
-    }
+    const selectionModel = engine.getModel<SelectionModel>('selection');
+
+    const basis = selectionModel.getBasis(
+      mat4.create(),
+      entity,
+      'local',
+    );
 
     const mvp = mat4.create();
-    mat4.translate(mvp, mvp, transform.getPositionWorld());
+    mat4.multiply(mvp, mvp, basis);
     mat4.multiply(mvp, cameraData.getView(camera), mvp);
     mat4.multiply(mvp, cameraData.getProjection(aspect), mvp);
 
@@ -265,20 +270,20 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
   render(props: GizmoPosRotScaleEffectProps): void {
     const {renderer} = this;
     const {glRenderer, pipeline} = renderer!;
-    const {entity, highlightAxis, showRotation} = props;
-    this.lastEntity = entity;
+    const {engine, entity, highlightAxis, showRotation} = props;
+    this.lastProps = props;
     if (entity == null) {
       return;
     }
     const camUniforms = pipeline.getCameraUniforms();
 
-    const transform = entity.get<Transform>('transform');
-    if (transform == null) {
-      return;
-    }
+    const selectionModel = engine.getModel<SelectionModel>('selection');
 
-    const modelMat = mat4.create();
-    mat4.translate(modelMat, modelMat, transform.getPositionWorld());
+    const basis = selectionModel.getBasis(
+      mat4.create(),
+      entity,
+      'local',
+    );
 
     const colorMat = mat4.create();
     mat4.translate(colorMat, colorMat, [0.2, 0.2, 0.2]);
@@ -294,7 +299,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
       shader: ARROW_SHADER,
       uniforms: {
         ...camUniforms,
-        uModel: modelMat,
+        uModel: basis,
         uScale: this.scale,
         uColor: colorMat,
       },
@@ -325,7 +330,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
       shader: ARROW_SHADER,
       uniforms: {
         ...camUniforms,
-        uModel: modelMat,
+        uModel: basis,
         uScale: this.scale,
         uColor: planeColorMat,
       },
@@ -348,7 +353,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
         shader: ARROW_SHADER,
         uniforms: {
           ...camUniforms,
-          uModel: modelMat,
+          uModel: basis,
           uScale: this.scale,
           uColor: planeColorMat,
         },

@@ -82,7 +82,9 @@ export class SelectionModel {
       const transform = targetEntity.get<Transform>('transform');
       if (transform != null) {
         const pos = transform.getPositionWorld();
-        mat4.translate(out, out, pos);
+        const transMat = mat4.create();
+        mat4.fromTranslation(transMat, pos);
+        mat4.mul(out, transMat, out);
       }
     }
     return out;
