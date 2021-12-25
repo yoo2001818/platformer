@@ -12,6 +12,7 @@ import {ViewportModel} from '../models/ViewportModel';
 import {getMouseEventPos, getNDCPos} from '../utils/getMousePos';
 import {ModeModel} from '../models/ModeModel';
 import {SelectedDotEffect} from '../gizmoEffects/SelectedDotEffect';
+import {CursorEffect} from '../gizmoEffects/CursorEffect';
 
 import {EditorMode} from './EditorMode';
 import {TranslateMode} from './TranslateMode';
@@ -191,6 +192,10 @@ export class DefaultMode implements EditorMode {
       gizmoItem(SelectedDotEffect, {
         entity,
         key: 'selectedDot',
+      }),
+      gizmoItem(CursorEffect, {
+        engine: this.engine!,
+        key: 'cursor',
       }),
     ];
   }
