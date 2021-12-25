@@ -242,7 +242,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
     const basis = selectionModel.getBasis(
       mat4.create(),
       entity,
-      'local',
+      'world',
     );
 
     const mvp = mat4.create();
@@ -282,7 +282,7 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
     const basis = selectionModel.getBasis(
       mat4.create(),
       entity,
-      'local',
+      'world',
     );
 
     const colorMat = mat4.create();

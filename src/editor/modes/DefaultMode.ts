@@ -113,6 +113,7 @@ export class DefaultMode implements EditorMode {
               this,
               viewport,
               ndcPos,
+              'world',
               hoveringAxis >= 3,
               axis,
             ));
@@ -135,7 +136,14 @@ export class DefaultMode implements EditorMode {
         switch (event.code) {
           case 'KeyG':
             modeModel.setMode(
-              new TranslateMode(this, viewport, this.lastMousePos, false, null),
+              new TranslateMode(
+                this,
+                viewport,
+                this.lastMousePos,
+                'world',
+                false,
+                null,
+              ),
             );
             break;
           case 'KeyS':
