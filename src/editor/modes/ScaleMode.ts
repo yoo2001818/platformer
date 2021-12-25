@@ -43,13 +43,6 @@ export class ScaleMode extends AbstractMoveMode {
     mat4.copy(this.initialMatrix, transform.getMatrixWorld());
   }
 
-  destroy(): void {
-    this.engine = null;
-  }
-
-  update(deltaTime?: number): void {
-  }
-
   _moveEntity(ndcPos: vec2): void {
     const {entityStore} = this.engine!;
     const selectedEntityHandle = entityStore.getAtom(selectedEntity).state;
@@ -118,5 +111,4 @@ export class ScaleMode extends AbstractMoveMode {
     }
     transform.setMatrixWorld(this.initialMatrix);
   }
-
 }

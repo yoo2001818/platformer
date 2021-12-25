@@ -135,33 +135,34 @@ export class DefaultMode implements EditorMode {
         console.log(event.code);
         switch (event.code) {
           case 'KeyG':
-            modeModel.setMode(
-              new TranslateMode(
-                this,
-                viewport,
-                this.lastMousePos,
-                'world',
-                false,
-                null,
-              ),
-            );
+            modeModel.setMode(new TranslateMode(
+              this,
+              viewport,
+              this.lastMousePos,
+              'world',
+              false,
+              null,
+            ));
             break;
           case 'KeyS':
-            modeModel.setMode(
-              new ScaleMode(
-                this,
-                viewport,
-                this.lastMousePos,
-                'world',
-                false,
-                null,
-              ),
-            );
+            modeModel.setMode(new ScaleMode(
+              this,
+              viewport,
+              this.lastMousePos,
+              'world',
+              false,
+              null,
+            ));
             break;
           case 'KeyR':
-            modeModel.setMode(
-              new RotateMode(this, viewport, this.lastMousePos, null),
-            );
+            modeModel.setMode(new RotateMode(
+              this,
+              viewport,
+              this.lastMousePos,
+              'world',
+              false,
+              null,
+            ));
             break;
         }
         break;
