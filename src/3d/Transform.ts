@@ -78,6 +78,30 @@ export class Transform {
     }
   }
 
+  _getParentWorldMatrix(): mat4 | null {
+    const parent = this.entity?.get<Entity | null>('parent');
+    if (parent == null) {
+      return null;
+    }
+    const parentTransform = parent.get<Transform>('transform')!;
+    const parentMat = parentTransform.getMatrixWorld();
+    // We don't do version check here because we assume that parent transform
+    // will be valid here
+    return parentMat;
+  }
+
+  _getParentWorldInverseMatrix(): mat4 | null {
+    const parent = this.entity?.get<Entity | null>('parent');
+    if (parent == null) {
+      return null;
+    }
+    const parentTransform = parent.get<Transform>('transform')!;
+    const parentMat = parentTransform.getMatrixInverseWorld();
+    // We don't do version check here because we assume that parent transform
+    // will be valid here
+    return parentMat;
+  }
+
   _updateWorldMatrix(): void {
     if (this.component!.globalVersion === this._globalVersion) {
       return;
@@ -192,8 +216,14 @@ export class Transform {
   }
 
   setPositionWorld(position: vec3): this {
-    // FIXME: Implement this
-    return this.setPosition(position);
+    const parentMat = this._getParentWorldInverseMatrix();
+    if (parentMat == null) {
+      return this.setPosition(position);
+    }
+    // Multiply current position by world's inverse matrix
+    const nextPos = vec3.create();
+    vec3.transformMat4(nextPos, position, parentMat);
+    return this.setPosition(nextPos);
   }
 
   setScale(scale: vec3): this {
@@ -202,9 +232,15 @@ export class Transform {
     return this;
   }
 
-  setScaleWorld(position: vec3): this {
-    // FIXME: Implement this
-    return this.setScale(position);
+  setScaleWorld(scale: vec3): this {
+    const parentMat = this._getParentWorldMatrix();
+    if (parentMat == null) {
+      return this.setScale(scale);
+    }
+    const nextScale = vec3.create();
+    mat4.getScaling(nextScale, parentMat);
+    vec3.divide(nextScale, scale, nextScale);
+    return this.setScale(nextScale);
   }
 
   setRotation(rotation: quat): this {
@@ -214,8 +250,15 @@ export class Transform {
   }
 
   setRotationWorld(rotation: quat): this {
-    // FIXME: Implement this
-    return this.setRotation(rotation);
+    const parentMat = this._getParentWorldMatrix();
+    if (parentMat == null) {
+      return this.setRotation(rotation);
+    }
+    const nextRotation = quat.create();
+    mat4.getRotation(nextRotation, parentMat);
+    quat.conjugate(nextRotation, nextRotation);
+    quat.multiply(nextRotation, nextRotation, rotation);
+    return this.setRotation(nextRotation);
   }
 
   setMatrix(matrix: mat4): this {
@@ -229,6 +272,16 @@ export class Transform {
     this.markMatrixChanged();
     mat4.multiply(this.matrix, matrix, this.matrix);
     return this;
+  }
+
+  setMatrixWorld(matrix: mat4): this {
+    const parentMat = this._getParentWorldInverseMatrix();
+    if (parentMat == null) {
+      return this.setMatrix(matrix);
+    }
+    const nextMat = mat4.create();
+    mat4.mul(nextMat, parentMat, matrix);
+    return this.setMatrix(nextMat);
   }
 
   rotate(rotation: quat): this {
