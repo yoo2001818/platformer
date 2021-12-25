@@ -85,7 +85,6 @@ export class GLTextureManager {
     let hasResolved = false;
     for (const entry of this.pendingTextures) {
       if (entry.isReady()) {
-        console.log(entry, this.pendingTextures.size);
         hasResolved = true;
         this.pendingTextures.delete(entry);
       }

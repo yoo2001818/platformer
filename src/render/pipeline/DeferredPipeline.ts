@@ -17,6 +17,7 @@ import {FXAA} from '../shader/fxaa';
 import {SSAO} from '../deferredEffect/SSAO';
 import {DeferredEffect} from '../deferredEffect/DeferredEffect';
 import {MaterialVertexShaderBlock} from '../Material';
+import {GLRenderBuffer} from '../gl/GLRenderBuffer';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -38,6 +39,7 @@ const LIGHT_QUAD = new GLGeometry(quad());
 export class DeferredPipeline implements Pipeline {
   renderer: Renderer;
   depthBuffer: GLTexture2D | null = null;
+  stencilBuffer: GLRenderBuffer | null = null;
   gBuffers: GLTexture2D[] | null = null;
   outBuffer: GLTexture2D | null = null;
   outDepthBuffer: GLTexture2D | null = null;
@@ -395,6 +397,9 @@ export class DeferredPipeline implements Pipeline {
         ...defaultOpts,
         format: 'depthStencil',
         type: 'unsignedInt248',
+        // type: capabilities.isWebGL2
+        //   ? 'float32unsignedInt248rev'
+        //   : 'unsignedInt248',
       });
     }
     this.depthBuffer.updateSize(width, height);
@@ -426,6 +431,9 @@ export class DeferredPipeline implements Pipeline {
         ...defaultOpts,
         format: 'depthStencil',
         type: 'unsignedInt248',
+        // type: capabilities.isWebGL2
+        //   ? 'float32unsignedInt248rev'
+        //   : 'unsignedInt248',
       });
     }
     this.outDepthBuffer.updateSize(width, height);

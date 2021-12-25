@@ -49,7 +49,7 @@ export function Viewport(
         type: 'perspective',
         fov: 70 / 180 * Math.PI,
         far: 1000,
-        near: 0.3,
+        near: 0.1,
       }),
     });
     renderer.setCamera(camera);
