@@ -33,6 +33,7 @@ export abstract class AbstractMoveMode implements EditorMode {
   shouldAllowAxisPlane: boolean;
   basisType: BasisType;
   initialBasisType: BasisType;
+  basisBundle: {[key in BasisType]: mat4;};
 
   constructor(
     prevMode: EditorMode,
@@ -55,6 +56,7 @@ export abstract class AbstractMoveMode implements EditorMode {
     this.shouldAllowAxisPlane = shouldAllowAxisPlane;
     this.basisType = basisType;
     this.initialBasisType = basisType;
+    this.basisBundle = {world: mat4.create(), local: mat4.create()};
   }
 
   bind(engine: Engine): void {
@@ -80,6 +82,11 @@ export abstract class AbstractMoveMode implements EditorMode {
     vec4.transformMat4(perspPos, perspPos, this._getCameraProjectionView());
     vec4.scale(perspPos, perspPos, 1 / perspPos[3]);
     vec2.copy(this.initialObjectNDC, perspPos as vec2);
+
+    this.basisBundle = {
+      world: selectionModel.getBasis(mat4.create(), entity, 'world'),
+      local: selectionModel.getBasis(mat4.create(), entity, 'local'),
+    };
 
     // The underlying class is expected to do something after calling this by
     // overriding this function
@@ -110,15 +117,7 @@ export abstract class AbstractMoveMode implements EditorMode {
   }
 
   _getBasis(): mat4 {
-    const {currentEntity} = this;
-    const engine = this.engine!;
-    const selectionModel = engine.getModel<SelectionModel>('selection');
-
-    return selectionModel.getBasis(
-      mat4.create(),
-      currentEntity,
-      this.basisType,
-    );
+    return this.basisBundle[this.basisType];
   }
 
   destroy(): void {

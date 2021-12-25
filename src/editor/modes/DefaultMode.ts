@@ -148,7 +148,14 @@ export class DefaultMode implements EditorMode {
             break;
           case 'KeyS':
             modeModel.setMode(
-              new ScaleMode(this, viewport, this.lastMousePos, false, null),
+              new ScaleMode(
+                this,
+                viewport,
+                this.lastMousePos,
+                'world',
+                false,
+                null,
+              ),
             );
             break;
           case 'KeyR':
