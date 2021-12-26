@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo} from 'react';
 
-import {TextInputInput} from '../TextInput';
+import {TextInputInput, TextInputStyleProps} from '../TextInput';
 
 export interface SelectInputOption<T> {
   label: string;
@@ -15,13 +15,15 @@ export interface SelectInputProps<T> {
   onBlur?: (e: React.FocusEvent) => void;
   placeholder?: string;
   options: SelectInputOption<T>[];
+  size?: TextInputStyleProps['sizeHeight'];
+  color?: TextInputStyleProps['color'];
 }
 
 export function SelectInput<T>(
   props: SelectInputProps<T>,
 ): React.ReactElement {
   const {
-    value, onChange, placeholder, options, ...restProps
+    value, onChange, placeholder, options, size, color, ...restProps
   } = props;
   const optionValues = useMemo(() => {
     const output: React.ReactElement[] = [];
@@ -58,6 +60,9 @@ export function SelectInput<T>(
       {...restProps}
       value={selectedIndex}
       onChange={handleChange}
+      size={1}
+      sizeHeight={size}
+      color={color}
     >
       { optionValues }
     </SelectInputInput>

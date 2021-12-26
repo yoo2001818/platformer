@@ -116,14 +116,7 @@ export function App(): React.ReactElement {
       <LayoutTree>
         <SplitList direction="horizontal">
           <SplitCell size={0.8}>
-            <Panel>
-              <PanelHeader>
-                Viewport
-              </PanelHeader>
-              <PanelContent>
-                <Viewport />
-              </PanelContent>
-            </Panel>
+            <Viewport />
           </SplitCell>
           <SplitCell size={0.2}>
             <SplitList direction="vertical">

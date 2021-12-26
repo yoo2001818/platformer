@@ -6,24 +6,44 @@ import {COLORS} from '../../styles/colors';
 export interface PanelHeaderProps {
   className?: string;
   children: React.ReactNode;
+  right?: React.ReactNode;
 }
 
 export function PanelHeader(
   props: PanelHeaderProps,
 ): React.ReactElement {
-  const {className, children} = props;
+  const {className, children, right} = props;
   return (
-    <Div className={className}>
-      { children }
-    </Div>
+    <HeaderContainer className={className}>
+      <HeaderTitle>
+        { children }
+      </HeaderTitle>
+      { right && (
+        <HeaderSection>
+          { right }
+        </HeaderSection>
+      ) }
+    </HeaderContainer>
   );
 }
 
-const Div = styled.div`
+const HeaderContainer = styled.div`
   flex: 0 0 auto;
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 3px;
+  box-sizing: border-box;
   background-color: ${COLORS.gray70};
   color: ${COLORS.gray0};
+  font-size: 13px;
+`;
+
+const HeaderSection = styled.div`
+`;
+
+const HeaderTitle = styled.div`
+  font-weight: bold;
+  padding-left: 6px;
 `;

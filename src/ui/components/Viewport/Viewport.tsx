@@ -10,6 +10,8 @@ import {ViewportModel} from '../../../editor/models/ViewportModel';
 import {Viewport as RendererViewport} from '../../../editor/Viewport';
 import {Transform} from '../../../3d/Transform';
 import {Camera} from '../../../3d/Camera';
+import {Panel, PanelHeader, PanelContent} from '../Panel';
+import {SelectInput} from '../Input';
 
 export interface ViewportProps {
   className?: string;
@@ -73,7 +75,27 @@ export function Viewport(
     rendererRef.current = renderer;
   }, [engine]);
   return (
-    <Canvas className={className} ref={canvasRef} tabIndex={0} />
+    <Panel>
+      <PanelHeader
+        right={(
+          <SelectInput
+            value="raytrace"
+            onChange={() => {}}
+            options={[
+              {label: 'Raytrace', value: 'raytrace'},
+              {label: 'Deferred', value: 'deferred'},
+            ]}
+            size={26}
+            color="dark"
+          />
+        )}
+      >
+        Viewport
+      </PanelHeader>
+      <PanelContent>
+        <Canvas className={className} ref={canvasRef} tabIndex={0} />
+      </PanelContent>
+    </Panel>
   );
 }
 
