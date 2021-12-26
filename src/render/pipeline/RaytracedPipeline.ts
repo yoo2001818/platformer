@@ -1,6 +1,5 @@
 import {Camera} from '../../3d/Camera';
 import {Transform} from '../../3d/Transform';
-import {TransformComponent} from '../../3d/TransformComponent';
 import {quad} from '../../geom/quad';
 import {GLArrayBuffer} from '../gl/GLArrayBuffer';
 import {GLFrameBuffer} from '../gl/GLFrameBuffer';
@@ -367,13 +366,11 @@ export class RaytracedPipeline implements Pipeline {
   render(deltaTime?: number): void {
     const {entityStore, glRenderer} = this.renderer;
 
-    const transformComp =
-      entityStore.getComponent<TransformComponent>('transform')!;
     this.cameraUniforms = this.getCameraUniforms();
 
     this.prepare();
 
-    const shouldRefresh = this.worldVersion !== transformComp.globalVersion;
+    const shouldRefresh = entityStore.version !== this.worldVersion;
     const randomMapWidth = this.randomMap!.getWidth();
     const randomMapHeight = this.randomMap!.getHeight();
 
@@ -389,7 +386,7 @@ export class RaytracedPipeline implements Pipeline {
       // Invalidate / clear the framebuffer
       glRenderer.clear(this.rayFrameBuffer!);
 
-      this.worldVersion = transformComp.globalVersion;
+      this.worldVersion = entityStore.version;
       this.rayTilePos = 0;
       this.sobol.reset();
 

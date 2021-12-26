@@ -35,6 +35,31 @@ export class WorldBVH {
     this.entityStore = entityStore;
   }
 
+  checkShouldUpdate(): boolean {
+    // Try to build entities array with mesh
+    const {entityStore} = this;
+    const meshComp = entityStore.getComponent<MeshComponent>('mesh');
+    // EntityStore didn't change at all; do nothing
+    if (entityStore.version === this.lastVersion) {
+      return false;
+    }
+    let actualLastVersion = -1;
+    // Try to record an actual last version
+    entityStore.forEachChunkWith(['transform', 'mesh'], (chunk) => {
+      const mesh = chunk.getAt(0)!.get(meshComp)!;
+      if (mesh.options.castRay === false) {
+        return;
+      }
+      if (actualLastVersion < chunk.version) {
+        actualLastVersion = chunk.version;
+      }
+    });
+    if (actualLastVersion === this.lastVersion) {
+      return false;
+    }
+    return true;
+  }
+
   update(): void {
     // Try to build entities array with mesh
     const {entityStore} = this;
@@ -53,7 +78,9 @@ export class WorldBVH {
       if (mesh.options.castRay === false) {
         return;
       }
-      actualLastVersion = chunk.version;
+      if (actualLastVersion < chunk.version) {
+        actualLastVersion = chunk.version;
+      }
     });
     if (actualLastVersion === this.lastVersion) {
       return;

@@ -38,6 +38,7 @@ export class BVHTexture {
   childInjector: BVHTextureChildInjector;
   bvhBuffer: Float32Array | null;
   bvhTexture: GLTexture2D;
+  lastVersion = -1;
 
   constructor(
     entityStore: EntityStore,
@@ -67,6 +68,10 @@ export class BVHTexture {
   }
 
   update(): void {
+    if (this.worldBVH.lastVersion === this.lastVersion) {
+      return;
+    }
+    this.lastVersion = this.worldBVH.lastVersion;
     // The BVH needs the following data:
     // Each BVH Node:
     // - min: vec3
