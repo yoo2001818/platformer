@@ -13,6 +13,8 @@
   "author": "Duknam Yoo (yoo2001818@gmail.com)",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.16.5",
+    "@babel/preset-react": "^7.16.5",
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
     "@shopify/eslint-plugin": "^40.2.3",
@@ -42,6 +44,7 @@
     "raw-loader": "^4.0.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-svg-loader": "^3.0.3",
     "style-loader": "^2.0.0",
     "ts-jest": "^27.0.3",
     "ts-loader": "^9.2.3",

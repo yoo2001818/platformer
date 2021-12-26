@@ -1,6 +1,8 @@
+import styled from '@emotion/styled';
 import React, {useCallback, useMemo} from 'react';
 
 import {TextInputInput, TextInputStyleProps} from '../TextInput';
+import IconCaretDown from '../../../icons/IconCaretDown.svg';
 
 export interface SelectInputOption<T> {
   label: string;
@@ -44,10 +46,10 @@ export function SelectInput<T>(
     [value, options],
   );
   const handleChange = useCallback((
-    e: React.ChangeEvent<HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLElement>,
   ) => {
     // Try to parse the value index
-    const index = parseInt(e.target.value, 10);
+    const index = parseInt((e.target as HTMLSelectElement).value, 10);
     if (!isNaN(index)) {
       const entry = options[index];
       if (entry != null) {
@@ -56,17 +58,35 @@ export function SelectInput<T>(
     }
   }, [onChange, options]);
   return (
-    <SelectInputInput
-      {...restProps}
-      value={selectedIndex}
-      onChange={handleChange}
-      size={1}
-      sizeHeight={size}
-      color={color}
-    >
-      { optionValues }
-    </SelectInputInput>
+    <SelectInputDiv>
+      <SelectInputInput
+        {...restProps}
+        value={selectedIndex}
+        onChange={handleChange}
+        size={1}
+        sizeHeight={size}
+        color={color}
+      >
+        { optionValues }
+      </SelectInputInput>
+      <SelectInputCaret />
+    </SelectInputDiv>
   );
 }
 
-const SelectInputInput = TextInputInput.withComponent('select');
+const SelectInputDiv = styled.div`
+  position: relative;
+`;
+
+const SelectInputInput = styled(TextInputInput)`
+  padding-right: 24px;
+`.withComponent('select');
+
+const SelectInputCaret = styled(IconCaretDown)`
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  margin-top: -8px;
+  font-size: 16px;
+  pointer-events: none;
+`;

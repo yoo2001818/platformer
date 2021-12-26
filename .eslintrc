@@ -14,6 +14,7 @@
     "id-length": 0,
     "@typescript-eslint/no-var-requires": 0,
     "@shopify/binary-assignment-parens": 0,
+    "@shopify/images-no-direct-imports": 0,
     "@typescript-eslint/no-extra-parens": 0,
     "@typescript-eslint/ban-types": 0
   }
