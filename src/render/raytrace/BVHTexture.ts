@@ -62,6 +62,10 @@ export class BVHTexture {
     });
   }
 
+  dispose(): void {
+    this.bvhTexture.dispose();
+  }
+
   update(): void {
     // The BVH needs the following data:
     // Each BVH Node:

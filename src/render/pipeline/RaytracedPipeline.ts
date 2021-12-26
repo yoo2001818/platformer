@@ -57,6 +57,12 @@ export class RaytracedPipeline implements Pipeline {
   }
 
   dispose(): void {
+    this.bvhTexture.dispose();
+    this.materialInjector.dispose();
+    this.rayBuffer?.dispose();
+    this.rayFrameBuffer?.dispose();
+    this.rayTileBuffer.dispose();
+    this.randomMap?.dispose();
   }
 
   getDeferredShader(id: string, onCreate: () => PipelineShaderBlock): GLShader {

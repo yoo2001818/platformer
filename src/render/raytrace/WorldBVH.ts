@@ -29,6 +29,7 @@ export class WorldBVH {
   children: [Entity, number, Geometry, Float32Array][] | null = null;
   metNodes: BVHNode[] = [];
   counter = 0;
+  lastVersion = -1;
 
   constructor(entityStore: EntityStore) {
     this.entityStore = entityStore;
@@ -41,6 +42,23 @@ export class WorldBVH {
       entityStore.getComponent<TransformComponent>('transform');
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     const children: [Entity, number, Geometry, Float32Array][] = [];
+    // EntityStore didn't change at all; do nothing
+    if (entityStore.version === this.lastVersion) {
+      return;
+    }
+    let actualLastVersion = -1;
+    // Try to record an actual last version
+    entityStore.forEachChunkWith(['transform', 'mesh'], (chunk) => {
+      const mesh = chunk.getAt(0)!.get(meshComp)!;
+      if (mesh.options.castRay === false) {
+        return;
+      }
+      actualLastVersion = chunk.version;
+    });
+    if (actualLastVersion !== this.lastVersion) {
+      return;
+    }
+    this.lastVersion = actualLastVersion;
     entityStore.forEachWith(['transform', 'mesh'], (entity) => {
       const mesh = entity.get(meshComp)!;
       if (mesh.options.castRay === false) {

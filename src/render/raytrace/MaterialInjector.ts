@@ -79,6 +79,11 @@ export class MaterialInjector implements BVHTextureChildInjector {
     this.entries = [];
   }
 
+  dispose(): void {
+    this.texture.dispose();
+    this.frameBuffer.dispose();
+  }
+
   isReady(): boolean {
     return this.entries.every((v) => v[0].isReady());
   }

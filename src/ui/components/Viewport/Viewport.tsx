@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styled from '@emotion/styled';
 
 import {COLORS} from '../../styles';
@@ -7,11 +7,16 @@ import {GLRenderer} from '../../../render/gl/GLRenderer';
 import {Renderer} from '../../../render/Renderer';
 import {RENDER_PHASE} from '../../../core/Engine';
 import {ViewportModel} from '../../../editor/models/ViewportModel';
-import {Viewport as RendererViewport} from '../../../editor/Viewport';
+import {
+  Viewport as RendererViewport,
+  ViewportState,
+} from '../../../editor/Viewport';
 import {Transform} from '../../../3d/Transform';
 import {Camera} from '../../../3d/Camera';
 import {Panel, PanelHeader, PanelContent} from '../Panel';
 import {SelectInput} from '../Input';
+import {AtomDescriptor} from '../../../core/Atom';
+import {useAtomNullable} from '../../hooks/useAtom';
 
 export interface ViewportProps {
   className?: string;
@@ -24,6 +29,8 @@ export function Viewport(
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const engine = useEngine();
+  const [atom, setAtom] = useState<AtomDescriptor<ViewportState> | null>(null);
+  const [state, setState] = useAtomNullable(atom);
   useEffect(() => {
     const canvasElem = canvasRef.current;
     if (canvasElem == null) {
@@ -43,6 +50,7 @@ export function Viewport(
 
     const viewport = new RendererViewport(canvasElem, renderer);
     engine.getModel<ViewportModel>('viewport').addViewport(viewport);
+    setAtom(viewport.stateAtom);
 
     const camera = engine.entityStore.create({
       name: 'Editor Camera',
@@ -79,11 +87,15 @@ export function Viewport(
       <PanelHeader
         right={(
           <SelectInput
-            value="raytrace"
-            onChange={() => {}}
+            value={state?.renderer}
+            onChange={(value) => value != null && setState({
+              ...state ?? {},
+              renderer: value,
+            })}
             options={[
               {label: 'Raytrace', value: 'raytrace'},
               {label: 'Deferred', value: 'deferred'},
+              {label: 'Forward', value: 'forward'},
             ]}
             size={26}
             color="dark"
