@@ -75,6 +75,15 @@ export class SSAO {
     this.noiseBuffer = createNoise(4);
   }
 
+  dispose(): void {
+    this.hemisphereBuffer.dispose();
+    this.noiseBuffer.dispose();
+    this.aoBuffer?.dispose();
+    this.aoFrameBuffer?.dispose();
+    this.aoOutBuffer?.dispose();
+    this.aoOutFrameBuffer?.dispose();
+  }
+
   prepare(): void {
     const {glRenderer} = this.pipeline.renderer;
     const width = glRenderer.getWidth();

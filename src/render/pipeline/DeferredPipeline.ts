@@ -59,7 +59,14 @@ export class DeferredPipeline implements Pipeline {
   }
 
   dispose(): void {
-
+    this.depthBuffer?.dispose();
+    this.stencilBuffer?.dispose();
+    this.gBuffers?.forEach((v) => v.dispose());
+    this.outBuffer?.dispose();
+    this.outDepthBuffer?.dispose();
+    this.frameBuffer?.dispose();
+    this.outFrameBuffer?.dispose();
+    this.ssao.dispose();
   }
 
   _collectLights(): void {
