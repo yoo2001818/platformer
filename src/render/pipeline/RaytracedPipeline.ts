@@ -9,6 +9,8 @@ import {GLShader} from '../gl/GLShader';
 import {GLTexture2D, GLTexture2DOptions} from '../gl/GLTexture2D';
 import {DrawOptions} from '../gl/types';
 import {generateBlueNoiseMap} from '../map/generateBlueNoiseMap';
+import {MaterialVertexShaderBlock} from '../Material';
+import {MeshComponent} from '../MeshComponent';
 import {BVHTexture} from '../raytrace/BVHTexture';
 import {MaterialInjector} from '../raytrace/MaterialInjector';
 import {Sobol} from '../raytrace/Sobol';
@@ -79,10 +81,6 @@ export class RaytracedPipeline implements Pipeline {
 
   drawForward(options: DrawOptions): void {
     throw new Error('Raytraced pipeline cannot work on draw call');
-  }
-
-  renderVertex(): void {
-    throw new Error('Raytraced pipeline cannot work on shadows');
   }
 
   getRaytraceShader(): GLShader {
@@ -484,4 +482,34 @@ export class RaytracedPipeline implements Pipeline {
     });
   }
 
+  renderVertex(
+    onGetShader: (
+      id: string,
+      onCreate: (defines?: string) => MaterialVertexShaderBlock,
+    ) => GLShader,
+    onDraw: (options: DrawOptions) => void,
+  ): void {
+    const {entityStore} = this.renderer;
+    const meshComp = entityStore.getComponent<MeshComponent>('mesh');
+    entityStore.forEachChunkWith([meshComp], (chunk) => {
+      const mesh = meshComp.getChunk(chunk, 0);
+      if (mesh != null) {
+        mesh.geometries.forEach((geometry, index) => {
+          const materialIndex = Math.min(mesh.materials.length - 1, index);
+          const material = mesh.materials[materialIndex];
+          if (material == null) {
+            throw new Error('Geometry is null');
+          }
+          const glGeometry = geometry.getGLGeometry(this.renderer);
+          material.renderVertex?.(
+            chunk,
+            glGeometry,
+            this.renderer,
+            onGetShader,
+            onDraw,
+          );
+        });
+      }
+    });
+  }
 }

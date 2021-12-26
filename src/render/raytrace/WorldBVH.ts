@@ -55,7 +55,7 @@ export class WorldBVH {
       }
       actualLastVersion = chunk.version;
     });
-    if (actualLastVersion !== this.lastVersion) {
+    if (actualLastVersion === this.lastVersion) {
       return;
     }
     this.lastVersion = actualLastVersion;
