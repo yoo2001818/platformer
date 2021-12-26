@@ -5,6 +5,7 @@ import {Transform} from '../../3d/Transform';
 import {Engine} from '../../core/Engine';
 import {Entity} from '../../core/Entity';
 import {AxisEffect} from '../gizmoEffects/AxisEffect';
+import {CursorEffect} from '../gizmoEffects/CursorEffect';
 import {SelectedDotEffect} from '../gizmoEffects/SelectedDotEffect';
 import {SelectedEffect} from '../gizmoEffects/SelectedEffect';
 import {ModeModel} from '../models/ModeModel';
@@ -258,6 +259,10 @@ export abstract class AbstractMoveMode implements EditorMode {
       gizmoItem(SelectedDotEffect, {
         entity: currentEntity,
         key: 'selectedDot',
+      }),
+      gizmoItem(CursorEffect, {
+        engine: this.engine!,
+        key: 'cursor',
       }),
     ].filter((v): v is RenderNode<any> => Boolean(v));
   }
