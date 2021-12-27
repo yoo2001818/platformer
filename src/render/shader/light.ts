@@ -6,16 +6,24 @@ export const POINT_LIGHT = /* glsl */`
   };
 
   vec3 calcPoint(vec3 viewPos, MaterialInfo mInfo, PointLight light) {
-    vec3 L = light.position - mInfo.position;
+    float radius = light.intensity.y;
+    vec3 L = normalize(light.position - mInfo.position);
     vec3 V = normalize(viewPos - mInfo.position);
     vec3 N = mInfo.normal;
+
+    vec3 R = reflect(V, N);
+    vec3 centerToRay = dot(L, R) * R - L;
+    vec3 closestPos = L +
+      centerToRay * clamp(radius / length(centerToRay), 0.0, 1.0);
+    L = normalize(closestPos);
 
     float lightDist = length(L);
     L = L / lightDist;
 
-    float attenuation = light.intensity.x /
-      (0.001 + (lightDist * lightDist));
-    float window = pow(max(1.0 - pow(lightDist / light.intensity.z, 4.0), 0.0), 2.0);
+    float power = light.intensity.x;
+    float range = light.intensity.z;
+    float attenuation = power / (0.0001 + (lightDist * lightDist));
+    float window = pow(max(1.0 - pow(lightDist / range, 4.0), 0.0), 2.0);
     
     float dotNL = max(dot(N, L), 0.0);
 
@@ -72,7 +80,7 @@ export const ENVIRONMENT_MAP = /* glsl */`
     float lod = roughness * (lodMax - 1.0);
     #endif
     vec3 envColor = textureCubePackLodHDR(envMap, R, lod, mapSize) * power;
-    vec3 F = fresnelSchlickRoughness(dotNV, fresnel, roughness * roughness);
+    vec3 F = fresnelSchlickRoughness(dotNV, fresnel, roughness);
     vec2 envBRDF = texture2D(brdfMap, vec2(dotNV, roughness)).rg;
 
     vec3 spec = envColor * (F * envBRDF.x + envBRDF.y);

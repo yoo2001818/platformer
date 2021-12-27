@@ -7,7 +7,7 @@ export const PBR = /* glsl */`
     float nom = dotNM * a2;
     float denom = (dotNM2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
-    return nom / denom;
+    return nom / max(denom, 0.0000001);
   }
 
   float lambdaGGX(float a) {

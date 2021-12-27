@@ -12,6 +12,7 @@ import {FILMIC} from '../shader/tonemap';
 export interface SkyboxMaterialOptions {
   texture: GLTexture;
   lod: number;
+  power?: number;
 }
 
 export class SkyboxMaterial implements Material {
@@ -27,6 +28,11 @@ export class SkyboxMaterial implements Material {
     const {options} = this;
     const {glRenderer, pipeline} = renderer;
 
+    if (options.power === 0) {
+      // Do nothing
+      return;
+    }
+
     // Prepare shader uniforms
     const uniformOptions: {[key: string]: any;} = {
       uTexture: options.texture,
@@ -35,6 +41,7 @@ export class SkyboxMaterial implements Material {
         1 / options.texture.getHeight(),
       ],
       uLod: options.lod,
+      uPower: options.power ?? 1,
     };
 
     const hdrType = getHDRType(glRenderer);
@@ -70,12 +77,14 @@ export class SkyboxMaterial implements Material {
         uniform float uLod;
         uniform mat4 uInverseView;
         uniform mat4 uInverseProjection;
+        uniform float uPower;
 
         vec3 material() {
           vec4 viewPos = uInverseProjection * vec4(vPosition.xy, 1.0, 1.0);
           viewPos /= viewPos.w;
           vec3 dir = (uInverseView * vec4(normalize(viewPos.xyz), 0.0)).xyz;
           vec3 result = textureCubePackLodHDR(uTexture, dir, uLod, uTextureSize);
+          result *= uPower;
           return result;
         }
       `,

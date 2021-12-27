@@ -27,7 +27,7 @@ import {Viewport} from './Viewport';
 function initEngine(): Engine {
   const engine = new Engine();
   engine.entityStore.registerComponents(create3DComponents());
-  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/pri-home5.gltf')).entities);
+  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/cornell.gltf')).entities);
   engine.entityStore.create({
     name: 'Test',
     transform: {position: [0, 1, 0]},
@@ -36,8 +36,8 @@ function initEngine(): Engine {
   engine.entityStore.create({
     name: 'PointLight',
     transform: new Transform()
-      .translate([0, 0.2, 0.6]),
-    light: new PointLight({color: '#ffffff', power: 5, radius: 10, range: 12}),
+      .translate([-0.25, 4.7, -3]),
+    light: new PointLight({color: '#ffffff', power: 10, radius: 0.1, range: 20}),
   });
   const skyboxTexture = new GLTexture2D({
     width: 4096,
@@ -63,6 +63,7 @@ function initEngine(): Engine {
       new SkyboxMaterial({
         texture: pbrTexture,
         lod: 2,
+        power: 0,
       }),
       new Geometry(quad()),
       {castRay: false},
@@ -71,7 +72,7 @@ function initEngine(): Engine {
   engine.entityStore.create({
     name: 'envLight',
     transform: new Transform(),
-    light: new EnvironmentLight({texture: pbrTexture, power: 1}),
+    light: new EnvironmentLight({texture: pbrTexture, power: 0}),
   });
   return engine;
 }

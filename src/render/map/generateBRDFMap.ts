@@ -72,7 +72,7 @@ const BRDF_SHADER = new GLShader(
 
     void main() {
       gl_FragColor = vec4(
-        integrateBRDF(vPosition.x, vPosition.y * vPosition.y),
+        integrateBRDF(vPosition.x, vPosition.y),
         0.0,
         1.0
       );

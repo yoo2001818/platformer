@@ -124,7 +124,7 @@ const BAKE_SHADER = new ShaderBank<[string]>(
         vec3 result;
         if (mipLevel < uMaxLevel) {
           // radiance calculation
-          result = runSample(coord, pow(min(mipLevel / (uMaxLevel - 1.0), 1.0), 2.0), resolution);
+          result = runSample(coord, min(mipLevel / (uMaxLevel - 1.0), 1.0), resolution);
         } else if (mipLevel == uMaxLevel) {
           // irradiance calculation
           result = runIrradianceSample(coord);
