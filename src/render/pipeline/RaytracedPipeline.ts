@@ -145,12 +145,12 @@ export class RaytracedPipeline implements Pipeline {
             PointLight light;
             light.position = vec3(1.78, 2.399, -1.78);
             light.color = vec3(1.0);
-            light.intensity = vec3(PI * 6.0, 0.0, 100.0);
+            light.intensity = vec3(PI * 6.0, 0.2, 100.0);
 
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
 
-            for (int i = 0; i < 3; i += 1) {
+            for (int i = 0; i < 5; i += 1) {
               bool isIntersecting = intersectBVH(
                 bvhResult,
                 uBVHMap,
@@ -191,8 +191,9 @@ export class RaytracedPipeline implements Pipeline {
               origin = mInfo.position + mInfo.normal * 0.0001;
               // lighting 
               vec3 lightingColor = vec3(0.0);
-              {
+              if (randFloat(uRandomMap) > 0.5) {
                 vec3 L = light.position - mInfo.position;
+                L += sampleSphere(randVec3(uRandomMap)) * light.intensity.y;
                 float lightDist = length(L);
                 L /= lightDist;
                 // Check occulsion
@@ -213,16 +214,16 @@ export class RaytracedPipeline implements Pipeline {
                       light.color * mInfo.albedo * light.intensity.x / PI;
                   }
                 }
-              }
-
-              resultColor += lightingColor * attenuation * 0.5;
-              // scattering
-              if (mInfo.metalic > 0.5) {
-                dir = mInfo.normal;
+                resultColor += lightingColor * attenuation;
+                break;
               } else {
-                dir = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
+                vec3 hemi = cosineSampleHemisphere(randVec2(uRandomMap));
+                mat3 basis = orthonormalBasis(mInfo.normal);
+                vec3 nextDir = normalize(basis * hemi);
+                vec3 brdf = calcBRDF(nextDir, -dir, mInfo.normal, mInfo);
+                dir = nextDir;
+                attenuation *= brdf;
               }
-              attenuation *= mInfo.albedo * 0.5;
 
             }
             gl_FragColor = vec4(resultColor, 1.0);
