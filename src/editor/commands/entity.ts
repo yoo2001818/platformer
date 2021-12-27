@@ -10,7 +10,7 @@ export function duplicateEntity(
 ): Entity {
   const {entityStore} = engine;
   // FIXME: Clone
-  console.log(entity.getMap());
+  console.log(entity.toJSON());
   return entityStore.create(entity.getMap());
 }
 

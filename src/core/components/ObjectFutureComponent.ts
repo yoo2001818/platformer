@@ -23,9 +23,14 @@ export class ObjectFutureComponent<
   name: string | null = null;
   index: number | null = null;
   childrenMap: Map<number | null, Entity[]> = new Map();
+  _clone: ((value: TReadValue) => TReadValue);
   _deserialize: ObjectFutureDeserializer<TReadValue, TWriteValue>;
 
-  constructor(deserialize: ObjectFutureDeserializer<TReadValue, TWriteValue>) {
+  constructor(
+    clone: (value: TReadValue) => TReadValue,
+    deserialize: ObjectFutureDeserializer<TReadValue, TWriteValue>,
+  ) {
+    this._clone = clone;
     this._deserialize = deserialize;
   }
 
@@ -71,6 +76,13 @@ export class ObjectFutureComponent<
   delete(entity: Entity): void {
     entity._setHashCode(this.index!, this.getHashCode(null));
     entity._setRawMap(this, null);
+  }
+
+  clone(value: TReadValue): TReadValue {
+    if (this._clone == null) {
+      return value;
+    }
+    return this._clone(value);
   }
 
   getHashCode(value: TWriteValue | null): number {

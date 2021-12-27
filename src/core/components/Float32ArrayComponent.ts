@@ -67,6 +67,10 @@ export class Float32ArrayComponent
     entity._setRawMap(this, null);
   }
 
+  clone(value: Float32Array): Float32Array {
+    return value.slice();
+  }
+
   getHashCode(value: Float32Array | null): number {
     return value == null ? 0 : 1;
   }

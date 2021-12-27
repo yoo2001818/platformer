@@ -10,9 +10,14 @@ export class ObjectComponent<
 
   name: string | null = null;
   index: number | null = null;
+  _clone: ((value: TReadValue) => TReadValue) | null;
   _fromJSON: ((value: TWriteValue) => TReadValue) | null;
 
-  constructor(fromJSON?: (value: TWriteValue) => TReadValue) {
+  constructor(
+    clone?: (value: TReadValue) => TReadValue,
+    fromJSON?: (value: TWriteValue) => TReadValue,
+  ) {
+    this._clone = clone ?? null;
     this._fromJSON = fromJSON ?? null;
   }
 
@@ -52,6 +57,13 @@ export class ObjectComponent<
   delete(entity: Entity): void {
     entity._setHashCode(this.index!, this.getHashCode(null));
     entity._setRawMap(this, null);
+  }
+
+  clone(value: TReadValue): TReadValue {
+    if (this._clone == null) {
+      return value;
+    }
+    return this._clone(value);
   }
 
   getHashCode(value: TWriteValue | null): number {

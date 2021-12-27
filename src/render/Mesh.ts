@@ -68,4 +68,12 @@ export class Mesh {
   toJSON(): unknown {
     return {};
   }
+
+  clone(): Mesh {
+    return new Mesh(
+      this.materials,
+      this.geometries,
+      this.options,
+    );
+  }
 }

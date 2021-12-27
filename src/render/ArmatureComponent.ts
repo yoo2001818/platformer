@@ -8,18 +8,22 @@ export class ArmatureComponent extends ObjectFutureComponent<
   Armature | ArmatureOptionsWithFuture
 > {
   constructor() {
-    super((value, getFuture) => {
-      if (value instanceof Armature) {
-        return value;
-      }
-      return new Armature({
-        ...value,
-        joints: value.joints.map(getFuture),
-        skeleton: value.skeleton != null
-          ? getFuture(value.skeleton)
-          : null,
-      });
-    });
+    super(
+      // TODO: The clone may want to change references
+      (value) => value.clone(),
+      (value, getFuture) => {
+        if (value instanceof Armature) {
+          return value;
+        }
+        return new Armature({
+          ...value,
+          joints: value.joints.map(getFuture),
+          skeleton: value.skeleton != null
+            ? getFuture(value.skeleton)
+            : null,
+        });
+      },
+    );
   }
 
   set(entity: Entity, value: Armature | ArmatureOptionsWithFuture): Armature {

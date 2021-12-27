@@ -26,4 +26,6 @@ export interface Light<T = any> {
     renderer: Renderer,
     pipeline: DeferredPipeline,
   ): void;
+  toJSON(): unknown;
+  clone(): Light<T>;
 }

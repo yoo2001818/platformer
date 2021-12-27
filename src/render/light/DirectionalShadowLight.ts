@@ -270,4 +270,12 @@ implements Light<DirectionalShadowLightOptions> {
       }
     });
   }
+
+  toJSON(): unknown {
+    return this.options;
+  }
+
+  clone(): DirectionalShadowLight {
+    return new DirectionalShadowLight(this.options);
+  }
 }

@@ -58,6 +58,8 @@ export class Entity {
 
   _markDeleted(): void {
     this.deleted = true;
+    this.markStructureChanged();
+    this.signal.updateUpstream();
   }
 
   _markFloating(): void {
@@ -248,7 +250,9 @@ export class Entity {
         if (value != null && typeof valueJSONable.toJSON === 'function') {
           value = valueJSONable.toJSON();
         }
-        result[name] = value;
+        if (value != null) {
+          result[name] = value;
+        }
       }
     });
     return result;

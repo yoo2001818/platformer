@@ -282,4 +282,12 @@ export class PointLight implements Light<PointLightOptions> {
       });
     }
   }
+
+  toJSON(): unknown {
+    return this.options;
+  }
+
+  clone(): PointLight {
+    return new PointLight(this.options);
+  }
 }

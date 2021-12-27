@@ -11,12 +11,15 @@ export class AnimationComponent extends ObjectFutureComponent<
   AnimationWithFuture
 > {
   constructor() {
-    super((value, getFuture) => ({
-      ...value,
-      targets: value.targets.map((target): AnimationTarget => ({
-        ...target,
-        entity: getFuture(target.entity),
-      })),
-    }));
+    super(
+      (value) => value,
+      (value, getFuture) => ({
+        ...value,
+        targets: value.targets.map((target): AnimationTarget => ({
+          ...target,
+          entity: getFuture(target.entity),
+        })),
+      }),
+    );
   }
 }

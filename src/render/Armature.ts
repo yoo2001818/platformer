@@ -94,4 +94,8 @@ export class Armature {
     this._textureVersion = transformComp.globalVersion;
     return this.texture;
   }
+
+  clone(): Armature {
+    return new Armature(this.options);
+  }
 }

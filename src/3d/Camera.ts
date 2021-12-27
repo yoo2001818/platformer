@@ -12,6 +12,10 @@ export interface CameraOptions {
 }
 
 export class Camera {
+  static fromJSON(options: unknown): Camera {
+    return new Camera(options as CameraOptions);
+  }
+
   options: CameraOptions;
   projection: Float32Array;
   inverseProjection: Float32Array;
@@ -77,5 +81,13 @@ export class Camera {
     const output = mat4.create();
     mat4.mul(output, inverseView, inverseProjection);
     return output;
+  }
+
+  clone(): Camera {
+    return new Camera(this.options);
+  }
+
+  toJSON(): unknown {
+    return this.options;
   }
 }

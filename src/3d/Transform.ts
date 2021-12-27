@@ -355,4 +355,10 @@ export class Transform {
     };
   }
 
+  clone(): Transform {
+    const result = new Transform();
+    result.setMatrix(this.getMatrixLocal());
+    return result;
+  }
+
 }

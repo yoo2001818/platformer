@@ -13,8 +13,13 @@ export function create3DComponents() {
     name: new ObjectComponent<string>(),
     transform: new TransformComponent(),
     parent: new ParentComponent(),
-    camera: new ObjectComponent<Camera>(),
-    light: new ObjectComponent<Light>(),
+    camera: new ObjectComponent<Camera>(
+      (camera) => camera.clone(),
+      (value) => Camera.fromJSON(value),
+    ),
+    light: new ObjectComponent<Light>(
+      (light) => light.clone(),
+    ),
     mesh: new MeshComponent(),
     animation: new AnimationComponent(),
     armature: new ArmatureComponent(),

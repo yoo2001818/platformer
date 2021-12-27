@@ -16,6 +16,7 @@ export interface Component<
   get(entity: Entity): TReadValue | null;
   set(entity: Entity, value: TWriteValue): void;
   delete(entity: Entity): void;
+  clone?(value: TReadValue): TReadValue;
 
   getHashCode(value: TWriteValue | null): number;
 

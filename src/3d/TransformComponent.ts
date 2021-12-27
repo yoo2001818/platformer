@@ -8,7 +8,10 @@ export class TransformComponent
   globalVersion = 0;
 
   constructor() {
-    super((v) => Transform.fromJSON(v));
+    super(
+      (v) => v.clone(),
+      (v) => Transform.fromJSON(v),
+    );
   }
 
   markGlobalDirty(): void {

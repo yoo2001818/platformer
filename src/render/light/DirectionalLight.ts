@@ -77,4 +77,12 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
   prepare(entities: Entity[], renderer: Renderer): void {
     // noop
   }
+
+  toJSON(): unknown {
+    return this.options;
+  }
+
+  clone(): DirectionalLight {
+    return new DirectionalLight(this.options);
+  }
 }
