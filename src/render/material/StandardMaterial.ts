@@ -47,8 +47,8 @@ export class StandardMaterial implements Material {
       onCreate: (defines?: string) => MaterialVertexShaderBlock,
     ) => GLShader,
     onDraw: (options: DrawOptions) => void,
-    startIndex?: number,
-    count?: number,
+    startIndex = 0,
+    count: number = chunk.maxSize,
   ): void {
     const {entityStore, glRenderer} = renderer;
     const transformComp =
@@ -146,7 +146,11 @@ export class StandardMaterial implements Material {
 
     if (chunk.has('armature')) {
       // Draw each armature separately;
-      chunk.forEach((entity) => {
+      for (let i = 0; i < count; i += 1) {
+        const entity = chunk.getAt(i + startIndex);
+        if (entity == null) {
+          continue;
+        }
         const transform = entity.get(transformComp)!;
         const armature = entity.get<Armature>('armature')!;
         const armatureMap = armature.getTexture();
@@ -163,16 +167,20 @@ export class StandardMaterial implements Material {
             ],
           },
         });
-      });
+      }
     } else {
       const buffer = new Float32Array(chunk.size * 17);
       let index = 0;
-      chunk.forEach((entity) => {
+      for (let i = 0; i < count; i += 1) {
+        const entity = chunk.getAt(i + startIndex);
+        if (entity == null) {
+          continue;
+        }
         const transform = entity.get(transformComp);
         buffer.set(transform!.getMatrixWorld(), index * 16);
         buffer[index + chunk.size * 16] = entity.handle.id;
         index += 1;
-      });
+      }
       // Pass instanced buffer to GPU
       this.instancedBuffer.set(buffer);
       // Bind the shader and bind aModel attribute
