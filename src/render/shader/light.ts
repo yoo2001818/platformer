@@ -7,7 +7,7 @@ export const POINT_LIGHT = /* glsl */`
 
   vec3 calcPoint(vec3 viewPos, MaterialInfo mInfo, PointLight light) {
     float radius = light.intensity.y;
-    vec3 L = normalize(light.position - mInfo.position);
+    vec3 L = light.position - mInfo.position;
     vec3 V = normalize(viewPos - mInfo.position);
     vec3 N = mInfo.normal;
 
@@ -15,7 +15,7 @@ export const POINT_LIGHT = /* glsl */`
     vec3 centerToRay = dot(L, R) * R - L;
     vec3 closestPos = L +
       centerToRay * clamp(radius / length(centerToRay), 0.0, 1.0);
-    L = normalize(closestPos);
+    L = closestPos;
 
     float lightDist = length(L);
     L = L / lightDist;
