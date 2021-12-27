@@ -101,6 +101,9 @@ export class EntityStore {
     if (this.deletedEntities.length > 0) {
       const entity = this.deletedEntities.pop()!;
       entity._markUndeleted();
+      if (options != null) {
+        entity.setMap(options);
+      }
       return entity;
     }
     // Otherwise, create one
