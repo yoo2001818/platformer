@@ -13,6 +13,8 @@ import {getMouseEventPos, getNDCPos} from '../utils/getMousePos';
 import {ModeModel} from '../models/ModeModel';
 import {SelectedDotEffect} from '../gizmoEffects/SelectedDotEffect';
 import {CursorEffect} from '../gizmoEffects/CursorEffect';
+import {deleteEntity, duplicateEntity} from '../commands/entity';
+import {SelectionModel} from '../models/SelectionModel';
 
 import {EditorMode} from './EditorMode';
 import {TranslateMode} from './TranslateMode';
@@ -165,6 +167,35 @@ export class DefaultMode implements EditorMode {
               null,
             ));
             break;
+          case 'KeyD': {
+            if (!event.shiftKey) {
+              break;
+            }
+            const engine = this.engine!;
+            const selectionModel = engine.getModel<SelectionModel>('selection');
+            const entity = selectionModel.getSelection();
+            if (entity != null) {
+              const target = duplicateEntity(engine, entity);
+              selectionModel.setSelection(target);
+              modeModel.setMode(new TranslateMode(
+                this,
+                viewport,
+                this.lastMousePos,
+                'world',
+                false,
+                null,
+              ));
+            }
+            break;
+          }
+          case 'Delete': {
+            const engine = this.engine!;
+            const selectionModel = engine.getModel<SelectionModel>('selection');
+            const entity = selectionModel.getSelection();
+            if (entity != null) {
+              deleteEntity(engine, entity);
+            }
+          }
         }
         break;
       }

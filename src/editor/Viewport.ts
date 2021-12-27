@@ -51,14 +51,21 @@ export class Viewport {
       'mouseup',
       'click',
       'contextmenu',
-      'keydown',
-      'keyup',
       'touchstart',
       'wheel',
     ].map((name) => {
       const callback =
         (...args: any[]) => viewportModel.emitter.emit(name, [this, ...args]);
       this.canvas.addEventListener(name, callback);
+      return {name, callback};
+    });
+    const windowCallbacks = [
+      'keydown',
+      'keyup',
+    ].map((name) => {
+      const callback =
+        (...args: any[]) => viewportModel.emitter.emit(name, [this, ...args]);
+      window.addEventListener(name, callback);
       return {name, callback};
     });
     const atomInst = engine.entityStore.getAtom(this.stateAtom);
@@ -95,6 +102,9 @@ export class Viewport {
     this.unattachFn = () => {
       callbacks.forEach(({name, callback}) => {
         this.canvas.removeEventListener(name, callback);
+      });
+      windowCallbacks.forEach(({name, callback}) => {
+        window.removeEventListener(name, callback);
       });
       atomInst.signal.remove(handleAtomChange);
     };

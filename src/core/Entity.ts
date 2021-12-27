@@ -212,7 +212,10 @@ export class Entity {
   getMap(): {[key: string]: any;} {
     const result: {[key: string]: any;} = {};
     this.store.getComponents().forEach((component) => {
-      result[component.getName()!] = component.get(this);
+      const compValue = component.get(this);
+      if (compValue != null) {
+        result[component.getName()!] = compValue;
+      }
     });
     return result;
   }
