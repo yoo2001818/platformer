@@ -11,7 +11,7 @@ import {
 
 export interface TransformPropertiesRotationProps {
   value: Transform;
-  onChange: () => void;
+  onChange: (value: Transform) => void;
 }
 
 export function TransformPropertiesRotation(
@@ -50,8 +50,7 @@ function TransformPropertiesRotationQuaternion(
         dimensions={4}
         value={value.getRotation()}
         onChange={(arr) => {
-          value.setRotation(arr);
-          onChange();
+          onChange(value.setRotation(arr));
         }}
       />
     </FormRow>
@@ -71,8 +70,7 @@ function TransformPropertiesRotationEuler(
     vec3.scale(euler, euler, Math.PI / 180);
     const out = new Float32Array(4);
     quaternionFromEulerYZX(out, euler);
-    value.setRotation(out);
-    onChange();
+    onChange(value.setRotation(out));
   }, [value, onChange]);
   return (
     <FormRow>

@@ -10,6 +10,7 @@ export interface EntityPropertiesComponentProps {
   entity: Entity;
   name: string;
   value: any;
+  onChange: (value: any) => void;
 }
 
 export function EntityPropertiesComponent(

@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React from 'react';
 
 import {Transform} from '../../../../3d/Transform';
 import {Entity} from '../../../../core/Entity';
@@ -11,15 +11,13 @@ export interface TransformPropertiesProps {
   className?: string;
   entity: Entity;
   value: Transform;
+  onChange: (value: Transform) => void;
 }
 
 export function TransformProperties(
   props: TransformPropertiesProps,
 ): React.ReactElement {
-  const {className, entity, value} = props;
-  const handleChange = useCallback(() => {
-    entity.markChanged('transform');
-  }, [entity]);
+  const {className, value, onChange} = props;
   return (
     <div className={className}>
       <FormGroup label="Position">
@@ -27,15 +25,14 @@ export function TransformProperties(
           dimensions={3}
           value={value.getPosition()}
           onChange={(arr) => {
-            value.setPosition(arr);
-            handleChange();
+            onChange(value.setPosition(arr));
           }}
         />
       </FormGroup>
       <FormGroup label="Rotation">
         <TransformPropertiesRotation
           value={value}
-          onChange={handleChange}
+          onChange={onChange}
         />
       </FormGroup>
       <FormGroup label="Scale">
@@ -43,8 +40,7 @@ export function TransformProperties(
           dimensions={3}
           value={value.getScale()}
           onChange={(arr) => {
-            value.setScale(arr);
-            handleChange();
+            onChange(value.setScale(arr));
           }}
         />
       </FormGroup>

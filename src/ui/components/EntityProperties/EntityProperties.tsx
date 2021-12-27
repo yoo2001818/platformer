@@ -26,6 +26,9 @@ export function EntityProperties(): React.ReactElement | null {
           name={name}
           value={value}
           key={name}
+          onChange={(value) => {
+            entity.set(name, value);
+          }}
         />
       )) }
     </Div>
