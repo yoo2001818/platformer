@@ -12,11 +12,22 @@ export interface DirectionalLightOptions {
   power: number;
 }
 
-export class DirectionalLight implements Light {
+export class DirectionalLight implements Light<DirectionalLightOptions> {
   type = 'directional';
   options: DirectionalLightOptions;
 
-  constructor(options: DirectionalLightOptions) {
+  constructor(options?: DirectionalLightOptions) {
+    this.options = options ?? {
+      color: '#ffffff',
+      power: 1,
+    };
+  }
+
+  getOptions(): DirectionalLightOptions {
+    return this.options;
+  }
+
+  setOptions(options: DirectionalLightOptions): void {
     this.options = options;
   }
 

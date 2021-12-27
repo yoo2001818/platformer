@@ -20,19 +20,31 @@ export interface DirectionalShadowLightOptions {
   power: number;
 }
 
-export class DirectionalShadowLight implements Light {
+export class DirectionalShadowLight
+implements Light<DirectionalShadowLightOptions> {
   type = 'directional';
   options: DirectionalShadowLightOptions;
   atlases: AtlasItem[] = [];
   viewProjections: mat4[];
   breakpoints: number[] = [];
 
-  constructor(options: DirectionalShadowLightOptions) {
-    this.options = options;
+  constructor(options?: DirectionalShadowLightOptions) {
+    this.options = options ?? {
+      color: '#ffffff',
+      power: 1,
+    };
     this.atlases = [];
     this.viewProjections =
       Array.from({length: NUM_CASCADES}, () => mat4.create());
     this.breakpoints = [];
+  }
+
+  getOptions(): DirectionalShadowLightOptions {
+    return this.options;
+  }
+
+  setOptions(options: DirectionalShadowLightOptions): void {
+    this.options = options;
   }
 
   getShaderBlock(numLights: number): LightShaderBlock {

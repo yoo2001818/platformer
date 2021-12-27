@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {Entity} from '../../../core/Entity';
-import {TransformProperties} from '../Properties';
+import {TransformProperties, LightProperties} from '../Properties';
 
 import {EntityPropertiesComponentHeader} from './ComponentHeader';
 
@@ -23,6 +23,13 @@ export function EntityPropertiesComponent(
         <>
           <EntityPropertiesComponentHeader label="Transform" />
           <TransformProperties {...props} />
+        </>
+      );
+    case 'light':
+      return (
+        <>
+          <EntityPropertiesComponentHeader label="Light" />
+          <LightProperties {...props} />
         </>
       );
     default:

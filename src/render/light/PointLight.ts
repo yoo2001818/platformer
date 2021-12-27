@@ -91,14 +91,27 @@ const LIGHT_BLOCK: LightPipelineShaderBlock = {
   `,
 };
 
-export class PointLight implements Light {
+export class PointLight implements Light<PointLightOptions> {
   type = 'point';
   options: PointLightOptions;
   buffer: GLArrayBuffer;
 
-  constructor(options: PointLightOptions) {
-    this.options = options;
+  constructor(options?: PointLightOptions) {
+    this.options = options ?? {
+      color: '#ffffff',
+      power: 1,
+      radius: 0.01,
+      range: 10,
+    };
     this.buffer = new GLArrayBuffer(undefined, 'stream');
+  }
+
+  getOptions(): PointLightOptions {
+    return this.options;
+  }
+
+  setOptions(options: PointLightOptions): void {
+    this.options = options;
   }
 
   getShaderBlock(numLights: number): LightShaderBlock {

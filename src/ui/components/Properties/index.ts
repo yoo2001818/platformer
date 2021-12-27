@@ -1,1 +1,2 @@
-export * from './Transform/Transform';
+export * from './Transform';
+export * from './Light';

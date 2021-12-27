@@ -13,15 +13,26 @@ import {Light, LightShaderBlock} from './Light';
 const BRDF_MAP = generateBRDFMap();
 
 export interface EnvironmentLightOptions {
-  texture: GLTexture;
+  texture: GLTexture | null;
   power: number;
 }
 
-export class EnvironmentLight implements Light {
+export class EnvironmentLight implements Light<EnvironmentLightOptions> {
   type = 'environment';
   options: EnvironmentLightOptions;
 
-  constructor(options: EnvironmentLightOptions) {
+  constructor(options?: EnvironmentLightOptions) {
+    this.options = options ?? {
+      texture: null,
+      power: 1,
+    };
+  }
+
+  getOptions(): EnvironmentLightOptions {
+    return this.options;
+  }
+
+  setOptions(options: EnvironmentLightOptions): void {
     this.options = options;
   }
 
@@ -61,6 +72,9 @@ export class EnvironmentLight implements Light {
         return;
       }
       const {options} = light;
+      if (options.texture == null) {
+        return;
+      }
       output = {
         uEnvironmentMap: options.texture,
         uBRDFMap: BRDF_MAP,

@@ -14,8 +14,10 @@ export interface LightPipelineShaderBlock {
   body: string;
 }
 
-export interface Light {
+export interface Light<T = any> {
   type: string;
+  getOptions(): T;
+  setOptions(value: T): void;
   getShaderBlock(numLights: number, renderer: Renderer): LightShaderBlock;
   getUniforms(entities: Entity[], renderer: Renderer): {[key: string]: unknown;};
   prepare(entities: Entity[], renderer: Renderer): void;

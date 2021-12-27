@@ -52,7 +52,7 @@ export function SelectInput<T>(
     const index = parseInt((e.target as HTMLSelectElement).value, 10);
     if (!isNaN(index)) {
       const entry = options[index];
-      if (entry != null) {
+      if (entry != null && entry.value !== value) {
         onChange(entry.value);
       }
     }

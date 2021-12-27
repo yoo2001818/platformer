@@ -37,17 +37,17 @@ export function NumberInput(
     if ('requestPointerLock' in target) {
       target.requestPointerLock();
     }
-    let pos = e.clientY + e.clientX;
+    let pos = -e.clientY + e.clientX;
     let currentValue = value ?? 0;
     const handleMouseMove = (e: MouseEvent): void => {
       let delta;
       if ('movementX' in e) {
-        delta = e.movementY + e.movementX;
+        delta = -e.movementY + e.movementX;
         if (Math.abs(delta) > 100) {
           delta = 0;
         }
       } else {
-        const currentPos = e.clientY + e.clientX;
+        const currentPos = -e.clientY + e.clientX;
         delta = currentPos - pos;
         pos = currentPos;
       }
