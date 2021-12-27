@@ -222,6 +222,20 @@ export class Entity {
     return result;
   }
 
+  getCloneMap(): {[key: string]: any;} {
+    const result: {[key: string]: any;} = {};
+    this.store.getComponents().forEach((component) => {
+      let compValue = component.get(this);
+      if (compValue != null) {
+        if (component.clone != null) {
+          compValue = component.clone(compValue);
+        }
+        result[component.getName()!] = compValue;
+      }
+    });
+    return result;
+  }
+
   getHashCodes(): number[] {
     return this.hashCodes;
   }

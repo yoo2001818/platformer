@@ -9,9 +9,7 @@ export function duplicateEntity(
   entity: Entity,
 ): Entity {
   const {entityStore} = engine;
-  // FIXME: Clone
-  console.log(entity.toJSON());
-  return entityStore.create(entity.getMap());
+  return entityStore.create(entity.getCloneMap());
 }
 
 export function deleteEntity(

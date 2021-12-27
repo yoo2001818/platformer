@@ -13,6 +13,9 @@ export interface CameraOptions {
 
 export class Camera {
   static fromJSON(options: unknown): Camera {
+    if (options instanceof Camera) {
+      return options;
+    }
     return new Camera(options as CameraOptions);
   }
 

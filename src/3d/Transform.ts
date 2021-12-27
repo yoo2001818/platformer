@@ -200,6 +200,7 @@ export class Transform {
   }
 
   markChanged(): void {
+    this._updateComponents();
     this._componentVersion += 1;
     this.component?.markGlobalDirty();
   }
