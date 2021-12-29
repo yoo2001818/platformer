@@ -76,7 +76,7 @@ export const PBR = /* glsl */`
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
 
-    return kD * albedo / PI + spec;
+    return dotNL * albedo / PI + spec;
   }
 
   float vanDerCorput(int n, int base) {

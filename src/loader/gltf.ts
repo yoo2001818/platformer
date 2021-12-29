@@ -170,7 +170,7 @@ export function parseGLTF(input: any): GLTFResult {
         // TODO
       } else {
         options.metalic = pbr.metallicFactor ?? 1;
-        options.roughness = Math.sqrt(pbr.roughnessFactor ?? 1);
+        options.roughness = pbr.roughnessFactor ?? 0;
       }
       if ('normalTexture' in material) {
         options.normal = textures[material.normalTexture.index];

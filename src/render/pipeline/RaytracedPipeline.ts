@@ -19,6 +19,7 @@ import {POINT_LIGHT} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
+import {RTPBR} from '../shader/raytracepbr';
 import {SAMPLE} from '../shader/sample';
 import {FILMIC} from '../shader/tonemap';
 
@@ -112,6 +113,7 @@ export class RaytracedPipeline implements Pipeline {
           ${POINT_LIGHT}
           ${MATERIAL_INJECTOR}
           ${SAMPLE}
+          ${RTPBR}
 
           #define PI 3.141592
 
@@ -143,9 +145,9 @@ export class RaytracedPipeline implements Pipeline {
             BVHIntersectResult bvhResult;
             MaterialInfo mInfo;
             PointLight light;
-            light.position = vec3(-0.25, 4.7, -3.0);
+            light.position = vec3(2.7341, 2.0792, -1.3383);
             light.color = vec3(1.0);
-            light.intensity = vec3(PI * 6.0, 0.2, 100.0);
+            light.intensity = vec3(PI * 3.0, 0.2, 100.0);
 
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
@@ -213,56 +215,54 @@ export class RaytracedPipeline implements Pipeline {
                 }
                 resultColor += lightingColor * attenuation;
               }
-              vec3 newNormal = importanceSampleGGX(randVec2(uRandomMap), mInfo.normal, mInfo.roughness);
-              vec3 nextDir = reflect(dir, newNormal);
-              // vec3 nextDir = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
-              // vec3 brdf = calcBRDF(nextDir, dir, mInfo.normal, mInfo);
-              // vec3 brdf = mInfo.albedo;
-              vec3 brdf;
-              float pdf;
-              {
-                vec3 N = mInfo.normal;
-                vec3 V = -dir;
-                vec3 L = nextDir;
-                float roughness = mInfo.roughness * mInfo.roughness;
-                vec3 albedo = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
-                vec3 reflection = mix(vec3(0.04), mInfo.albedo, mInfo.metalic);
+              vec3 N = mInfo.normal;
+              vec3 V = -dir;
+              vec3 L;
+              vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
+              vec3 specColor = mix(vec3(0.04), mInfo.albedo, mInfo.metalic);
+              // determine if we should use diffuse or not
+              float probDiffuse = probabilityToSampleDiffuse(diffuseColor, specColor);
+              if (probDiffuse > randFloat(uRandomMap)) {
+                // diffuse
+                L = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
+                attenuation *= diffuseColor / probDiffuse;
+              } else {
+                // specular
+                float roughness = max(mInfo.roughness * mInfo.roughness, 0.0001);
+
+                vec3 H = importanceSampleGGX(randVec2(uRandomMap), mInfo.normal, roughness);
+                L = reflect(dir, H);
 
                 float dotNL = max(dot(N, L), 0.0);
                 float dotNV = max(dot(N, V), 0.0);
-
-                vec3 H = normalize(V + L);
 
                 float dotNH = max(dot(N, H), 0.0);
                 float dotHV = max(dot(H, V), 0.0);
 
                 float D = distributionGGX(dotNH, roughness);
-                vec3 F = fresnelSchlick(dotHV, reflection);
+                vec3 F = fresnelSchlick(dotHV, specColor);
                 float G = geometrySmith(roughness, dotNV, dotNL);
 
                 vec3 spec = specCookTorr(D, F, G, dotNL, dotNV);
 
-                vec3 kS = F;
-                vec3 kD = vec3(1.0) - kS;
-
-                float specularPdf = pdfDistributionGGX(
+                float specPdf = pdfDistributionGGX(
                   dotNH,
                   max(dot(H, L), 0.0),
                   roughness
                 );
-                float diffusePdf = dotNL / PI;
-                float pdf = mix(0.5 * (specularPdf + diffusePdf), specularPdf, mInfo.metalic);
-
-                if (abs(pdf) < 0.000001) {
+                
+                float pdf = specPdf * (1.0 - probDiffuse);
+                attenuation *= dotNL * spec / max(pdf, 0.001);
+              }
+              dir = L;
+              // russian roulette
+              if (i >= 2) {
+                float q = 1.0 - luminance(attenuation);
+                if (randFloat(uRandomMap) < q) {
                   break;
                 }
-
-                brdf = kD * albedo / PI + spec;
-                brdf *= 1.0 / (1.0 + pdf);
+                attenuation /= 1.0 - q;
               }
-              dir = nextDir;
-              attenuation *= brdf;
-
             }
             gl_FragColor = vec4(resultColor, 1.0);
           }
