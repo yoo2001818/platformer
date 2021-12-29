@@ -10,6 +10,12 @@ export const PBR = /* glsl */`
     return nom / max(denom, 0.0000001);
   }
 
+  float pdfDistributionGGX(float dotNM, float dotOM, float a) {
+    float nom = distributionGGX(dotNM, a) * dotNM;
+    float denom = 4.0 * dotOM;
+    return nom / denom;
+  }
+
   float lambdaGGX(float a) {
     float a2 = a * a;
     float nom = sqrt(1.0 + 1.0 / a2) - 1.0;

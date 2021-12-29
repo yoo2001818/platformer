@@ -143,12 +143,13 @@ export class RaytracedPipeline implements Pipeline {
             BVHIntersectResult bvhResult;
             MaterialInfo mInfo;
             PointLight light;
-            light.position = vec3(1.78, 2.399, -1.78);
+            light.position = vec3(-0.25, 4.7, -3.0);
             light.color = vec3(1.0);
             light.intensity = vec3(PI * 6.0, 0.2, 100.0);
 
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
+            float weight = 1.0;
 
             for (int i = 0; i < 5; i += 1) {
               bool isIntersecting = intersectBVH(
@@ -191,7 +192,7 @@ export class RaytracedPipeline implements Pipeline {
               origin = mInfo.position + mInfo.normal * 0.0001;
               // lighting 
               vec3 lightingColor = vec3(0.0);
-              if (randFloat(uRandomMap) > 0.5) {
+              {
                 vec3 L = light.position - mInfo.position;
                 L += sampleSphere(randVec3(uRandomMap)) * light.intensity.y;
                 float lightDist = length(L);
@@ -206,24 +207,61 @@ export class RaytracedPipeline implements Pipeline {
                   origin,
                   L
                 );
+                
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
-                  if (i == 0) {
-                    lightingColor += calcPoint(prevOrigin, mInfo, light);
-                  } else {
-                    lightingColor += max(dot(mInfo.normal, L), 0.0) *
-                      light.color * mInfo.albedo * light.intensity.x / PI;
-                  }
+                  lightingColor += calcPoint(prevOrigin, mInfo, light);
                 }
                 resultColor += lightingColor * attenuation;
-                break;
-              } else {
-                vec3 hemi = cosineSampleHemisphere(randVec2(uRandomMap));
-                mat3 basis = orthonormalBasis(mInfo.normal);
-                vec3 nextDir = normalize(basis * hemi);
-                vec3 brdf = calcBRDF(nextDir, -dir, mInfo.normal, mInfo);
-                dir = nextDir;
-                attenuation *= brdf;
               }
+              vec3 newNormal = importanceSampleGGX(randVec2(uRandomMap), mInfo.normal, mInfo.roughness);
+              vec3 nextDir = reflect(dir, newNormal);
+              // vec3 nextDir = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
+              // vec3 brdf = calcBRDF(nextDir, dir, mInfo.normal, mInfo);
+              // vec3 brdf = mInfo.albedo;
+              vec3 brdf;
+              float pdf;
+              {
+                vec3 N = mInfo.normal;
+                vec3 V = -dir;
+                vec3 L = nextDir;
+                float roughness = mInfo.roughness * mInfo.roughness;
+                vec3 albedo = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
+                vec3 reflection = mix(vec3(0.04), mInfo.albedo, mInfo.metalic);
+
+                float dotNL = max(dot(N, L), 0.0);
+                float dotNV = max(dot(N, V), 0.0);
+
+                vec3 H = normalize(V + L);
+
+                float dotNH = max(dot(N, H), 0.0);
+                float dotHV = max(dot(H, V), 0.0);
+
+                float D = distributionGGX(dotNH, roughness);
+                vec3 F = fresnelSchlick(dotHV, reflection);
+                float G = geometrySmith(roughness, dotNV, dotNL);
+
+                vec3 spec = specCookTorr(D, F, G, dotNL, dotNV);
+
+                vec3 kS = F;
+                vec3 kD = vec3(1.0) - kS;
+
+                float specularPdf = pdfDistributionGGX(
+                  dotNH,
+                  max(dot(H, L), 0.0),
+                  roughness
+                );
+                float diffusePdf = dotNL / PI;
+                float pdf = mix(0.5 * (specularPdf + diffusePdf), specularPdf, mInfo.metalic);
+
+                if (abs(pdf) < 0.000001) {
+                  break;
+                }
+
+                brdf = kD * albedo / PI + spec;
+                brdf *= 1.0 / (1.0 + pdf);
+              }
+              dir = nextDir;
+              attenuation *= brdf;
 
             }
             gl_FragColor = vec4(resultColor, 1.0);
@@ -426,6 +464,7 @@ export class RaytracedPipeline implements Pipeline {
       const next = this.sobol.next();
       this.randomPos[0] = next[0] * (randomMapWidth - 1) / randomMapWidth;
       this.randomPos[1] = next[1] * (randomMapHeight - 1) / randomMapHeight;
+      this.refreshRandomMap();
     }
     this.rayTileBuffer.set(tileData);
     this.rayTilePos += tilePerFrame;

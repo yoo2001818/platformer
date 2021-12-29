@@ -80,7 +80,7 @@ export const ENVIRONMENT_MAP = /* glsl */`
     float lod = roughness * (lodMax - 1.0);
     #endif
     vec3 envColor = textureCubePackLodHDR(envMap, R, lod, mapSize) * power;
-    vec3 F = fresnelSchlickRoughness(dotNV, fresnel, roughness);
+    vec3 F = fresnelSchlickRoughness(dotNV, fresnel, roughness * roughness);
     vec2 envBRDF = texture2D(brdfMap, vec2(dotNV, roughness)).rg;
 
     vec3 spec = envColor * (F * envBRDF.x + envBRDF.y);
