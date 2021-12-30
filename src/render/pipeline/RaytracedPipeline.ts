@@ -26,7 +26,7 @@ import {FILMIC} from '../shader/tonemap';
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
 const LIGHT_QUAD = new GLGeometry(quad());
-const TARGET_DELTA_TIME = 1 / 60;
+const TARGET_DELTA_TIME = 1 / 50;
 
 export class RaytracedPipeline implements Pipeline {
   renderer: Renderer;
@@ -38,6 +38,7 @@ export class RaytracedPipeline implements Pipeline {
   rayTilePos = 0;
   rayTileFrame = 1;
   rayTileBuffer: GLArrayBuffer = new GLArrayBuffer(undefined, 'stream');
+  numPasses = 0;
   tileWidth = 1;
   tileHeight = 1;
   randomPos: Float32Array = new Float32Array(2);
@@ -145,13 +146,14 @@ export class RaytracedPipeline implements Pipeline {
             BVHIntersectResult bvhResult;
             MaterialInfo mInfo;
             PointLight light;
-            light.position = vec3(2.7341, 2.0792, -1.3383);
+            light.position = vec3(-0.25, 4.7, -3.0);
             light.color = vec3(1.0);
-            light.intensity = vec3(PI * 3.0, 0.2, 100.0);
+            light.intensity = vec3(10.0 / PI, 0.2, 100.0);
 
             vec3 resultColor = vec3(0.0);
             vec3 attenuation = vec3(1.0);
             float weight = 1.0;
+            float specularDisabled = 0.0;
 
             for (int i = 0; i < 5; i += 1) {
               bool isIntersecting = intersectBVH(
@@ -211,7 +213,17 @@ export class RaytracedPipeline implements Pipeline {
                 );
                 
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
-                  lightingColor += calcPoint(prevOrigin, mInfo, light);
+                  if (specularDisabled > 0.5) {
+                    vec3 L;
+                    vec3 V = -dir;
+                    vec3 N = mInfo.normal;
+                    vec3 radiance = calcPointRaw(prevOrigin, mInfo.position, N, light, L);
+                    float dotNL = max(dot(N, L), 0.0);
+                    vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
+                    lightingColor += diffuseColor * dotNL * radiance / PI;
+                  } else {
+                    lightingColor += calcPoint(prevOrigin, mInfo, light);
+                  }
                 }
                 resultColor += lightingColor * attenuation;
               }
@@ -221,11 +233,12 @@ export class RaytracedPipeline implements Pipeline {
               vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
               vec3 specColor = mix(vec3(0.04), mInfo.albedo, mInfo.metalic);
               // determine if we should use diffuse or not
-              float probDiffuse = probabilityToSampleDiffuse(diffuseColor, specColor);
+              float probDiffuse = mix(probabilityToSampleDiffuse(diffuseColor, specColor), 1.0, specularDisabled);
               if (probDiffuse > randFloat(uRandomMap)) {
                 // diffuse
                 L = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
                 attenuation *= diffuseColor / probDiffuse;
+                specularDisabled = 1.0;
               } else {
                 // specular
                 float roughness = max(mInfo.roughness * mInfo.roughness, 0.0001);
@@ -253,6 +266,7 @@ export class RaytracedPipeline implements Pipeline {
                 
                 float pdf = specPdf * (1.0 - probDiffuse);
                 attenuation *= dotNL * spec / max(pdf, 0.001);
+                // specularDisabled = 1.0;
               }
               dir = L;
               // russian roulette
@@ -264,7 +278,12 @@ export class RaytracedPipeline implements Pipeline {
                 attenuation /= 1.0 - q;
               }
             }
-            gl_FragColor = vec4(resultColor, 1.0);
+            float threshold = 100.0;
+            if (all(lessThan(resultColor, vec3(threshold)))) {
+              gl_FragColor = vec4(resultColor, 1.0);
+            } else {
+              gl_FragColor = vec4(0.0);
+            }
           }
         `,
       );
@@ -460,6 +479,7 @@ export class RaytracedPipeline implements Pipeline {
     }
     const prevScanId = Math.floor(this.rayTilePos / (tw * th));
     const nextScanId = Math.floor((this.rayTilePos + tilePerFrame) / (tw * th));
+    this.numPasses = nextScanId;
     if (prevScanId !== nextScanId) {
       const next = this.sobol.next();
       this.randomPos[0] = next[0] * (randomMapWidth - 1) / randomMapWidth;

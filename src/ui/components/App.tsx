@@ -27,7 +27,7 @@ import {Viewport} from './Viewport';
 function initEngine(): Engine {
   const engine = new Engine();
   engine.entityStore.registerComponents(create3DComponents());
-  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/pri-home5.gltf')).entities);
+  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/cornell2.gltf')).entities);
   engine.entityStore.create({
     name: 'Test',
     transform: {position: [0, 1, 0]},

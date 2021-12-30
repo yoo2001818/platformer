@@ -41,9 +41,13 @@ const HeaderContainer = styled.div`
 `;
 
 const HeaderSection = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 const HeaderTitle = styled.div`
+  display: flex;
+  align-items: center;
   font-weight: bold;
   padding-left: 6px;
 `;

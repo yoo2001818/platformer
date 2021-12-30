@@ -17,6 +17,7 @@ import {Panel, PanelHeader, PanelContent} from '../Panel';
 import {SelectInput} from '../Input';
 import {AtomDescriptor} from '../../../core/Atom';
 import {useAtomNullable} from '../../hooks/useAtom';
+import {RaytracedPipeline} from '../../../render/pipeline/RaytracedPipeline';
 
 export interface ViewportProps {
   className?: string;
@@ -31,6 +32,7 @@ export function Viewport(
   const engine = useEngine();
   const [atom, setAtom] = useState<AtomDescriptor<ViewportState> | null>(null);
   const [state, setState] = useAtomNullable(atom);
+  const [passes, setPasses] = useState(0);
   useEffect(() => {
     const canvasElem = canvasRef.current;
     if (canvasElem == null) {
@@ -81,25 +83,43 @@ export function Viewport(
     });
 
     rendererRef.current = renderer;
+
+    // FIXME: Passes display
+    const timerId = setInterval(() => {
+      const pipeline = renderer.pipeline;
+      if (pipeline instanceof RaytracedPipeline) {
+        setPasses(pipeline.numPasses);
+      } else {
+        setPasses(0);
+      }
+    }, 100);
+
+    // eslint-disable-next-line consistent-return
+    return () => {
+      clearInterval(timerId);
+    };
   }, [engine]);
   return (
     <Panel>
       <PanelHeader
         right={(
-          <SelectInput
-            value={state?.renderer}
-            onChange={(value) => value != null && setState({
-              ...state ?? {},
-              renderer: value,
-            })}
-            options={[
-              {label: 'Raytrace', value: 'raytrace'},
-              {label: 'Deferred', value: 'deferred'},
-              {label: 'Forward', value: 'forward'},
-            ]}
-            size={26}
-            color="dark"
-          />
+          <>
+            { passes > 0 ? `Pass ${passes}` : null }
+            <SelectInput
+              value={state?.renderer}
+              onChange={(value) => value != null && setState({
+                ...state ?? {},
+                renderer: value,
+              })}
+              options={[
+                {label: 'Raytrace', value: 'raytrace'},
+                {label: 'Deferred', value: 'deferred'},
+                {label: 'Forward', value: 'forward'},
+              ]}
+              size={26}
+              color="dark"
+            />
+          </>
         )}
       >
         Viewport

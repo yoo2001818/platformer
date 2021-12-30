@@ -5,11 +5,17 @@ export const POINT_LIGHT = /* glsl */`
     vec3 intensity;
   };
 
-  vec3 calcPoint(vec3 viewPos, MaterialInfo mInfo, PointLight light) {
+  vec3 calcPointRaw(
+    vec3 viewPos,
+    vec3 hitPos,
+    vec3 normal,
+    PointLight light,
+    out vec3 L
+  ) {
     float radius = light.intensity.y;
-    vec3 L = light.position - mInfo.position;
-    vec3 V = normalize(viewPos - mInfo.position);
-    vec3 N = mInfo.normal;
+    L = light.position - hitPos;
+    vec3 V = normalize(viewPos - hitPos);
+    vec3 N = normal;
 
     vec3 R = reflect(V, N);
     vec3 centerToRay = dot(L, R) * R - L;
@@ -28,7 +34,14 @@ export const POINT_LIGHT = /* glsl */`
     float dotNL = max(dot(N, L), 0.0);
 
     vec3 radiance = window * attenuation * dotNL * light.color;
+    return radiance;
+  }
 
+  vec3 calcPoint(vec3 viewPos, MaterialInfo mInfo, PointLight light) {
+    vec3 L;
+    vec3 V = normalize(viewPos - mInfo.position);
+    vec3 N = mInfo.normal;
+    vec3 radiance = calcPointRaw(viewPos, mInfo.position, N, light, L);
     return radiance * calcBRDF(L, V, N, mInfo);
   }
 `;
