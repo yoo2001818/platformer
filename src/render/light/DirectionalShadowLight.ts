@@ -87,7 +87,13 @@ implements Light<DirectionalShadowLightOptions> {
               lightUV = shadowUV.xy + lightUV * shadowUV.zw;
               lightInten = unpackVSM(uDirectionalShadowMap, lightUV, lightPos.z);
             }
-            result += lightInten * calcDirectional(viewPos, mInfo, light);
+            vec3 L;
+            vec3 V = normalize(viewPos - mInfo.position);
+            vec3 N = mInfo.normal;
+            result +=
+              lightInten *
+              calcDirectional(L, V, N, mInfo.position, light) *
+              calcBRDF(L, V, N, mInfo);
           }
         }
       `,

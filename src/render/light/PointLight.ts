@@ -87,7 +87,12 @@ const LIGHT_BLOCK: LightPipelineShaderBlock = {
     light.color = vColor;
     light.intensity = vIntensity;
 
-    result += calcPoint(viewPos, mInfo, light);
+    vec3 L;
+    vec3 V = normalize(viewPos - mInfo.position);
+    vec3 N = mInfo.normal;
+    result +=
+      calcPoint(L, V, N, mInfo.position, light) *
+      calcBRDF(L, V, N, mInfo);
   `,
 };
 

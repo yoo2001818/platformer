@@ -213,16 +213,16 @@ export class RaytracedPipeline implements Pipeline {
                 );
                 
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
+                  vec3 L;
+                  vec3 V = -dir;
+                  vec3 N = mInfo.normal;
+                  vec3 radiance = calcPoint(L, V, N, mInfo.position, light);
                   if (specularDisabled > 0.5) {
-                    vec3 L;
-                    vec3 V = -dir;
-                    vec3 N = mInfo.normal;
-                    vec3 radiance = calcPointRaw(prevOrigin, mInfo.position, N, light, L);
                     float dotNL = max(dot(N, L), 0.0);
                     vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
                     lightingColor += diffuseColor * dotNL * radiance / PI;
                   } else {
-                    lightingColor += calcPoint(prevOrigin, mInfo, light);
+                    lightingColor += calcBRDF(L, V, N, mInfo) * radiance;
                   }
                 }
                 resultColor += lightingColor * attenuation;

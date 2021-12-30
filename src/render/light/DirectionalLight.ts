@@ -44,7 +44,12 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
         for (int i = 0; i < NUM_POINT_LIGHTS; i += 1) {
           DirectionalLight light = uDirectionalLights[i];
 
-          result += calcDirectional(viewPos, mInfo, light);
+          vec3 L;
+          vec3 V = normalize(viewPos - mInfo.position);
+          vec3 N = mInfo.normal;
+          result +=
+            calcDirectional(L, V, N, mInfo.position, light) *
+            calcBRDF(L, V, N, mInfo);
         }
       `,
     };
