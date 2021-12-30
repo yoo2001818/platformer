@@ -207,7 +207,7 @@ export class ForwardPipeline implements Pipeline {
   render(): void {
     const {entityStore, glRenderer} = this.renderer;
 
-    glRenderer.clear();
+    glRenderer.clear(null, undefined, [0, 0, 0, 1]);
     this._collectLights();
     this.cameraUniforms = this.getCameraUniforms();
 
