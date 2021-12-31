@@ -51,13 +51,14 @@ export const PBR = /* glsl */`
     return nom / max(denom, 0.001);
   }
 
-  vec3 brdfCookTorr(
+  vec3 specCookTorrGGX(
     vec3 L,
     vec3 V,
     vec3 N,
     float roughness,
     vec3 albedo,
-    vec3 reflection
+    vec3 reflection,
+    out vec3 F
   ) {
     float dotNL = max(dot(N, L), 0.0);
     float dotNV = max(dot(N, V), 0.0);
@@ -68,10 +69,23 @@ export const PBR = /* glsl */`
     float dotHV = max(dot(H, V), 0.0);
 
     float D = distributionGGX(dotNH, roughness);
-    vec3 F = fresnelSchlick(dotHV, reflection);
+    F = fresnelSchlick(dotHV, reflection);
     float G = geometrySmith(roughness, dotNV, dotNL);
 
-    vec3 spec = specCookTorr(D, F, G, dotNL, dotNV);
+    return specCookTorr(D, F, G, dotNL, dotNV);
+  }
+
+  vec3 brdfCookTorr(
+    vec3 L,
+    vec3 V,
+    vec3 N,
+    float roughness,
+    vec3 albedo,
+    vec3 reflection
+  ) {
+    float dotNL = max(dot(N, L), 0.0);
+    vec3 F;
+    vec3 spec = specCookTorrGGX(L, V, N, roughness, albedo, reflection, F);
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
