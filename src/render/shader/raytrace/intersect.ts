@@ -454,7 +454,7 @@ export const INTERSECTION_MESH = /* glsl */`
       lightResult,
       bvhMap,
       bvhMapSize,
-      1.0 / bvhMapSizeInv,
+      bvhMapSizeInv,
       bvhRootAddr,
       origin,
       dir,
