@@ -92,7 +92,7 @@ implements Light<DirectionalShadowLightOptions> {
             vec3 N = mInfo.normal;
             result +=
               lightInten *
-              calcDirectional(L, V, N, mInfo.position, light) *
+              calcDirectionalLight(L, V, N, mInfo.position, light) *
               calcBRDF(L, V, N, mInfo);
           }
         }

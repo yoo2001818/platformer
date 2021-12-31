@@ -5,7 +5,7 @@ export const POINT_LIGHT = /* glsl */`
     vec3 intensity;
   };
 
-  vec3 calcPoint(
+  vec3 calcPointLight(
     out vec3 L,
     vec3 V,
     vec3 N,
@@ -35,13 +35,25 @@ export const POINT_LIGHT = /* glsl */`
   }
 `;
 
+export const POINT_LIGHT_RAYTRACE = /* glsl */`
+  vec3 shootPointLight(
+    vec3 hitPos,
+    PointLight light,
+    vec3 randVec3Val
+  ) {
+    vec3 L = light.position - hitPos;
+    L += sampleSphere(randVec3Val) * light.intensity.y;
+    return L;
+  }
+`;
+
 export const DIRECTIONAL_LIGHT = /* glsl */`
   struct DirectionalLight {
     vec4 direction;
     vec3 color;
   };
 
-  vec3 calcDirectional(
+  vec3 calcDirectionalLight(
     out vec3 L,
     vec3 V,
     vec3 N,
@@ -51,6 +63,16 @@ export const DIRECTIONAL_LIGHT = /* glsl */`
     L = normalize(light.direction.xyz);
     float dotNL = max(dot(N, L), 0.0);
     return light.direction.w * dotNL * light.color;
+  }
+`;
+
+export const DIRECTIONAL_LIGHT_RAYTRACE = /* glsl */`
+  vec3 shootDirectionalLight(
+    vec3 hitPos,
+    DirectionalLight light
+  ) {
+    vec3 L = light.position - hitPos;
+    return L;
   }
 `;
 

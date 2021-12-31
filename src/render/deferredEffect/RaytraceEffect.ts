@@ -172,7 +172,7 @@ export class RaytraceEffect implements DeferredEffect {
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > -0.001)) {
                   if (i == 0) {
                     if (uPassId == 0) {
-                      directColor += vec4(calcPoint(prevOrigin, mInfo, light) * 0.5, 1.0);
+                      directColor += vec4(calcPointLight(prevOrigin, mInfo, light) * 0.5, 1.0);
                     }
                   } else {
                     lightingColor += max(dot(mInfo.normal, L), 0.0) *

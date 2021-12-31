@@ -15,10 +15,10 @@ import {MaterialInjector} from '../raytrace/MaterialInjector';
 import {Sobol} from '../raytrace/Sobol';
 import {WorldBVH} from '../raytrace/WorldBVH';
 import {Renderer} from '../Renderer';
-import {POINT_LIGHT} from '../shader/light';
+import {POINT_LIGHT, POINT_LIGHT_RAYTRACE} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
-import {INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
+import {INTERSECTION, INTERSECTION_MESH, MATERIAL_INJECTOR} from '../shader/raytrace/intersect';
 import {RTPBR} from '../shader/raytracepbr';
 import {SAMPLE} from '../shader/sample';
 import {FILMIC} from '../shader/tonemap';
@@ -108,15 +108,17 @@ export class RaytracedPipeline implements Pipeline {
           precision highp float;
           precision highp sampler2D;
 
+          #define PI 3.141592
+
           ${INTERSECTION}
           ${PBR}
+          ${SAMPLE}
           ${MATERIAL_INFO}
           ${POINT_LIGHT}
+          ${POINT_LIGHT_RAYTRACE}
           ${MATERIAL_INJECTOR}
-          ${SAMPLE}
+          ${INTERSECTION_MESH}
           ${RTPBR}
-
-          #define PI 3.141592
 
           varying vec2 vPosition;
 
@@ -155,11 +157,14 @@ export class RaytracedPipeline implements Pipeline {
             float weight = 1.0;
             float specularDisabled = 0.0;
 
-            for (int i = 0; i < 5; i += 1) {
-              bool isIntersecting = intersectBVH(
-                bvhResult,
+            const int NUM_SAMPLES = 3;
+            for (int i = 0; i < NUM_SAMPLES; i += 1) {
+              bool isIntersecting = intersectMesh(
+                mInfo,
+                uAtlasMap,
                 uBVHMap,
-                uBVHMapSize, 1.0 / uBVHMapSize,
+                uBVHMapSize,
+                1.0 / uBVHMapSize,
                 0,
                 origin,
                 dir
@@ -167,38 +172,12 @@ export class RaytracedPipeline implements Pipeline {
               if (!isIntersecting) {
                 break;
               }
-              BVHBLASLeaf blas;
-              bvhBLASFetch(blas, bvhResult.faceAddr, uBVHMap, uBVHMapSize, 1.0 / uBVHMapSize);
-              vec3 normal = vec3(0.0);
-              normal += blas.normal[0] * bvhResult.barycentric.x;
-              normal += blas.normal[1] * bvhResult.barycentric.y;
-              normal += blas.normal[2] * bvhResult.barycentric.z;
-              normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
-              if (dot(normal, dir) > 0.0) {
-                // normal *= -1.0;
-              }
-              vec2 texCoord = vec2(0.0);
-              texCoord += blas.texCoord[0] * bvhResult.barycentric.x;
-              texCoord += blas.texCoord[1] * bvhResult.barycentric.y;
-              texCoord += blas.texCoord[2] * bvhResult.barycentric.z;
-              unpackMaterialInfoBVH(
-                mInfo,
-                bvhResult.position,
-                normal,
-                texCoord,
-                uAtlasMap,
-                int(bvhResult.childId),
-                uBVHMap,
-                uBVHMapSize,
-                1.0 / uBVHMapSize
-              );
               vec3 prevOrigin = origin;
               origin = mInfo.position + mInfo.normal * 0.0001;
               // lighting 
               vec3 lightingColor = vec3(0.0);
               {
-                vec3 L = light.position - mInfo.position;
-                L += sampleSphere(randVec3(uRandomMap)) * light.intensity.y;
+                vec3 L = shootPointLight(mInfo.position, light, randVec3(uRandomMap));
                 float lightDist = length(L);
                 L /= lightDist;
                 // Check occulsion
@@ -209,14 +188,15 @@ export class RaytracedPipeline implements Pipeline {
                   uBVHMapSize, 1.0 / uBVHMapSize,
                   0,
                   origin,
-                  L
+                  L,
+                  lightDist
                 );
                 
                 if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
                   vec3 L;
                   vec3 V = -dir;
                   vec3 N = mInfo.normal;
-                  vec3 radiance = calcPoint(L, V, N, mInfo.position, light);
+                  vec3 radiance = calcPointLight(L, V, N, mInfo.position, light);
                   if (specularDisabled > 0.5) {
                     float dotNL = max(dot(N, L), 0.0);
                     vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
@@ -227,55 +207,57 @@ export class RaytracedPipeline implements Pipeline {
                 }
                 resultColor += lightingColor * attenuation;
               }
-              vec3 N = mInfo.normal;
-              vec3 V = -dir;
-              vec3 L;
-              vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
-              vec3 specColor = mix(vec3(0.04), mInfo.albedo, mInfo.metalic);
-              // determine if we should use diffuse or not
-              float probDiffuse = mix(probabilityToSampleDiffuse(diffuseColor, specColor), 1.0, specularDisabled);
-              if (probDiffuse > randFloat(uRandomMap)) {
-                // diffuse
-                L = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
-                attenuation *= diffuseColor / probDiffuse;
-                specularDisabled = 1.0;
-              } else {
-                // specular
-                float roughness = max(mInfo.roughness * mInfo.roughness, 0.0001);
+              if (i < NUM_SAMPLES - 1) {
+                vec3 N = mInfo.normal;
+                vec3 V = -dir;
+                vec3 L;
+                vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
+                vec3 specColor = mix(vec3(0.04), mInfo.albedo, mInfo.metalic);
+                // determine if we should use diffuse or not
+                float probDiffuse = mix(probabilityToSampleDiffuse(diffuseColor, specColor), 1.0, specularDisabled);
+                if (probDiffuse > randFloat(uRandomMap)) {
+                  // diffuse
+                  L = normalize(mInfo.normal + sampleSphere(randVec3(uRandomMap)));
+                  attenuation *= diffuseColor / probDiffuse;
+                  specularDisabled = 1.0;
+                } else {
+                  // specular
+                  float roughness = max(mInfo.roughness * mInfo.roughness, 0.0001);
 
-                vec3 H = importanceSampleGGX(randVec2(uRandomMap), mInfo.normal, roughness);
-                L = reflect(dir, H);
+                  vec3 H = importanceSampleGGX(randVec2(uRandomMap), mInfo.normal, roughness);
+                  L = reflect(dir, H);
 
-                float dotNL = max(dot(N, L), 0.0);
-                float dotNV = max(dot(N, V), 0.0);
+                  float dotNL = max(dot(N, L), 0.0);
+                  float dotNV = max(dot(N, V), 0.0);
 
-                float dotNH = max(dot(N, H), 0.0);
-                float dotHV = max(dot(H, V), 0.0);
+                  float dotNH = max(dot(N, H), 0.0);
+                  float dotHV = max(dot(H, V), 0.0);
 
-                float D = distributionGGX(dotNH, roughness);
-                vec3 F = fresnelSchlick(dotHV, specColor);
-                float G = geometrySmith(roughness, dotNV, dotNL);
+                  float D = distributionGGX(dotNH, roughness);
+                  vec3 F = fresnelSchlick(dotHV, specColor);
+                  float G = geometrySmith(roughness, dotNV, dotNL);
 
-                vec3 spec = specCookTorr(D, F, G, dotNL, dotNV);
+                  vec3 spec = specCookTorr(D, F, G, dotNL, dotNV);
 
-                float specPdf = pdfDistributionGGX(
-                  dotNH,
-                  max(dot(H, L), 0.0),
-                  roughness
-                );
-                
-                float pdf = specPdf * (1.0 - probDiffuse);
-                attenuation *= dotNL * spec / max(pdf, 0.001);
-                // specularDisabled = 1.0;
-              }
-              dir = L;
-              // russian roulette
-              if (i >= 2) {
-                float q = 1.0 - luminance(attenuation);
-                if (randFloat(uRandomMap) < q) {
-                  break;
+                  float specPdf = pdfDistributionGGX(
+                    dotNH,
+                    max(dot(H, L), 0.0),
+                    roughness
+                  );
+                  
+                  float pdf = specPdf * (1.0 - probDiffuse);
+                  attenuation *= dotNL * spec / max(pdf, 0.001);
+                  // specularDisabled = 1.0;
                 }
-                attenuation /= 1.0 - q;
+                dir = L;
+                // russian roulette
+                if (i >= 2) {
+                  float q = 1.0 - luminance(attenuation);
+                  if (randFloat(uRandomMap) < q) {
+                    break;
+                  }
+                  attenuation /= 1.0 - q;
+                }
               }
             }
             float threshold = 100.0;

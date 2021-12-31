@@ -48,7 +48,7 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
           vec3 V = normalize(viewPos - mInfo.position);
           vec3 N = mInfo.normal;
           result +=
-            calcDirectional(L, V, N, mInfo.position, light) *
+            calcDirectionalLight(L, V, N, mInfo.position, light) *
             calcBRDF(L, V, N, mInfo);
         }
       `,
