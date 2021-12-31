@@ -99,6 +99,7 @@ const LIGHT_BLOCK: LightPipelineShaderBlock = {
 
 export class PointLight implements Light<PointLightOptions> {
   type = 'point';
+  canRaytrace = true;
   options: PointLightOptions;
   buffer: GLArrayBuffer;
 
@@ -310,7 +311,7 @@ export class PointLight implements Light<PointLightOptions> {
     buffer[position + 4] = colorVec[0];
     buffer[position + 5] = colorVec[1];
     buffer[position + 6] = colorVec[2];
-    buffer[position + 8] = options.power;
+    buffer[position + 8] = options.power / Math.PI;
     buffer[position + 9] = options.radius;
     buffer[position + 10] = options.range;
   }

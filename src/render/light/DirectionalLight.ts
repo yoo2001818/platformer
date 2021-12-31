@@ -16,6 +16,7 @@ export interface DirectionalLightOptions {
 
 export class DirectionalLight implements Light<DirectionalLightOptions> {
   type = 'directional';
+  canRaytrace = true;
   options: DirectionalLightOptions;
 
   constructor(options?: DirectionalLightOptions) {

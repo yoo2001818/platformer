@@ -8,6 +8,7 @@ export const RAYTRACE_STEP = /* glsl */`
     bool abort;
   };
 
+
   void initRaytraceContext(
     out RaytraceContext context,
     vec3 dir,
@@ -30,36 +31,42 @@ export const RAYTRACE_STEP = /* glsl */`
     sampler2D bvhMap,
     sampler2D atlasMap,
     vec2 bvhMapSize,
-    int bvhRootAddr
+    int bvhRootAddr,
+    sampler2D lightMap,
+    vec3 lightMapSizeCount
   ) {
     vec3 prevOrigin = context.origin;
     context.origin = mInfo.position + mInfo.normal * 0.0001;
 
-    // Sample the light source
-    PointLight light;
-    light.position = vec3(-0.25, 4.7, -3.0);
-    light.color = vec3(1.0);
-    light.intensity = vec3(10.0 / PI, 0.2, 100.0);
-
-    vec3 lightDir = shootPointLight(context.origin, light, randVec3(randomMap));
-    float lightDist = length(lightDir);
-    lightDir /= lightDist;
-
-    vec3 V = -context.dir;
     vec3 N = mInfo.normal;
-    
-    if (!intersectMeshOcclude(context.origin, lightDir, lightDist, bvhMap, bvhMapSize, 0)) {
-      vec3 L;
-      vec3 radiance = calcPointLight(L, V, N, mInfo.position, light);
-      vec3 lightingColor;
-      if (context.specDisabled > 0.5) {
-        float dotNL = max(dot(N, L), 0.0);
-        vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
-        lightingColor = diffuseColor * dotNL * radiance / PI;
-      } else {
-        lightingColor = calcBRDF(L, V, N, mInfo) * radiance;
+    vec3 V = -context.dir;
+
+    // Sample the light source
+    vec2 lightMapSize = lightMapSizeCount.xy;
+    vec2 lightMapSizeInv = 1.0 / lightMapSize;
+    int lightAddr = LIGHT_MAP_SIZE * int(randFloat(randomMap) * lightMapSizeCount.z);
+    int lightMapType = lightMapUnpackType(lightAddr, lightMap, lightMapSize, lightMapSizeInv);
+    if (lightMapType == 1) {
+      PointLight light;
+      lightMapUnpackPoint(light, lightAddr, lightMap, lightMapSize, lightMapSizeInv);
+
+      vec3 lightDir = shootPointLight(context.origin, light, randVec3(randomMap));
+      float lightDist = length(lightDir);
+      lightDir /= lightDist;
+
+      if (!intersectMeshOcclude(context.origin, lightDir, lightDist, bvhMap, bvhMapSize, 0)) {
+        vec3 L;
+        vec3 radiance = calcPointLight(L, V, N, mInfo.position, light);
+        vec3 lightingColor;
+        if (context.specDisabled > 0.5) {
+          float dotNL = max(dot(N, L), 0.0);
+          vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
+          lightingColor = diffuseColor * dotNL * radiance / PI;
+        } else {
+          lightingColor = calcBRDF(L, V, N, mInfo) * radiance;
+        }
+        context.li += lightingColor * context.beta;
       }
-      context.li += lightingColor * context.beta;
     }
 
     // Run BRDF

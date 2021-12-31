@@ -16,6 +16,7 @@ export interface LightPipelineShaderBlock {
 
 export interface Light<T = any> {
   type: string;
+  canRaytrace: boolean;
   getOptions(): T;
   setOptions(value: T): void;
   getShaderBlock(numLights: number, renderer: Renderer): LightShaderBlock;

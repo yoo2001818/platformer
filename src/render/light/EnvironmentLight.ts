@@ -19,6 +19,7 @@ export interface EnvironmentLightOptions {
 
 export class EnvironmentLight implements Light<EnvironmentLightOptions> {
   type = 'environment';
+  canRaytrace = false;
   options: EnvironmentLightOptions;
 
   constructor(options?: EnvironmentLightOptions) {

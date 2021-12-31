@@ -69,25 +69,31 @@ export class LightTexture {
     }
     this.lastVersion = entityStore.version;
 
+    const lightComp = entityStore.getComponent<Component<Light>>('light');
+
     const entities: Entity[] = [];
     entityStore.forEachWith(['transform', 'light'], (entity) => {
-      entities.push(entity);
+      const light = entity.get(lightComp)!;
+      if (light.canRaytrace) {
+        entities.push(entity);
+      }
     });
-
-    const lightComp = entityStore.getComponent<Component<Light>>('light');
 
     // Determine required texels
     const requiredTexels = entities.length * LIGHT_SIZE;
 
     // Determine the width / height of the resulting texture. For simplicity,
     // we'll just use multiples of 1024.
+    // NOTE: We can have no lights in the scene (although that means nothing
+    // gets rendered). We still have to generate light texture though, so just
+    // send an empty texture with height of 1.
     const width = 1024;
-    const height = Math.ceil(requiredTexels / 1024);
+    const height = Math.max(Math.ceil(requiredTexels / 1024), 1);
 
     const output = new Float32Array(width * height * 4);
     entities.forEach((entity, i) => {
       const light = entity.get(lightComp)!;
-      light.writeTexture(entity, output, i * LIGHT_SIZE);
+      light.writeTexture(entity, output, i * LIGHT_SIZE * 4);
     });
 
     // Update the texture...

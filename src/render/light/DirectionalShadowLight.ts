@@ -25,6 +25,7 @@ export interface DirectionalShadowLightOptions {
 export class DirectionalShadowLight
 implements Light<DirectionalShadowLightOptions> {
   type = 'directional';
+  canRaytrace = true;
   options: DirectionalShadowLightOptions;
   atlases: AtlasItem[] = [];
   viewProjections: mat4[];

@@ -22,6 +22,8 @@ import {RAYTRACE_STEP} from '../shader/raytrace/step';
 import {RAYTRACE_PBR} from '../shader/raytrace/pbr';
 import {SAMPLE} from '../shader/sample';
 import {FILMIC} from '../shader/tonemap';
+import {LightTexture} from '../raytrace/LightTexture';
+import {LIGHT_MAP} from '../shader/raytrace/lightMap';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -32,6 +34,7 @@ export class RaytracedPipeline implements Pipeline {
   renderer: Renderer;
   worldBVH: WorldBVH;
   bvhTexture: BVHTexture;
+  lightTexture: LightTexture;
   materialInjector: MaterialInjector;
   rayBuffer: GLTexture2D | null = null;
   rayFrameBuffer: GLFrameBuffer | null = null;
@@ -55,11 +58,13 @@ export class RaytracedPipeline implements Pipeline {
       worldBVH,
       this.materialInjector,
     );
+    this.lightTexture = new LightTexture(renderer.entityStore);
   }
 
   dispose(): void {
     this.bvhTexture.dispose();
     this.materialInjector.dispose();
+    this.lightTexture.dispose();
     this.rayBuffer?.dispose();
     this.rayFrameBuffer?.dispose();
     this.rayTileBuffer.dispose();
@@ -114,6 +119,7 @@ export class RaytracedPipeline implements Pipeline {
           ${MATERIAL_INFO}
           ${POINT_LIGHT}
           ${POINT_LIGHT_RAYTRACE}
+          ${LIGHT_MAP}
           ${MATERIAL_INJECTOR}
           ${INTERSECTION_MESH}
           ${RAYTRACE_PBR}
@@ -126,6 +132,8 @@ export class RaytracedPipeline implements Pipeline {
           uniform sampler2D uBVHMap;
           uniform vec2 uBVHMapSize;
           uniform sampler2D uAtlasMap;
+          uniform sampler2D uLightMap;
+          uniform vec3 uLightMapSize;
           uniform sampler2D uRandomMap;
           uniform vec2 uSeed;
           uniform vec2 uScreenSize;
@@ -156,7 +164,7 @@ export class RaytracedPipeline implements Pipeline {
               if (!isIntersecting) {
                 break;
               }
-              raytraceStep(context, mInfo, i, i == NUM_SAMPLES - 1, uRandomMap, uBVHMap, uAtlasMap, uBVHMapSize, 0);
+              raytraceStep(context, mInfo, i, i == NUM_SAMPLES - 1, uRandomMap, uBVHMap, uAtlasMap, uBVHMapSize, 0, uLightMap, uLightMapSize);
               if (context.abort) {
                 break;
               }
@@ -323,6 +331,7 @@ export class RaytracedPipeline implements Pipeline {
       // TODO: Don't update it unless any mesh has moved
       this.worldBVH.update();
       this.bvhTexture.update();
+      this.lightTexture.update();
 
       // Invalidate / clear the framebuffer
       glRenderer.clear(this.rayFrameBuffer!);
@@ -390,6 +399,12 @@ export class RaytracedPipeline implements Pipeline {
           this.bvhTexture.bvhTexture.getHeight(),
         ],
         uAtlasMap: this.materialInjector.texture,
+        uLightMap: this.lightTexture.lightTexture,
+        uLightMapSize: [
+          this.lightTexture.lightTexture.getWidth(),
+          this.lightTexture.lightTexture.getHeight(),
+          this.lightTexture.numLights,
+        ],
         uSeed: this.randomPos,
         uRandomMap: this.randomMap,
         uRandomMapSize: [randomMapWidth, randomMapHeight],
