@@ -396,21 +396,21 @@ export const MATERIAL_INJECTOR = /* glsl */`
 export const INTERSECTION_MESH = /* glsl */`
   bool intersectMesh(
     out MaterialInfo mInfo,
-    sampler2D atlasMap,
-    sampler2D bvhMap,
-    vec2 bvhMapSize,
-    vec2 bvhMapSizeInv,
-    int rootAddr,
     vec3 origin,
-    vec3 dir
+    vec3 dir,
+    sampler2D bvhMap,
+    sampler2D atlasMap,
+    vec2 bvhMapSize,
+    int bvhRootAddr
   ) {
+    vec2 bvhMapSizeInv = 1.0 / bvhMapSize;
     BVHIntersectResult bvhResult;
     bool isIntersecting = intersectBVH(
       bvhResult,
       bvhMap,
       bvhMapSize,
       bvhMapSizeInv,
-      rootAddr,
+      bvhRootAddr,
       origin,
       dir,
       BVH_MAX_DIST
@@ -438,5 +438,28 @@ export const INTERSECTION_MESH = /* glsl */`
       bvhMapSizeInv
     );
     return true;
+  }
+
+  bool intersectMeshOcclude(
+    vec3 origin,
+    vec3 dir,
+    float maxDist,
+    sampler2D bvhMap,
+    vec2 bvhMapSize,
+    int bvhRootAddr
+  ) {
+    vec2 bvhMapSizeInv = 1.0 / bvhMapSize;
+    BVHIntersectResult lightResult;
+    bool isLightIntersecting = intersectBVH(
+      lightResult,
+      bvhMap,
+      bvhMapSize,
+      1.0 / bvhMapSizeInv,
+      bvhRootAddr,
+      origin,
+      dir,
+      maxDist
+    );
+    return isLightIntersecting && (lightResult.rayDist - maxDist <= 0.000001);
   }
 `;

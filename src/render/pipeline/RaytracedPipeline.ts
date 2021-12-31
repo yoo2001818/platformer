@@ -12,7 +12,6 @@ import {MaterialVertexShaderBlock} from '../Material';
 import {MeshComponent} from '../MeshComponent';
 import {BVHTexture} from '../raytrace/BVHTexture';
 import {MaterialInjector} from '../raytrace/MaterialInjector';
-import {Sobol} from '../raytrace/Sobol';
 import {WorldBVH} from '../raytrace/WorldBVH';
 import {Renderer} from '../Renderer';
 import {POINT_LIGHT, POINT_LIGHT_RAYTRACE} from '../shader/light';
@@ -45,7 +44,6 @@ export class RaytracedPipeline implements Pipeline {
   randomMap: GLTexture2D | null = null;
   cameraUniforms: {[key: string]: unknown;} = {};
   worldVersion = -1;
-  sobol: Sobol;
 
   constructor(renderer: Renderer, worldBVH: WorldBVH) {
     this.renderer = renderer;
@@ -56,7 +54,6 @@ export class RaytracedPipeline implements Pipeline {
       worldBVH,
       this.materialInjector,
     );
-    this.sobol = new Sobol(2);
   }
 
   dispose(): void {
@@ -159,40 +156,21 @@ export class RaytracedPipeline implements Pipeline {
 
             const int NUM_SAMPLES = 3;
             for (int i = 0; i < NUM_SAMPLES; i += 1) {
-              bool isIntersecting = intersectMesh(
-                mInfo,
-                uAtlasMap,
-                uBVHMap,
-                uBVHMapSize,
-                1.0 / uBVHMapSize,
-                0,
-                origin,
-                dir
-              );
+              bool isIntersecting = intersectMesh(mInfo, origin, dir, uBVHMap, uAtlasMap, uBVHMapSize, 0);
               if (!isIntersecting) {
                 break;
               }
               vec3 prevOrigin = origin;
               origin = mInfo.position + mInfo.normal * 0.0001;
               // lighting 
-              vec3 lightingColor = vec3(0.0);
               {
+                vec3 lightingColor = vec3(0.0);
                 vec3 L = shootPointLight(mInfo.position, light, randVec3(uRandomMap));
                 float lightDist = length(L);
                 L /= lightDist;
                 // Check occulsion
-                BVHIntersectResult lightResult;
-                bool isLightIntersecting = intersectBVH(
-                  lightResult,
-                  uBVHMap,
-                  uBVHMapSize, 1.0 / uBVHMapSize,
-                  0,
-                  origin,
-                  L,
-                  lightDist
-                );
-                
-                if (!isLightIntersecting || (lightResult.rayDist - lightDist > 0.000001)) {
+                bool isLightIntersecting = intersectMeshOcclude(origin, L, lightDist, uBVHMap, uBVHMapSize, 0);
+                if (!isLightIntersecting) {
                   vec3 L;
                   vec3 V = -dir;
                   vec3 N = mInfo.normal;
@@ -204,8 +182,8 @@ export class RaytracedPipeline implements Pipeline {
                   } else {
                     lightingColor += calcBRDF(L, V, N, mInfo) * radiance;
                   }
+                  resultColor += lightingColor * attenuation;
                 }
-                resultColor += lightingColor * attenuation;
               }
               if (i < NUM_SAMPLES - 1) {
                 vec3 N = mInfo.normal;
@@ -428,11 +406,9 @@ export class RaytracedPipeline implements Pipeline {
 
       this.worldVersion = entityStore.version;
       this.rayTilePos = 0;
-      this.sobol.reset();
 
-      const next = this.sobol.next();
-      this.randomPos[0] = next[0] * (randomMapWidth - 1) / randomMapWidth;
-      this.randomPos[1] = next[1] * (randomMapHeight - 1) / randomMapHeight;
+      this.randomPos[0] = Math.random();
+      this.randomPos[1] = Math.random();
     }
     this.materialInjector.updateTexture();
     if (!this.materialInjector.isReady()) {
@@ -463,9 +439,10 @@ export class RaytracedPipeline implements Pipeline {
     const nextScanId = Math.floor((this.rayTilePos + tilePerFrame) / (tw * th));
     this.numPasses = nextScanId;
     if (prevScanId !== nextScanId) {
-      const next = this.sobol.next();
-      this.randomPos[0] = next[0] * (randomMapWidth - 1) / randomMapWidth;
-      this.randomPos[1] = next[1] * (randomMapHeight - 1) / randomMapHeight;
+      this.randomPos[0] =
+        Math.floor(Math.random() * randomMapWidth) / randomMapWidth;
+      this.randomPos[1] =
+        Math.floor(Math.random() * randomMapHeight) / randomMapHeight;
       this.refreshRandomMap();
     }
     this.rayTileBuffer.set(tileData);
