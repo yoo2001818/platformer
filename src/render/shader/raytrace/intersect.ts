@@ -23,6 +23,7 @@ export const INTERSECTION = /* glsl */`
   bool intersectRayTriangle(
     out vec3 outBarycentric,
     out float outDist,
+    out vec3 normal,
     vec3 v0,
     vec3 v1,
     vec3 v2,
@@ -31,7 +32,7 @@ export const INTERSECTION = /* glsl */`
   ) {
     vec3 e0 = v1 - v0;
     vec3 e1 = v0 - v2;
-    vec3 normal = cross(e1, e0);
+    normal = cross(e1, e0);
     vec3 e2 = (1.0 / dot(normal, dir)) * (v0 - origin);
     vec3 i = cross(dir, e2);
     outBarycentric.y = dot(i, e1);
@@ -70,9 +71,11 @@ export const INTERSECTION = /* glsl */`
   struct BVHIntersectResult {
     float childId;
     mat4 matrix;
+    mat4 invMatrix;
     int faceAddr;
     vec3 position;
     vec3 barycentric;
+    vec3 hardNormal;
     float rayDist;
   };
 
@@ -203,6 +206,7 @@ export const INTERSECTION = /* glsl */`
     int blasResultAddr = -1;
     vec3 blasResultPos;
     vec3 blasResultBarycentric;
+    vec3 blasResultHardNormal;
     float blasResultDist;
     float nearDist;
     bool hasIntersection = false;
@@ -258,9 +262,10 @@ export const INTERSECTION = /* glsl */`
         vec3 v2 = bvhTexelFetch(childAddr + 2, bvhMap, bvhMapSize, bvhMapSizeInv).xyz;
         vec3 resultPos;
         vec3 resultBarycentric;
+        vec3 resultNormal;
         float resultDist;
         bool isIntersecting = intersectRayTriangle(
-          resultBarycentric, resultDist,
+          resultBarycentric, resultDist, resultNormal,
           v0, v1, v2,
           blasOrigin,
           blasDir
@@ -273,6 +278,7 @@ export const INTERSECTION = /* glsl */`
           blasResultAddr = childAddr;
           blasResultPos = resultPos;
           blasResultBarycentric = resultBarycentric;
+          blasResultHardNormal = resultNormal;
           blasResultDist = resultDist;
         }
         blasOffset += 1;
@@ -358,12 +364,22 @@ export const INTERSECTION = /* glsl */`
               outResult.faceAddr = blasResultAddr;
               outResult.position = resultPos;
               outResult.barycentric = blasResultBarycentric;
+              outResult.hardNormal = blasResultHardNormal;
               outResult.rayDist = resultDist;
               outResult.matrix = tlasLeaf.matrix;
+              outResult.invMatrix = tlasLeaf.invMatrix;
             }
           }
         }
       }
+    }
+    if (hasIntersection) {
+      mat4 invMatrix = outResult.invMatrix;
+      outResult.hardNormal = normalize(mat3(
+        invMatrix[0].x, invMatrix[1].x, invMatrix[2].x,
+        invMatrix[0].y, invMatrix[1].y, invMatrix[2].y,
+        invMatrix[0].z, invMatrix[1].z, invMatrix[2].z
+      ) * outResult.hardNormal);
     }
     return hasIntersection;
   }
@@ -423,11 +439,14 @@ export const INTERSECTION_MESH = /* glsl */`
     }
     BVHBLASLeaf blas;
     bvhBLASFetch(blas, bvhResult.faceAddr, bvhMap, bvhMapSize, bvhMapSizeInv);
+    mInfo.hardNormal = bvhResult.hardNormal;
     vec3 normal = blas.normal * bvhResult.barycentric;
-    normal = normalize((bvhResult.matrix * vec4(normal, 0.0)).xyz);
-    if (dot(normal, dir) > 0.0) {
-      // normal *= -1.0;
-    }
+    mat4 invMatrix = bvhResult.invMatrix;
+    normal = normalize(mat3(
+      invMatrix[0].x, invMatrix[1].x, invMatrix[2].x,
+      invMatrix[0].y, invMatrix[1].y, invMatrix[2].y,
+      invMatrix[0].z, invMatrix[1].z, invMatrix[2].z
+    ) * normal);
     vec2 texCoord = blas.texCoord * bvhResult.barycentric;
     unpackMaterialInfoBVH(
       mInfo,

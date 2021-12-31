@@ -36,11 +36,12 @@ export const RAYTRACE_STEP = /* glsl */`
     vec3 lightMapSizeCount
   ) {
     vec3 prevOrigin = context.origin;
-    if (dot(context.dir, mInfo.normal) > 0.0) {
+    if (dot(context.dir, mInfo.hardNormal) > 0.0) {
       // The normal is facing away from the camera; invert it
+      mInfo.hardNormal *= -1.0;
       mInfo.normal *= -1.0;
     }
-    context.origin = mInfo.position + mInfo.normal * 0.0001;
+    context.origin = mInfo.position + mInfo.hardNormal * 0.0001;
 
     vec3 N = mInfo.normal;
     vec3 V = -context.dir;
@@ -71,7 +72,7 @@ export const RAYTRACE_STEP = /* glsl */`
       radiance = calcDirectionalLight(L, V, N, mInfo.position, light);
     }
 
-    if (lightDist > 0.0) {
+    if (lightDist > 0.0 && (radiance.x + radiance.y + radiance.z) > 0.0) {
       if (!intersectMeshOcclude(context.origin, lightDir, lightDist, bvhMap, bvhMapSize, 0)) {
         vec3 lightingColor;
         if (context.specDisabled > 0.5) {

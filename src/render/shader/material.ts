@@ -13,6 +13,7 @@ export const MATERIAL_INFO = /* glsl */`
     vec3 albedo;
     vec3 normal;
     vec3 position;
+    vec3 hardNormal;
     float depth;
     float roughness;
     float metalic;
