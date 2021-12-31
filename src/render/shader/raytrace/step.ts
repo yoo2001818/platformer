@@ -36,6 +36,10 @@ export const RAYTRACE_STEP = /* glsl */`
     vec3 lightMapSizeCount
   ) {
     vec3 prevOrigin = context.origin;
+    if (dot(context.dir, mInfo.normal) > 0.0) {
+      // The normal is facing away from the camera; invert it
+      mInfo.normal *= -1.0;
+    }
     context.origin = mInfo.position + mInfo.normal * 0.0001;
 
     vec3 N = mInfo.normal;

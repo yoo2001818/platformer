@@ -169,7 +169,7 @@ export class RaytracedPipeline implements Pipeline {
                 break;
               }
             }
-            float threshold = 100.0;
+            float threshold = 1000.0;
             if (all(lessThan(context.li, vec3(threshold)))) {
               gl_FragColor = vec4(context.li, 1.0);
             } else {
