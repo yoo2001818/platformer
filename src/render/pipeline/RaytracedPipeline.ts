@@ -14,7 +14,7 @@ import {BVHTexture} from '../raytrace/BVHTexture';
 import {MaterialInjector} from '../raytrace/MaterialInjector';
 import {WorldBVH} from '../raytrace/WorldBVH';
 import {Renderer} from '../Renderer';
-import {POINT_LIGHT, POINT_LIGHT_RAYTRACE} from '../shader/light';
+import {DIRECTIONAL_LIGHT, DIRECTIONAL_LIGHT_RAYTRACE, POINT_LIGHT, POINT_LIGHT_RAYTRACE} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {INTERSECTION, INTERSECTION_MESH, MATERIAL_INJECTOR} from '../shader/raytrace/intersect';
@@ -119,6 +119,8 @@ export class RaytracedPipeline implements Pipeline {
           ${MATERIAL_INFO}
           ${POINT_LIGHT}
           ${POINT_LIGHT_RAYTRACE}
+          ${DIRECTIONAL_LIGHT}
+          ${DIRECTIONAL_LIGHT_RAYTRACE}
           ${LIGHT_MAP}
           ${MATERIAL_INJECTOR}
           ${INTERSECTION_MESH}

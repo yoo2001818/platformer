@@ -48,4 +48,19 @@ export const LIGHT_MAP = /* glsl */`
     vec4 tex3 = lightMapTexelFetch(addr + 2, lightMap, lightMapSize, lightMapSizeInv);
     light.intensity = tex3.xyz;
   }
+
+  void lightMapUnpackDirectional(
+    out DirectionalLight light,
+    int addr,
+    sampler2D lightMap,
+    vec2 lightMapSize,
+    vec2 lightMapSizeInv
+  ) {
+    // dir, (color, power)
+    vec4 tex1 = lightMapTexelFetch(addr, lightMap, lightMapSize, lightMapSizeInv);
+    light.direction.xyz = tex1.xyz;
+    vec4 tex2 = lightMapTexelFetch(addr + 1, lightMap, lightMapSize, lightMapSizeInv);
+    light.color = tex2.xyz;
+    light.direction.w = tex2.w;
+  }
 `;

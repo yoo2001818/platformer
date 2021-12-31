@@ -50,17 +50,29 @@ export const RAYTRACE_STEP = /* glsl */`
     vec2 lightMapSizeInv = 1.0 / lightMapSize;
     int lightAddr = LIGHT_MAP_SIZE * int(randFloat(randomMap) * lightMapSizeCount.z);
     int lightMapType = lightMapUnpackType(lightAddr, lightMap, lightMapSize, lightMapSizeInv);
+    vec3 lightDir;
+    float lightDist = 0.0;
+    vec3 radiance;
+    vec3 L;
     if (lightMapType == 1) {
       PointLight light;
       lightMapUnpackPoint(light, lightAddr, lightMap, lightMapSize, lightMapSizeInv);
 
-      vec3 lightDir = shootPointLight(context.origin, light, randVec3(randomMap));
-      float lightDist = length(lightDir);
+      lightDir = shootPointLight(context.origin, light, randVec3(randomMap));
+      lightDist = length(lightDir);
       lightDir /= lightDist;
+      radiance = calcPointLight(L, V, N, mInfo.position, light);
+    } else if (lightMapType == 2) {
+      DirectionalLight light;
+      lightMapUnpackDirectional(light, lightAddr, lightMap, lightMapSize, lightMapSizeInv);
 
+      lightDir = shootDirectionalLight(context.origin, light);
+      lightDist = 100000.0;
+      radiance = calcDirectionalLight(L, V, N, mInfo.position, light);
+    }
+
+    if (lightDist > 0.0) {
       if (!intersectMeshOcclude(context.origin, lightDir, lightDist, bvhMap, bvhMapSize, 0)) {
-        vec3 L;
-        vec3 radiance = calcPointLight(L, V, N, mInfo.position, light);
         vec3 lightingColor;
         if (context.specDisabled > 0.5) {
           float dotNL = max(dot(N, L), 0.0);
@@ -76,7 +88,6 @@ export const RAYTRACE_STEP = /* glsl */`
     // Run BRDF
     if (lastStep) return;
 
-    vec3 L;
     vec3 diffuseColor = mix(mInfo.albedo, vec3(0.0), mInfo.metalic);
     vec3 specColor = mix(vec3(0.04), mInfo.albedo, mInfo.metalic);
     // determine if we should use diffuse or not

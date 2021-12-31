@@ -71,7 +71,7 @@ export const DIRECTIONAL_LIGHT_RAYTRACE = /* glsl */`
     vec3 hitPos,
     DirectionalLight light
   ) {
-    vec3 L = light.position - hitPos;
+    vec3 L = light.direction.xyz;
     return L;
   }
 `;
