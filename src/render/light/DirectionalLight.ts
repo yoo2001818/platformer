@@ -2,9 +2,11 @@ import {vec3} from 'gl-matrix';
 
 import {Transform} from '../../3d/Transform';
 import {Entity} from '../../core/Entity';
+import {convertFloatArray} from '../gl/uniform/utils';
 import {Renderer} from '../Renderer';
 import {DIRECTIONAL_LIGHT} from '../shader/light';
 
+import {DIRECTIONAL_LIGHT_VALUE} from './constant';
 import {Light, LightShaderBlock} from './Light';
 
 export interface DirectionalLightOptions {
@@ -81,6 +83,27 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
 
   prepare(entities: Entity[], renderer: Renderer): void {
     // noop
+  }
+
+  writeTexture(entity: Entity, buffer: Float32Array, position: number): void {
+    // dir, color, power
+    const {options} = this;
+    const transform = entity.get<Transform>('transform')!;
+    if (transform == null) {
+      return;
+    }
+    const dir = vec3.create();
+    vec3.set(dir, 0, 0, 1);
+    vec3.transformQuat(dir, dir, transform.getRotation());
+    buffer[position + 0] = dir[0];
+    buffer[position + 1] = dir[1];
+    buffer[position + 2] = dir[2];
+    buffer[position + 3] = DIRECTIONAL_LIGHT_VALUE;
+    const colorVec = convertFloatArray(options.color, 3);
+    buffer[position + 4] = colorVec[0];
+    buffer[position + 5] = colorVec[1];
+    buffer[position + 6] = colorVec[2];
+    buffer[position + 7] = options.power;
   }
 
   toJSON(): unknown {

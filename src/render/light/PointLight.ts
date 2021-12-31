@@ -12,6 +12,7 @@ import {DeferredPipeline} from '../pipeline/DeferredPipeline';
 import {Renderer} from '../Renderer';
 import {POINT_LIGHT} from '../shader/light';
 
+import {POINT_LIGHT_VALUE} from './constant';
 import {Light, LightPipelineShaderBlock, LightShaderBlock} from './Light';
 
 export interface PointLightOptions {
@@ -291,6 +292,27 @@ export class PointLight implements Light<PointLightOptions> {
         primCount: quadEntities.length,
       });
     }
+  }
+
+  writeTexture(entity: Entity, buffer: Float32Array, position: number): void {
+    // (pos, type), (color), (power, radius, range)
+    const {options} = this;
+    const transform = entity.get<Transform>('transform')!;
+    if (transform == null) {
+      return;
+    }
+    const pos = transform.getPositionWorld();
+    buffer[position + 0] = pos[0];
+    buffer[position + 1] = pos[1];
+    buffer[position + 2] = pos[2];
+    buffer[position + 3] = POINT_LIGHT_VALUE;
+    const colorVec = convertFloatArray(options.color, 3);
+    buffer[position + 4] = colorVec[0];
+    buffer[position + 5] = colorVec[1];
+    buffer[position + 6] = colorVec[2];
+    buffer[position + 8] = options.power;
+    buffer[position + 9] = options.radius;
+    buffer[position + 10] = options.range;
   }
 
   toJSON(): unknown {

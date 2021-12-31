@@ -92,6 +92,10 @@ export class EnvironmentLight implements Light<EnvironmentLightOptions> {
     // noop
   }
 
+  writeTexture(entity: Entity, buffer: Float32Array, position: number): void {
+    // noop
+  }
+
   toJSON(): unknown {
     return this.options;
   }

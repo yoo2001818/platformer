@@ -19,7 +19,7 @@ import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {INTERSECTION, INTERSECTION_MESH, MATERIAL_INJECTOR} from '../shader/raytrace/intersect';
 import {RAYTRACE_STEP} from '../shader/raytrace/step';
-import {RTPBR} from '../shader/raytracepbr';
+import {RAYTRACE_PBR} from '../shader/raytrace/pbr';
 import {SAMPLE} from '../shader/sample';
 import {FILMIC} from '../shader/tonemap';
 
@@ -116,7 +116,7 @@ export class RaytracedPipeline implements Pipeline {
           ${POINT_LIGHT_RAYTRACE}
           ${MATERIAL_INJECTOR}
           ${INTERSECTION_MESH}
-          ${RTPBR}
+          ${RAYTRACE_PBR}
           ${RAYTRACE_STEP}
 
           varying vec2 vPosition;

@@ -9,8 +9,10 @@ import {DIRECTIONAL_LIGHT} from '../shader/light';
 import {VSM} from '../shader/shadow';
 import {VSMShadowPipeline} from '../shadow/VSMShadowPipeline';
 import {AtlasItem} from '../Atlas';
+import {convertFloatArray} from '../gl/uniform/utils';
 
 import {Light, LightShaderBlock} from './Light';
+import {DIRECTIONAL_LIGHT_VALUE} from './constant';
 
 const NUM_CASCADES = 3;
 const CASCADE_BREAKPOINTS = [-1, 0.05, 0.15, 1];
@@ -275,6 +277,28 @@ implements Light<DirectionalShadowLightOptions> {
         }
       }
     });
+  }
+
+  writeTexture(entity: Entity, buffer: Float32Array, position: number): void {
+    // This will be used by ray tracing routine, so no shadow data are needed
+    // dir, type (1), color, power
+    const {options} = this;
+    const transform = entity.get<Transform>('transform')!;
+    if (transform == null) {
+      return;
+    }
+    const dir = vec3.create();
+    vec3.set(dir, 0, 0, 1);
+    vec3.transformQuat(dir, dir, transform.getRotation());
+    buffer[position + 0] = dir[0];
+    buffer[position + 1] = dir[1];
+    buffer[position + 2] = dir[2];
+    buffer[position + 3] = DIRECTIONAL_LIGHT_VALUE;
+    const colorVec = convertFloatArray(options.color, 3);
+    buffer[position + 4] = colorVec[0];
+    buffer[position + 5] = colorVec[1];
+    buffer[position + 6] = colorVec[2];
+    buffer[position + 7] = options.power;
   }
 
   toJSON(): unknown {
