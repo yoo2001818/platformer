@@ -1,5 +1,6 @@
 export const LIGHT_MAP = /* glsl */`
   const int LIGHT_MAP_SIZE = 4;
+  const int LIGHT_MAP_WIDTH_BITS = 10;
 
   vec4 lightMapTexelFetch(
     int addr,
@@ -7,14 +8,15 @@ export const LIGHT_MAP = /* glsl */`
     vec2 lightMapSize,
     vec2 lightMapSizeInv
   ) {
-    float addrFloat = float(addr);
     #ifdef WEBGL2
+      int y = addr >> LIGHT_MAP_WIDTH_BITS;
       ivec2 coord = ivec2(
-        int(mod(addrFloat, lightMapSize.x)),
-        int(addrFloat * lightMapSizeInv.x)
+        addr - (y << LIGHT_MAP_WIDTH_BITS),
+        y
       );
       return texelFetch(lightMap, coord, 0);
     #else
+      float addrFloat = float(addr);
       vec2 coord = vec2(
         mod(addrFloat, lightMapSize.x),
         addrFloat * lightMapSizeInv.x

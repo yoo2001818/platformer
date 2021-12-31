@@ -42,6 +42,7 @@ export class RaytracedPipeline implements Pipeline {
   rayTileFrame = 1;
   rayTileBuffer: GLArrayBuffer = new GLArrayBuffer(undefined, 'stream');
   numPasses = 0;
+  prevPassTime = 0;
   tileWidth = 1;
   tileHeight = 1;
   randomPos: Float32Array = new Float32Array(2);
@@ -160,7 +161,7 @@ export class RaytracedPipeline implements Pipeline {
             );
             MaterialInfo mInfo;
 
-            const int NUM_SAMPLES = 3;
+            const int NUM_SAMPLES = 4;
             for (int i = 0; i < NUM_SAMPLES; i += 1) {
               bool isIntersecting = intersectMesh(mInfo, context.origin, context.dir, uBVHMap, uAtlasMap, uBVHMapSize, 0);
               if (!isIntersecting) {
@@ -340,6 +341,7 @@ export class RaytracedPipeline implements Pipeline {
 
       this.worldVersion = entityStore.version;
       this.rayTilePos = 0;
+      this.prevPassTime = performance.now();
 
       this.randomPos[0] = Math.random();
       this.randomPos[1] = Math.random();
@@ -378,6 +380,8 @@ export class RaytracedPipeline implements Pipeline {
       this.randomPos[1] =
         Math.floor(Math.random() * randomMapHeight) / randomMapHeight;
       this.refreshRandomMap();
+      console.log(`Pass took ${performance.now() - this.prevPassTime}ms`);
+      this.prevPassTime = performance.now();
     }
     this.rayTileBuffer.set(tileData);
     this.rayTilePos += tilePerFrame;

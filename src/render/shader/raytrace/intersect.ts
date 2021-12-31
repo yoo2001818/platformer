@@ -42,20 +42,23 @@ export const INTERSECTION = /* glsl */`
       all(greaterThanEqual(outBarycentric, vec3(0.0)));
   }
 
+  const int BVH_MAP_WIDTH_BITS = 10;
+
   vec4 bvhTexelFetch(
     int addr,
     sampler2D bvhMap,
     vec2 bvhMapSize,
     vec2 bvhMapSizeInv
   ) {
-    float addrFloat = float(addr);
     #ifdef WEBGL2
+      int y = addr >> BVH_MAP_WIDTH_BITS;
       ivec2 coord = ivec2(
-        int(mod(addrFloat, bvhMapSize.x)),
-        int(addrFloat * bvhMapSizeInv.x)
+        addr - (y << BVH_MAP_WIDTH_BITS),
+        y
       );
       return texelFetch(bvhMap, coord, 0);
     #else
+      float addrFloat = float(addr);
       vec2 coord = vec2(
         mod(addrFloat, bvhMapSize.x),
         addrFloat * bvhMapSizeInv.x
@@ -460,6 +463,6 @@ export const INTERSECTION_MESH = /* glsl */`
       dir,
       maxDist
     );
-    return isLightIntersecting && (lightResult.rayDist - maxDist <= 0.000001);
+    return isLightIntersecting && (lightResult.rayDist <= maxDist - 0.0002);
   }
 `;
