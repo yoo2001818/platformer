@@ -92,14 +92,13 @@ export class Renderer {
       entityStore.getComponent<TransformComponent>('transform')!;
 
     // Skip render if it's not needed
-    /*
     if (
       this.frameVersion === entityStore.version &&
-      !glRenderer.hasResourceChanged()
+      !glRenderer.hasResourceChanged() &&
+      !pipeline.shouldForceRender()
     ) {
       return;
     }
-    */
     this.frameId += 1;
     this.frameTransformVersion = transformComp.globalVersion;
     this.frameVersion = entityStore.version;

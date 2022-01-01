@@ -458,6 +458,10 @@ export class DeferredPipeline implements Pipeline {
     }
   }
 
+  shouldForceRender(): boolean {
+    return false;
+  }
+
   renderVertex(
     onGetShader: (
       id: string,

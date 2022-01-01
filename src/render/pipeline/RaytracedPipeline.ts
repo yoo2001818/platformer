@@ -315,6 +315,10 @@ export class RaytracedPipeline implements Pipeline {
     }
   }
 
+  shouldForceRender(): boolean {
+    return true;
+  }
+
   render(deltaTime?: number): void {
     const {entityStore, glRenderer} = this.renderer;
 

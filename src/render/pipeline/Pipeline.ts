@@ -23,5 +23,6 @@ export interface Pipeline {
     ) => GLShader,
     onDraw: (options: DrawOptions) => void,
   ): void;
+  shouldForceRender(): boolean;
   render(deltaTime?: number): void;
 }

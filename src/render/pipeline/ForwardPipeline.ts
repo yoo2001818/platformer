@@ -173,6 +173,10 @@ export class ForwardPipeline implements Pipeline {
     });
   }
 
+  shouldForceRender(): boolean {
+    return false;
+  }
+
   renderVertex(
     onGetShader: (
       id: string,
