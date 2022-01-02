@@ -317,7 +317,7 @@ export class PointLight implements Light<PointLightOptions> {
     buffer[position + 10] = options.range;
   }
 
-  renderGizmo(entities: Entity[], renderer: Renderer): void {
+  renderGizmo(entities: Entity[], renderer: Renderer, color: string): void {
     const {glRenderer, pipeline} = renderer!;
     const width = glRenderer.getWidth();
     const height = glRenderer.getHeight();
@@ -342,6 +342,7 @@ export class PointLight implements Light<PointLightOptions> {
           uModel: transform.getMatrixWorld(),
           uTexture: POINT_LIGHT_TEX,
           uScale: [32 / width, 32 / height],
+          uColor: color,
         },
         state: {
           depth: false,
@@ -362,7 +363,7 @@ export class PointLight implements Light<PointLightOptions> {
           ...camUniforms,
           uModel: transform.getMatrixWorld(),
           uScale: radius,
-          uColor: '#000000',
+          uColor: color,
         },
         state: {
           depth: false,

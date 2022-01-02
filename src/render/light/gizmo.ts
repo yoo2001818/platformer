@@ -38,9 +38,10 @@ export const GIZMO_QUAD_SHADER = new GLShader(
     varying vec2 vTexCoord;
 
     uniform sampler2D uTexture;
+    uniform vec3 uColor; 
 
     void main() {
-      gl_FragColor = texture2D(uTexture, vTexCoord);
+      gl_FragColor = vec4(uColor, texture2D(uTexture, vTexCoord).a);
     }
   `,
 );

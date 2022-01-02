@@ -25,7 +25,7 @@ export interface DirectionalShadowLightOptions {
 
 export class DirectionalShadowLight
 implements Light<DirectionalShadowLightOptions> {
-  type = 'directional';
+  type = 'directionalShadow';
   canRaytrace = true;
   options: DirectionalShadowLightOptions;
   atlases: AtlasItem[] = [];
@@ -303,7 +303,7 @@ implements Light<DirectionalShadowLightOptions> {
     buffer[position + 7] = options.power;
   }
 
-  renderGizmo(entities: Entity[], renderer: Renderer): void {
+  renderGizmo(entities: Entity[], renderer: Renderer, color: string): void {
     const {glRenderer, pipeline} = renderer!;
     const width = glRenderer.getWidth();
     const height = glRenderer.getHeight();
@@ -326,6 +326,7 @@ implements Light<DirectionalShadowLightOptions> {
           uModel: transform.getMatrixWorld(),
           uTexture: DIRECTIONAL_LIGHT_TEX,
           uScale: [48 / width, 48 / height],
+          uColor: color,
         },
         state: {
           depth: false,
@@ -344,7 +345,7 @@ implements Light<DirectionalShadowLightOptions> {
         uniforms: {
           ...camUniforms,
           uModel: transform.getMatrixWorld(),
-          uColor: '#000000',
+          uColor: color,
           uScale: 10,
         },
         state: {

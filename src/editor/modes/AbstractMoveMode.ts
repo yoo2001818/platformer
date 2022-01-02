@@ -6,6 +6,7 @@ import {Engine} from '../../core/Engine';
 import {Entity} from '../../core/Entity';
 import {AxisEffect} from '../gizmoEffects/AxisEffect';
 import {CursorEffect} from '../gizmoEffects/CursorEffect';
+import {GizmoLightEffect} from '../gizmoEffects/GizmoLightEffect';
 import {SelectedDotEffect} from '../gizmoEffects/SelectedDotEffect';
 import {SelectedEffect} from '../gizmoEffects/SelectedEffect';
 import {ModeModel} from '../models/ModeModel';
@@ -231,6 +232,10 @@ export abstract class AbstractMoveMode implements EditorMode {
     const axisZ = basis.slice(8, 11) as vec3;
     const position = mat4.getTranslation(vec3.create(), basis);
     return [
+      gizmoItem(GizmoLightEffect, {
+        selectedEntity: currentEntity,
+        key: 'light',
+      }),
       gizmoItem(SelectedEffect, {
         entity: currentEntity,
         key: 'selected',

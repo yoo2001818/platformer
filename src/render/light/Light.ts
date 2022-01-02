@@ -27,7 +27,7 @@ export interface Light<T = any> {
     renderer: Renderer,
     pipeline: DeferredPipeline,
   ): void;
-  renderGizmo?(entities: Entity[], renderer: Renderer): void;
+  renderGizmo?(entities: Entity[], renderer: Renderer, color: string): void;
   writeTexture(entity: Entity, buffer: Float32Array, position: number): void;
   toJSON(): unknown;
   clone(): Light<T>;

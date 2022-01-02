@@ -211,6 +211,7 @@ export class DefaultMode implements EditorMode {
     const entity = entityStore.get(selectedEntityHandle);
     return [
       gizmoItem(GizmoLightEffect, {
+        selectedEntity: entity,
         key: 'light',
       }),
       gizmoItem(SelectedEffect, {

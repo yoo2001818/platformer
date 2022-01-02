@@ -108,7 +108,7 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
     buffer[position + 7] = options.power;
   }
 
-  renderGizmo(entities: Entity[], renderer: Renderer): void {
+  renderGizmo(entities: Entity[], renderer: Renderer, color: string): void {
     const {glRenderer, pipeline} = renderer!;
     const width = glRenderer.getWidth();
     const height = glRenderer.getHeight();
@@ -131,6 +131,7 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
           uModel: transform.getMatrixWorld(),
           uTexture: DIRECTIONAL_LIGHT_TEX,
           uScale: [48 / width, 48 / height],
+          uColor: color,
         },
         state: {
           depth: false,
@@ -149,8 +150,8 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
         uniforms: {
           ...camUniforms,
           uModel: transform.getMatrixWorld(),
-          uColor: '#000000',
           uScale: 10,
+          uColor: color,
         },
         state: {
           depth: false,
