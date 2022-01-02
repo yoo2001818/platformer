@@ -155,7 +155,7 @@ export class PointLight implements Light<PointLightOptions> {
         return;
       }
       output.push({
-        position: transform.getPosition(),
+        position: transform.getPositionWorld(),
         color: light.options.color,
         intensity: [
           light.options.power / Math.PI,
@@ -187,7 +187,7 @@ export class PointLight implements Light<PointLightOptions> {
     }));
     // Split sphere / quad shader; this is done by comparing against the camera
     const {camera} = renderer;
-    const cameraPos = camera!.get<Transform>('transform')!.getPosition();
+    const cameraPos = camera!.get<Transform>('transform')!.getPositionWorld();
     const cameraNear = camera!.get<Camera>('camera')!.options.near;
     const sphereEntities: Entity[] = [];
     const quadEntities: Entity[] = [];
@@ -195,10 +195,10 @@ export class PointLight implements Light<PointLightOptions> {
       const transform = entity.get<Transform>('transform')!;
       const light = entity.get<PointLight>('light')!;
       const {options} = light;
-      const pos = transform.getPosition();
+      const pos = transform.getPositionWorld();
       const range = options.range * 1.2;
       const distance = vec3.dist(cameraPos, pos);
-      if (distance > range + cameraNear) {
+      if (range > 0 && distance > range + cameraNear) {
         sphereEntities.push(entity);
       } else {
         quadEntities.push(entity);
@@ -211,7 +211,7 @@ export class PointLight implements Light<PointLightOptions> {
       const transform = entity.get<Transform>('transform')!;
       const light = entity.get<PointLight>('light')!;
       const {options} = light;
-      const pos = transform.getPosition();
+      const pos = transform.getPositionWorld();
       const range = options.range * 1.05;
       bufferData[i * 9] = pos[0];
       bufferData[i * 9 + 1] = pos[1];

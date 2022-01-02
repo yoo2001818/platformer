@@ -7,6 +7,9 @@ import {Geometry, GeometryBounds} from '../render/Geometry';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {GLAttributeType} from '../render/gl/types';
 import {TEXTURE_PARAM_MAP} from '../render/gl/utils';
+import {DirectionalLight} from '../render/light/DirectionalLight';
+import {Light} from '../render/light/Light';
+import {PointLight} from '../render/light/PointLight';
 import {Material} from '../render/Material';
 import {StandardMaterial, StandardMaterialOptions} from '../render/material/StandardMaterial';
 import {Mesh} from '../render/Mesh';
@@ -384,6 +387,32 @@ export function parseGLTF(input: any): GLTFResult {
     return new Mesh(outMaterials, geometries);
   });
 
+  let lights: Light[] = [];
+  if (input.extensions?.KHR_lights_punctual != null) {
+    lights = (input.extensions.KHR_lights_punctual.lights ?? []).map((
+      light: any,
+    ): Light => {
+      switch (light.type) {
+        case 'point':
+        case 'spot':
+          // TODO: Spot light support
+          return new PointLight({
+            color: light.color ?? [1, 1, 1],
+            power: light.intensity ?? 1,
+            radius: 0,
+            range: light.range ?? 0,
+          });
+        case 'directional':
+          return new DirectionalLight({
+            color: light.color ?? [1, 1, 1],
+            power: light.intensity ?? 1,
+          });
+        default:
+          throw new Error(`Unknown light ${light.type}`);
+      }
+    });
+  }
+
   const nodes: {[key: string]: any;}[] = input.nodes.map((node: any) => {
     const entity: {[key: string]: any;} = {};
     const transform = new Transform();
@@ -410,6 +439,13 @@ export function parseGLTF(input: any): GLTFResult {
     }
     if ('name' in node) {
       entity.name = node.name;
+    }
+    if (node.extensions?.KHR_lights_punctual != null) {
+      const light = lights[node.extensions?.KHR_lights_punctual.light];
+      if (light == null) {
+        throw new Error('Invalid light reference');
+      }
+      entity.light = light.clone();
     }
     return entity;
   });

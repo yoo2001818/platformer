@@ -27,7 +27,10 @@ export const POINT_LIGHT = /* glsl */`
     float power = light.intensity.x;
     float range = light.intensity.z;
     float attenuation = power / (0.0001 + (lightDist * lightDist));
-    float window = pow(max(1.0 - pow(lightDist / range, 4.0), 0.0), 2.0);
+    float window = 1.0;
+    if (range > 0.0) {
+      window = pow(max(1.0 - pow(lightDist / range, 4.0), 0.0), 2.0);
+    }
     
     float dotNL = max(dot(N, L), 0.0);
 
