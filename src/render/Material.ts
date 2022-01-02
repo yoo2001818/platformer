@@ -11,6 +11,7 @@ export interface MaterialVertexShaderBlock {
 
 export interface Material {
   id: number;
+  name: string;
   mode: 'forward' | 'deferred';
   renderVertex?(
     chunk: EntityChunk,

@@ -60,12 +60,12 @@ function initEngine(): Engine {
     name: 'skybox',
     transform: new Transform(),
     mesh: new Mesh(
-      new SkyboxMaterial({
+      new SkyboxMaterial('skybox', {
         texture: pbrTexture,
         lod: 2,
         power: 0,
       }),
-      new Geometry(quad()),
+      new Geometry('quad', quad()),
       {castRay: false},
     ),
   });

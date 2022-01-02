@@ -82,7 +82,7 @@ function main() {
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
   // mip.dispose();
   // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
-  const material = new StandardMaterial({
+  const material = new StandardMaterial('material', {
     albedo: '#ffffff',
     metalic: 0,
     roughness: 0.12,
@@ -94,23 +94,23 @@ function main() {
       .setScale([2.5, 5, 10])
       .setPosition([15, 0, 0]),
     mesh: new Mesh(
-      new StandardMaterial({
+      new StandardMaterial('material', {
         albedo: pbrTexture,
         metalic: 0,
         roughness: 1,
       }),
-      new Geometry(calcNormals(quad())),
+      new Geometry('quad', calcNormals(quad())),
     ),
   });
   store.create({
     name: 'skybox',
     transform: new Transform(),
     mesh: new Mesh(
-      new SkyboxMaterial({
+      new SkyboxMaterial('skybox', {
         texture: pbrTexture,
         lod: 2,
       }),
-      new Geometry(quad()),
+      new Geometry('quad', quad()),
     ),
   });
 
@@ -119,7 +119,7 @@ function main() {
     transform: new Transform(),
     mesh: new Mesh(
       material,
-      new Geometry(bakeChannelGeom(teapot[0].geometry)),
+      new Geometry('teapotBase', bakeChannelGeom(teapot[0].geometry)),
     ),
   });
 
@@ -128,7 +128,7 @@ function main() {
     transform: new Transform(),
     mesh: new Mesh(
       material,
-      new Geometry(bakeChannelGeom(teapot[1].geometry)),
+      new Geometry('teapotLid', bakeChannelGeom(teapot[1].geometry)),
     ),
   });
 
@@ -138,12 +138,12 @@ function main() {
       .rotateX(-Math.PI / 2)
       .setScale([10, 10, 10]),
     mesh: new Mesh(
-      new StandardMaterial({
+      new StandardMaterial('floor', {
         albedo: new GLTexture2D({source: createImage(require('./wood.jpg'))}),
         metalic: 0,
         roughness: 0.3,
       }),
-      new Geometry(calcNormals(quad())),
+      new Geometry('floor', calcNormals(quad())),
     ),
   });
 

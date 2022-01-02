@@ -81,7 +81,7 @@ function main() {
   // mip.dispose();
   // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
   const axeModel = parseObj(require('./models/axe/axe.obj').default);
-  const axeMat = new StandardMaterial({
+  const axeMat = new StandardMaterial('axe', {
     albedo: new GLTextureImage(require('./models/axe/albedo.png')),
     metalic: new GLTextureImage(require('./models/axe/metalic.png')),
     roughness: new GLTextureImage(require('./models/axe/roughness.png')),
@@ -96,7 +96,7 @@ function main() {
       .rotateZ(Math.PI / 2),
     mesh: new Mesh(
       axeMat,
-      new Geometry(calcTangents(bakeChannelGeom(axeModel[0].geometry))),
+      new Geometry('axe', calcTangents(bakeChannelGeom(axeModel[0].geometry))),
     ),
   });
 
@@ -107,14 +107,14 @@ function main() {
       .setScale([10, 10, 10])
       .translate([0, -0.5, 0]),
     mesh: new Mesh(
-      new StandardMaterial({
+      new StandardMaterial('floor', {
         albedo: new GLTexture2D({source: createImage(require('./textures/wood49.albedo.jpg'))}),
         metalic: 0,
         roughness: new GLTexture2D({source: createImage(require('./textures/wood49.roughness.jpg'))}),
         normal: new GLTexture2D({source: createImage(require('./textures/wood49.normal.jpg'))}),
         // ao: new GLTexture2D({source: createImage(require('./textures/ground48.ao.jpg'))}),
       }),
-      new Geometry(calcTangents(calcNormals(quad()))),
+      new Geometry('floor', calcTangents(calcNormals(quad()))),
     ),
   });
 
@@ -122,11 +122,11 @@ function main() {
     name: 'skybox',
     transform: new Transform(),
     mesh: new Mesh(
-      new SkyboxMaterial({
+      new SkyboxMaterial('skybox', {
         texture: pbrTexture,
         lod: 2,
       }),
-      new Geometry(quad()),
+      new Geometry('skybox', quad()),
     ),
   });
 

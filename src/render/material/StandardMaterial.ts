@@ -29,11 +29,13 @@ const ARMATURE2_BIT = 64;
 
 export class StandardMaterial implements Material {
   id: number;
+  name: string;
   mode: 'deferred' = 'deferred';
   options: StandardMaterialOptions;
   instancedBuffer: GLArrayBuffer;
-  constructor(options: StandardMaterialOptions) {
+  constructor(name: string, options: StandardMaterialOptions) {
     this.id = createId();
+    this.name = name;
     this.options = options;
     this.instancedBuffer = new GLArrayBuffer(null, 'stream');
   }

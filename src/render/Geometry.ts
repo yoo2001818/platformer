@@ -12,12 +12,18 @@ export interface GeometryBounds {
 
 export class Geometry {
   id: number;
+  name: string;
   options: GeometryOptions;
   bounds: GeometryBounds | null = null;
   boundPoints: number[][] | null = null;
   bvh: BVH | null = null;
-  constructor(options: GeometryOptions, bounds: GeometryBounds | null = null) {
+  constructor(
+    name: string,
+    options: GeometryOptions,
+    bounds: GeometryBounds | null = null,
+  ) {
     this.id = createId();
+    this.name = name;
     this.options = options;
     this.bounds = bounds;
   }

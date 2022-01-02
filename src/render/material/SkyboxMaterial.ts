@@ -17,10 +17,12 @@ export interface SkyboxMaterialOptions {
 
 export class SkyboxMaterial implements Material {
   id: number;
+  name: string;
   options: SkyboxMaterialOptions;
   mode: 'forward' = 'forward';
-  constructor(options: SkyboxMaterialOptions) {
+  constructor(name: string, options: SkyboxMaterialOptions) {
     this.id = createId();
+    this.name = name;
     this.options = options;
   }
 

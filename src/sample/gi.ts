@@ -84,14 +84,14 @@ function main() {
       .setScale([40, 40, 40])
       .translate([0, -1, 0]),
     mesh: new Mesh(
-      new StandardMaterial({
+      new StandardMaterial('floor', {
         albedo: new GLTextureImage(require('./textures/forestground01.albedo.jpg')),
         metalic: 0,
         roughness: new GLTextureImage(require('./textures/forestground01.roughness.jpg')),
         normal: new GLTextureImage(require('./textures/forestground01.normal.jpg')),
         texScale: [20, 20],
       }),
-      new Geometry(calcTangents(calcNormals(quad()))),
+      new Geometry('floor', calcTangents(calcNormals(quad()))),
       {
         castShadow: false,
       },
@@ -102,11 +102,11 @@ function main() {
     name: 'skybox',
     transform: new Transform(),
     mesh: new Mesh(
-      new SkyboxMaterial({
+      new SkyboxMaterial('skybox', {
         texture: pbrTexture,
         lod: 2,
       }),
-      new Geometry(quad()),
+      new Geometry('skybox', quad()),
     ),
   });
 

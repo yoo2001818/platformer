@@ -13,6 +13,7 @@ export type ShaderMaterialUniformSetter =
 
 export class ShaderMaterial implements Material {
   id: number;
+  name: string;
   vert: string;
   frag: string;
   glShader: GLShader;
@@ -20,11 +21,13 @@ export class ShaderMaterial implements Material {
   mode: 'forward' = 'forward';
 
   constructor(
+    name: string,
     vert: string,
     frag: string,
     uniforms: ShaderMaterialUniformSetter = {},
   ) {
     this.id = createId();
+    this.name = name;
     this.vert = vert;
     this.frag = frag;
     this.glShader = new GLShader(vert, frag);

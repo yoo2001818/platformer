@@ -81,7 +81,7 @@ function main() {
   // mip.dispose();
   // generatePBREnvMap(glRenderer, skyboxTexture, pbrTexture);
   const coneModel = parseObj(require('./models/cone/cone.obj').default);
-  const coneMat = new StandardMaterial({
+  const coneMat = new StandardMaterial('cone', {
     albedo: new GLTextureImage(require('./models/cone/albedo.png')),
     metalic: 0,
     roughness: new GLTextureImage(require('./models/cone/roughness.png')),
@@ -89,7 +89,7 @@ function main() {
   });
   const coneMesh = new Mesh(
     coneMat,
-    new Geometry(calcTangents(bakeChannelGeom(coneModel[0].geometry))),
+    new Geometry('cone', calcTangents(bakeChannelGeom(coneModel[0].geometry))),
   );
 
   const cone1 = store.create({
@@ -146,14 +146,14 @@ function main() {
       .rotateX(-Math.PI / 2)
       .setScale([40, 40, 40]),
     mesh: new Mesh(
-      new StandardMaterial({
+      new StandardMaterial('floor', {
         albedo: new GLTextureImage(require('./textures/forestground01.albedo.jpg')),
         metalic: 0,
         roughness: new GLTextureImage(require('./textures/forestground01.roughness.jpg')),
         normal: new GLTextureImage(require('./textures/forestground01.normal.jpg')),
         texScale: [4, 4],
       }),
-      new Geometry(calcTangents(calcNormals(quad()))),
+      new Geometry('floor', calcTangents(calcNormals(quad()))),
     ),
   });
 
@@ -161,11 +161,11 @@ function main() {
     name: 'skybox',
     transform: new Transform(),
     mesh: new Mesh(
-      new SkyboxMaterial({
+      new SkyboxMaterial('skybox', {
         texture: pbrTexture,
         lod: 2,
       }),
-      new Geometry(quad()),
+      new Geometry('skybox', quad()),
     ),
   });
 

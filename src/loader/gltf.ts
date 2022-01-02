@@ -154,7 +154,7 @@ export function parseGLTF(input: any): GLTFResult {
     });
   });
   const materials = (input.materials ?? []).map((material: any): Material => {
-    // TODO: material.name
+    const name: string = material.name ?? 'Material';
     if ('pbrMetallicRoughness' in material) {
       // TODO: material.emissiveFactor
       // TODO: material.normalTexture
@@ -175,12 +175,12 @@ export function parseGLTF(input: any): GLTFResult {
       if ('normalTexture' in material) {
         options.normal = textures[material.normalTexture.index];
       }
-      return new StandardMaterial(options as StandardMaterialOptions);
+      return new StandardMaterial(name, options as StandardMaterialOptions);
     } else {
       throw new Error('Invalid material');
     }
   });
-  const defaultMaterial = new StandardMaterial({
+  const defaultMaterial = new StandardMaterial('Default', {
     albedo: '#ffffff',
     metalic: 0,
     roughness: 0.5,
@@ -350,6 +350,7 @@ export function parseGLTF(input: any): GLTFResult {
   };
 
   const meshes: Mesh[] = input.meshes.map((mesh: any) => {
+    const name: string = mesh.name ?? 'Mesh';
     const geometries: Geometry[] = [];
     const outMaterials: Material[] = [];
     mesh.primitives.map((primitive: any) => {
@@ -372,7 +373,7 @@ export function parseGLTF(input: any): GLTFResult {
       const indices = primitive.indices != null
         ? getIndices(primitive.indices)
         : undefined;
-      geometries.push(new Geometry({
+      geometries.push(new Geometry(name, {
         attributes,
         indices,
         mode: primitive.mode,

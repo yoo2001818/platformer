@@ -81,11 +81,11 @@ function main() {
     name: 'skybox',
     transform: new Transform(),
     mesh: new Mesh(
-      new SkyboxMaterial({
+      new SkyboxMaterial('skybox', {
         texture: pbrTexture,
         lod: 3,
       }),
-      new Geometry(quad()),
+      new Geometry('skybox', quad()),
     ),
   });
 
@@ -105,12 +105,12 @@ function main() {
         transform: new Transform()
           .setPosition([x * 4, y * 4, 0]),
         mesh: new Mesh(
-          new StandardMaterial({
+          new StandardMaterial('teapot', {
             albedo: '#ffffff',
             metalic,
             roughness,
           }),
-          new Geometry(bakeChannelGeom(teapot[0].geometry)),
+          new Geometry('teapot', bakeChannelGeom(teapot[0].geometry)),
         ),
       });
 
@@ -119,12 +119,12 @@ function main() {
         transform: new Transform()
           .setPosition([x * 4, y * 4, 0]),
         mesh: new Mesh(
-          new StandardMaterial({
+          new StandardMaterial('teapot', {
             albedo: '#ffffff',
             metalic,
             roughness,
           }),
-          new Geometry(bakeChannelGeom(teapot[1].geometry)),
+          new Geometry('teapot', bakeChannelGeom(teapot[1].geometry)),
         ),
       });
     }

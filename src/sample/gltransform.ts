@@ -48,8 +48,8 @@ function main() {
   const renderer = new Renderer(glRenderer, store);
 
   const texture = new GLTexture2D({source: createImage(logo)});
-  const geometry = new Geometry(calcNormals(box()));
-  const material = new StandardMaterial({
+  const geometry = new Geometry('box', calcNormals(box()));
+  const material = new StandardMaterial('box', {
     albedo: texture,
     metalic: 0,
     roughness: 0.02,
