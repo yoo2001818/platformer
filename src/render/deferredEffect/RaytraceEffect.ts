@@ -14,7 +14,8 @@ import {WorldBVH} from '../raytrace/WorldBVH';
 import {POINT_LIGHT} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
-import {DENOISE, INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace';
+import {DENOISE} from '../shader/raytrace/denoise';
+import {INTERSECTION, MATERIAL_INJECTOR} from '../shader/raytrace/intersect';
 import {SAMPLE} from '../shader/sample';
 
 import {DeferredEffect} from './DeferredEffect';
