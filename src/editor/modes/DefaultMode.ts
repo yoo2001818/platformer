@@ -15,6 +15,7 @@ import {SelectedDotEffect} from '../gizmoEffects/SelectedDotEffect';
 import {CursorEffect} from '../gizmoEffects/CursorEffect';
 import {deleteEntity, duplicateEntity} from '../commands/entity';
 import {SelectionModel} from '../models/SelectionModel';
+import {GizmoLightEffect} from '../gizmoEffects/GizmoLightEffect';
 
 import {EditorMode} from './EditorMode';
 import {TranslateMode} from './TranslateMode';
@@ -209,6 +210,9 @@ export class DefaultMode implements EditorMode {
     const selectedEntityHandle = entityStore.getAtom(selectedEntity).state;
     const entity = entityStore.get(selectedEntityHandle);
     return [
+      gizmoItem(GizmoLightEffect, {
+        key: 'light',
+      }),
       gizmoItem(SelectedEffect, {
         entity,
         key: 'selected',

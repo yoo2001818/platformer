@@ -13,6 +13,7 @@ import {Renderer} from '../Renderer';
 import {POINT_LIGHT} from '../shader/light';
 
 import {POINT_LIGHT_VALUE} from './constant';
+import {GIZMO_CIRCLE_MODEL, GIZMO_CIRCLE_SHADER, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER, POINT_LIGHT_TEX} from './gizmo';
 import {Light, LightPipelineShaderBlock, LightShaderBlock} from './Light';
 
 export interface PointLightOptions {
@@ -314,6 +315,59 @@ export class PointLight implements Light<PointLightOptions> {
     buffer[position + 8] = options.power / Math.PI;
     buffer[position + 9] = options.radius;
     buffer[position + 10] = options.range;
+  }
+
+  renderGizmo(entities: Entity[], renderer: Renderer): void {
+    const {glRenderer, pipeline} = renderer!;
+    const width = glRenderer.getWidth();
+    const height = glRenderer.getHeight();
+    entities.forEach((entity) => {
+      const camUniforms = pipeline.getCameraUniforms();
+
+      const transform = entity.get<Transform>('transform');
+      const light = entity.get<Light>('light');
+      if (transform == null || light == null) {
+        return;
+      }
+      if (!(light instanceof PointLight)) {
+        return;
+      }
+      const radius = light.getOptions().radius;
+
+      glRenderer.draw({
+        geometry: GIZMO_QUAD_MODEL,
+        shader: GIZMO_QUAD_SHADER,
+        uniforms: {
+          ...camUniforms,
+          uModel: transform.getMatrixWorld(),
+          uTexture: POINT_LIGHT_TEX,
+          uScale: [32 / width, 32 / height],
+        },
+        state: {
+          depth: false,
+          blend: {
+            equation: 'add',
+            func: [
+              ['srcAlpha', 'oneMinusSrcAlpha'],
+              ['one', 'one'],
+            ],
+          },
+        },
+      });
+
+      glRenderer.draw({
+        geometry: GIZMO_CIRCLE_MODEL,
+        shader: GIZMO_CIRCLE_SHADER,
+        uniforms: {
+          ...camUniforms,
+          uModel: transform.getMatrixWorld(),
+          uScale: radius,
+        },
+        state: {
+          depth: false,
+        },
+      });
+    });
   }
 
   toJSON(): unknown {
