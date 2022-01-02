@@ -362,6 +362,7 @@ export class PointLight implements Light<PointLightOptions> {
           ...camUniforms,
           uModel: transform.getMatrixWorld(),
           uScale: radius,
+          uColor: '#000000',
         },
         state: {
           depth: false,

@@ -7,6 +7,7 @@ import {Renderer} from '../Renderer';
 import {DIRECTIONAL_LIGHT} from '../shader/light';
 
 import {DIRECTIONAL_LIGHT_VALUE} from './constant';
+import {DIRECTIONAL_LIGHT_TEX, GIZMO_LINE_MODEL, GIZMO_LINE_SHADER, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER} from './gizmo';
 import {Light, LightShaderBlock} from './Light';
 
 export interface DirectionalLightOptions {
@@ -105,6 +106,57 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
     buffer[position + 5] = colorVec[1];
     buffer[position + 6] = colorVec[2];
     buffer[position + 7] = options.power;
+  }
+
+  renderGizmo(entities: Entity[], renderer: Renderer): void {
+    const {glRenderer, pipeline} = renderer!;
+    const width = glRenderer.getWidth();
+    const height = glRenderer.getHeight();
+    entities.forEach((entity) => {
+      const camUniforms = pipeline.getCameraUniforms();
+
+      const transform = entity.get<Transform>('transform');
+      const light = entity.get<Light>('light');
+      if (transform == null || light == null) {
+        return;
+      }
+      if (!(light instanceof DirectionalLight)) {
+        return;
+      }
+      glRenderer.draw({
+        geometry: GIZMO_QUAD_MODEL,
+        shader: GIZMO_QUAD_SHADER,
+        uniforms: {
+          ...camUniforms,
+          uModel: transform.getMatrixWorld(),
+          uTexture: DIRECTIONAL_LIGHT_TEX,
+          uScale: [48 / width, 48 / height],
+        },
+        state: {
+          depth: false,
+          blend: {
+            equation: 'add',
+            func: [
+              ['srcAlpha', 'oneMinusSrcAlpha'],
+              ['one', 'one'],
+            ],
+          },
+        },
+      });
+      glRenderer.draw({
+        geometry: GIZMO_LINE_MODEL,
+        shader: GIZMO_LINE_SHADER,
+        uniforms: {
+          ...camUniforms,
+          uModel: transform.getMatrixWorld(),
+          uColor: '#000000',
+          uScale: 10,
+        },
+        state: {
+          depth: false,
+        },
+      });
+    });
   }
 
   toJSON(): unknown {

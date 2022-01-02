@@ -1,5 +1,6 @@
 import {circleLine} from '../../geom/circleLine';
 import {quad} from '../../geom/quad';
+import {LINES} from '../../geom/types';
 import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
@@ -79,6 +80,42 @@ export const GIZMO_CIRCLE_SHADER = new GLShader(
   `,
 );
 
+export const GIZMO_LINE_MODEL = new GLGeometry({
+  attributes: {
+    aPosition: {
+      data: [0, 0, 0, 0, 0, -1],
+      size: 3,
+    },
+  },
+  mode: LINES,
+});
+
+export const GIZMO_LINE_SHADER = new GLShader(
+  /* glsl */`
+    precision highp float;
+
+    attribute vec3 aPosition;
+
+    uniform mat4 uView;
+    uniform mat4 uProjection;
+    uniform mat4 uModel;
+    uniform float uScale;
+
+    void main() {
+      gl_Position = uProjection * uView * uModel * vec4(aPosition * uScale, 1.0);
+    }
+  `,
+  /* glsl */`
+    precision highp float;
+
+    uniform vec3 uColor; 
+
+    void main() {
+      gl_FragColor = vec4(uColor, 1.0);
+    }
+  `,
+);
+
 export const POINT_LIGHT_TEX = new GLTextureGenerated({
   width: 32,
   height: 32,
@@ -103,8 +140,52 @@ export const POINT_LIGHT_TEX = new GLTextureGenerated({
   ctx.arc(16, 16, 10, 0, Math.PI * 2);
   ctx.stroke();
   return new GLTexture2D({
-    width: 16,
-    height: 16,
+    width: 32,
+    height: 32,
+    wrapS: 'clampToEdge',
+    wrapT: 'clampToEdge',
+    minFilter: 'nearest',
+    magFilter: 'nearest',
+    mipmap: false,
+    format: 'rgba',
+    source: canvas,
+  });
+});
+
+export const DIRECTIONAL_LIGHT_TEX = new GLTextureGenerated({
+  width: 48,
+  height: 48,
+  wrapS: 'clampToEdge',
+  wrapT: 'clampToEdge',
+  minFilter: 'nearest',
+  magFilter: 'nearest',
+  mipmap: false,
+  format: 'rgba',
+}, () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 48;
+  canvas.height = 48;
+  const ctx = canvas.getContext('2d')!;
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(24, 24, 3, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([2.1, 2.1]);
+  ctx.beginPath();
+  ctx.arc(24, 24, 10, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  for (let i = 0; i < 8; i += 1) {
+    const angle = Math.PI * 2 * (i / 8);
+    ctx.beginPath();
+    ctx.moveTo(24.5 + Math.cos(angle) * 10, 24.5 + Math.sin(angle) * 10);
+    ctx.lineTo(24.5 + Math.cos(angle) * 18, 24.5 + Math.sin(angle) * 18);
+    ctx.stroke();
+  }
+  return new GLTexture2D({
+    width: 48,
+    height: 48,
     wrapS: 'clampToEdge',
     wrapT: 'clampToEdge',
     minFilter: 'nearest',
