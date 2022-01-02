@@ -45,7 +45,7 @@ export class Entity {
     this.componentSignals = new ComponentSignalMapper(
       store,
       this.signal,
-      this.componentVersions,
+      (index) => this.componentVersions[index],
     );
   }
 

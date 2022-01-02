@@ -7,17 +7,17 @@ export class ComponentSignalMapper {
   store: EntityStore;
   wrapperSignal: Signal;
   signals: Signal[];
-  componentVersions: number[];
+  getVersionCallback: (index: number) => number | null | undefined;
 
   constructor(
     store: EntityStore,
     wrapperSignal: Signal,
-    componentVersions: number[],
+    getVersionCallback: (index: number) => number | null | undefined,
   ) {
     this.store = store;
     this.wrapperSignal = wrapperSignal;
     this.signals = [];
-    this.componentVersions = componentVersions;
+    this.getVersionCallback = getVersionCallback;
   }
 
   getIndex(index: number): Signal {
@@ -26,7 +26,7 @@ export class ComponentSignalMapper {
     }
     const newSignal = new UpstreamSignal(
       () => this.wrapperSignal,
-      () => this.componentVersions[index] ?? -1,
+      () => this.getVersionCallback(index) ?? -1,
     );
     this.signals[index] = newSignal;
     return newSignal;

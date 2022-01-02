@@ -32,7 +32,7 @@ export class EntityGroup {
     this.componentSignals = new ComponentSignalMapper(
       store,
       this.signal,
-      this.componentVersions,
+      (index) => this.componentVersions[index],
     );
     this.init(protoEntity);
   }

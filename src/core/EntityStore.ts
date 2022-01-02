@@ -7,6 +7,7 @@ import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
 import {EntityQuery} from './EntityQuery';
 import {Signal} from './Signal';
+import {SignalWithArg} from './SignalWithArg';
 import {sortEntity} from './sortEntity';
 import {getHashCode} from './utils/getHashCode';
 
@@ -29,6 +30,7 @@ export class EntityStore {
   componentVersions: number[];
 
   signal: Signal;
+  groupAddedSignal: SignalWithArg<[EntityGroup]>;
 
   // FIXME: This should be specified differently; it is only used for
   // createEntities
@@ -52,6 +54,7 @@ export class EntityStore {
     this.componentVersions = [];
 
     this.signal = new Signal();
+    this.groupAddedSignal = new SignalWithArg();
 
     this.futureResolver = null;
   }
@@ -196,9 +199,11 @@ export class EntityStore {
         return group;
       }
       const newGroup = new EntityGroup(this, hashCodes, entity);
+      this.groupAddedSignal.emit(newGroup);
       matchedGroups.push(newGroup);
     }
     const newGroup = new EntityGroup(this, hashCodes, entity);
+    this.groupAddedSignal.emit(newGroup);
     this.groups.set(hashCode, [newGroup]);
     return newGroup;
   }

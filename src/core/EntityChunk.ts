@@ -48,7 +48,7 @@ export class EntityChunk {
     this.componentSignals = new ComponentSignalMapper(
       this.group.store,
       this.signal,
-      this.componentVersions,
+      (index) => this.componentVersions[index],
     );
     this.init(protoEntity);
   }
