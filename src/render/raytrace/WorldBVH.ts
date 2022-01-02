@@ -4,6 +4,7 @@ import {BVH, BVHNode, createBVH} from '../../3d/BVH';
 import {intersectRayAABB, intersectRayTriangle} from '../../3d/collision';
 import {TransformComponent} from '../../3d/TransformComponent';
 import {Entity} from '../../core/Entity';
+import {EntityQuery} from '../../core/EntityQuery';
 import {EntityStore} from '../../core/EntityStore';
 import {Geometry} from '../Geometry';
 import {flattenBuffer} from '../gl/utils';
@@ -30,34 +31,16 @@ export class WorldBVH {
   metNodes: BVHNode[] = [];
   counter = 0;
   lastVersion = -1;
+  query: EntityQuery;
 
   constructor(entityStore: EntityStore) {
     this.entityStore = entityStore;
+    this.query = entityStore.query()
+      .with('transform', 'mesh');
   }
 
   checkShouldUpdate(): boolean {
-    // Try to build entities array with mesh
-    const {entityStore} = this;
-    const meshComp = entityStore.getComponent<MeshComponent>('mesh');
-    // EntityStore didn't change at all; do nothing
-    if (entityStore.version === this.lastVersion) {
-      return false;
-    }
-    let actualLastVersion = -1;
-    // Try to record an actual last version
-    entityStore.forEachChunkWith(['transform', 'mesh'], (chunk) => {
-      const mesh = chunk.getAt(0)!.get(meshComp)!;
-      if (mesh.options.castRay === false) {
-        return;
-      }
-      if (actualLastVersion < chunk.version) {
-        actualLastVersion = chunk.version;
-      }
-    });
-    if (actualLastVersion === this.lastVersion) {
-      return false;
-    }
-    return true;
+    return this.query.getTopicVersion('transform', 'mesh') > this.lastVersion;
   }
 
   update(): void {
@@ -67,26 +50,12 @@ export class WorldBVH {
       entityStore.getComponent<TransformComponent>('transform');
     const meshComp = entityStore.getComponent<MeshComponent>('mesh');
     const children: [Entity, number, Geometry, Float32Array][] = [];
-    // EntityStore didn't change at all; do nothing
-    if (entityStore.version === this.lastVersion) {
+    const nextVersion = this.query.getTopicVersion('transform', 'mesh');
+    if (this.lastVersion >= nextVersion) {
       return;
     }
-    let actualLastVersion = -1;
-    // Try to record an actual last version
-    entityStore.forEachChunkWith(['transform', 'mesh'], (chunk) => {
-      const mesh = chunk.getAt(0)!.get(meshComp)!;
-      if (mesh.options.castRay === false) {
-        return;
-      }
-      if (actualLastVersion < chunk.version) {
-        actualLastVersion = chunk.version;
-      }
-    });
-    if (actualLastVersion === this.lastVersion) {
-      return;
-    }
-    this.lastVersion = actualLastVersion;
-    entityStore.forEachWith(['transform', 'mesh'], (entity) => {
+    this.lastVersion = nextVersion;
+    this.query.forEach((entity) => {
       const mesh = entity.get(meshComp)!;
       if (mesh.options.castRay === false) {
         return;

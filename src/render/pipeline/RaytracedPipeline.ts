@@ -240,6 +240,16 @@ export class RaytracedPipeline implements Pipeline {
     };
   }
 
+  getCameraVersion(): number {
+    const {camera} = this.renderer;
+
+    if (camera == null) {
+      throw new Error('Camera is not specified');
+    }
+
+    return camera.version;
+  }
+
   refreshRandomMap(): void {
     const tileWidth = 256;
     const tileHeight = 256;
@@ -326,7 +336,10 @@ export class RaytracedPipeline implements Pipeline {
 
     this.prepare();
 
-    const shouldRefresh = entityStore.version !== this.worldVersion;
+    const shouldRefresh =
+      this.worldBVH.checkShouldUpdate() ||
+      this.lightTexture.checkShouldUpdate() ||
+      this.getCameraVersion() > this.worldVersion;
     const randomMapWidth = this.randomMap!.getWidth();
     const randomMapHeight = this.randomMap!.getHeight();
 

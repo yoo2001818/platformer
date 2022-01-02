@@ -1,5 +1,6 @@
 import {Component} from '../../core/components';
 import {Entity} from '../../core/Entity';
+import {EntityQuery} from '../../core/EntityQuery';
 import {EntityStore} from '../../core/EntityStore';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {Light} from '../light/Light';
@@ -34,6 +35,7 @@ export class LightTexture {
   lightTexture: GLTexture2D;
   numLights: number;
   lastVersion = -1;
+  query: EntityQuery;
 
   constructor(
     entityStore: EntityStore,
@@ -53,10 +55,17 @@ export class LightTexture {
       source: null,
     });
     this.numLights = 0;
+    this.query = entityStore.query()
+      .with('transform', 'light');
   }
 
   dispose(): void {
     this.lightTexture.dispose();
+    this.query.dispose();
+  }
+
+  checkShouldUpdate(): boolean {
+    return this.query.getTopicVersion('transform', 'light') > this.lastVersion;
   }
 
   update(): void {
@@ -64,15 +73,16 @@ export class LightTexture {
     // TODO: However we are not able to do this at this moment.
     // Let's just use entityStore's version
     const {entityStore} = this;
-    if (this.lastVersion === entityStore.version) {
+    const nextVersion = this.query.getTopicVersion('transform', 'light');
+    if (this.lastVersion >= nextVersion) {
       return;
     }
-    this.lastVersion = entityStore.version;
+    this.lastVersion = nextVersion;
 
     const lightComp = entityStore.getComponent<Component<Light>>('light');
 
     const entities: Entity[] = [];
-    entityStore.forEachWith(['transform', 'light'], (entity) => {
+    this.query.forEach((entity) => {
       const light = entity.get(lightComp)!;
       if (light.canRaytrace) {
         entities.push(entity);
