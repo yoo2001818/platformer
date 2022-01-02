@@ -233,6 +233,9 @@ implements GizmoEffect<GizmoPosRotScaleEffectProps> {
       return null;
     }
     const {entity, engine} = lastProps;
+    if (entity == null) {
+      return null;
+    }
     const camera = renderer!.camera!;
     const cameraData = camera.get<Camera>('camera')!;
     const aspect = renderer!.getAspectRatio();

@@ -26,6 +26,10 @@ const LIGHT_SCHEMAS: {[key: string]: SchemaPropertiesSchema[];} = {
     {id: 'texture', label: 'Texture', type: 'texture2D'},
     {id: 'power', label: 'Power', type: 'number'},
   ],
+  ambient: [
+    {id: 'color', label: 'Color', type: 'color'},
+    {id: 'power', label: 'Power', type: 'number'},
+  ],
 };
 
 export interface LightPropertiesProps {

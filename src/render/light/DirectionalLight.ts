@@ -38,14 +38,14 @@ export class DirectionalLight implements Light<DirectionalLightOptions> {
   getShaderBlock(numLights: number): LightShaderBlock {
     return {
       header: /* glsl */`
-        #define NUM_POINT_LIGHTS ${numLights}
+        #define NUM_DIRECTIONAL_LIGHTS ${numLights}
 
         ${DIRECTIONAL_LIGHT}
         
-        uniform DirectionalLight uDirectionalLights[NUM_POINT_LIGHTS];
+        uniform DirectionalLight uDirectionalLights[NUM_DIRECTIONAL_LIGHTS];
       `,
       body: /* glsl */`
-        for (int i = 0; i < NUM_POINT_LIGHTS; i += 1) {
+        for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i += 1) {
           DirectionalLight light = uDirectionalLights[i];
 
           vec3 L;

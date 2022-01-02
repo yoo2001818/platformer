@@ -1,3 +1,4 @@
+import {AmbientLight} from './AmbientLight';
 import {DirectionalLight} from './DirectionalLight';
 import {DirectionalShadowLight} from './DirectionalShadowLight';
 import {EnvironmentLight} from './EnvironmentLight';
@@ -13,4 +14,5 @@ export const LIGHT_TABLE: {[key: string]: LightConstructor;} = {
   directional: DirectionalLight,
   directionalShadow: DirectionalShadowLight,
   environment: EnvironmentLight,
+  ambient: AmbientLight,
 };
