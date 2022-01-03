@@ -399,7 +399,7 @@ export function parseGLTF(input: any): GLTFResult {
           return new PointLight({
             color: light.color ?? [1, 1, 1],
             power: light.intensity ?? 1,
-            radius: 0,
+            radius: 0.1,
             range: light.range ?? 0,
           });
         case 'directional':
