@@ -120,3 +120,18 @@ export const ENVIRONMENT_MAP = /* glsl */`
     return kD * albedo * irradiance + spec;
   }
 `;
+
+export const PROBE_GRID_LIGHT = /* glsl */`
+  struct ProbeGridLight {
+    mat4 matrix;
+    mat4 invMatrix;
+    ivec3 size;
+    float power;
+    float range;
+  };
+
+  vec3 calcProbeGridLight(vec3 viewPos, MaterialInfo mInfo, sampler2D gridMap, ProbeGridLight light) {
+    // Note that we can only use irradiance here
+    return vec3(1.0, 0.0, 0.0);
+  }
+`;

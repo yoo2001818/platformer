@@ -49,16 +49,15 @@ export const SH = /* glsl */`
     float y4 = y2*y2;
     float z4 = z2*z2;
 
-    result[0] =  vec3(1.0/(2.0*sqrtPI));
-    result[1] = myT(-sqrt(3.0/(4.0*PI))*y);
-    result[2] = myT( sqrt(3.0/(4.0*PI))*z);
-    result[3] = myT(-sqrt(3.0/(4.0*PI))*x);
-    result[4] = myT( sqrt(15.0/(4.0*PI))*y*x );
-    result[5] = myT(-sqrt(15.0/(4.0*PI))*y*z );
-    result[6] = myT( sqrt(5.0/(16.0*PI))*(3.0*z2-1.0) );
-    result[7] = myT(-sqrt(15.0/(4.0*PI))*x*z );
-    result[8] = myT( sqrt(15.0/(16.0*PI))*(x2-y2) );
-    return result;
+    result[0] = vec3(1.0/(2.0*sqrtPI));
+    result[1] = vec3(-sqrt(3.0/(4.0*PI))*y);
+    result[2] = vec3( sqrt(3.0/(4.0*PI))*z);
+    result[3] = vec3(-sqrt(3.0/(4.0*PI))*x);
+    result[4] = vec3( sqrt(15.0/(4.0*PI))*y*x );
+    result[5] = vec3(-sqrt(15.0/(4.0*PI))*y*z );
+    result[6] = vec3( sqrt(5.0/(16.0*PI))*(3.0*z2-1.0) );
+    result[7] = vec3(-sqrt(15.0/(4.0*PI))*x*z );
+    result[8] = vec3( sqrt(15.0/(16.0*PI))*(x2-y2) );
   }
 
   vec3 shEvaulateDiffuse(in vec3[9] sh, vec3 direction) {
@@ -67,21 +66,15 @@ export const SH = /* glsl */`
     shEvaluate(directionSh, direction);
     // https://cseweb.ucsd.edu/~ravir/papers/envmap/envmap.pdf equation 8
 
-    const float A[5] = float[5](
-      1.0,
-      2.0 / 3.0,
-      1.0 / 4.0,
-    );
-
-    vec3 result = sh[0] * directionSh[0] * A[0];
-    result += sh[1] * directionSh[1] * A[1];
-    result += sh[2] * directionSh[2] * A[1];
-    result += sh[3] * directionSh[3] * A[1];
-    result += sh[4] * directionSh[4] * A[2];
-    result += sh[5] * directionSh[5] * A[2];
-    result += sh[6] * directionSh[6] * A[2];
-    result += sh[7] * directionSh[7] * A[2];
-    result += sh[8] * directionSh[8] * A[2];
+    vec3 result = sh[0] * directionSh[0] * 1.0;
+    result += sh[1] * directionSh[1] * (2.0 / 3.0);
+    result += sh[2] * directionSh[2] * (2.0 / 3.0);
+    result += sh[3] * directionSh[3] * (2.0 / 3.0);
+    result += sh[4] * directionSh[4] * (1.0 / 4.0);
+    result += sh[5] * directionSh[5] * (1.0 / 4.0);
+    result += sh[6] * directionSh[6] * (1.0 / 4.0);
+    result += sh[7] * directionSh[7] * (1.0 / 4.0);
+    result += sh[8] * directionSh[8] * (1.0 / 4.0);
 
     return result;
   }
