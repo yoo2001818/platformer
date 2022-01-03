@@ -196,3 +196,73 @@ export const DIRECTIONAL_LIGHT_TEX = new GLTextureGenerated({
     source: canvas,
   });
 });
+
+export const PROBE_GRID_LIGHT_TEX = new GLTextureGenerated({
+  width: 4,
+  height: 4,
+  wrapS: 'clampToEdge',
+  wrapT: 'clampToEdge',
+  minFilter: 'nearest',
+  magFilter: 'nearest',
+  mipmap: false,
+  format: 'rgba',
+}, () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 4;
+  canvas.height = 4;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(2, 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+  return new GLTexture2D({
+    width: 4,
+    height: 4,
+    wrapS: 'clampToEdge',
+    wrapT: 'clampToEdge',
+    minFilter: 'nearest',
+    magFilter: 'nearest',
+    mipmap: false,
+    format: 'rgba',
+    source: canvas,
+  });
+});
+
+export const GIZMO_QUAD_INSTANCED_SHADER = new GLShader(
+  /* glsl */`
+    precision highp float;
+
+    attribute vec3 aPosition;
+    attribute vec2 aTexCoord;
+    attribute vec3 aInstanced;
+
+    varying vec2 vTexCoord;
+
+    uniform mat4 uView;
+    uniform mat4 uProjection;
+    uniform mat4 uModel;
+    uniform vec2 uScale;
+
+    void main() {
+      vTexCoord = aTexCoord;
+      mat4 mvp = uProjection * uView * uModel;
+      // Determine the NDC of the center position
+      vec4 centerPos = mvp * vec4(vec3(0.0) + aInstanced, 1.0);
+      centerPos /= centerPos.w;
+      // Calculate in screen space...
+      gl_Position = vec4(centerPos.xy + aPosition.xy * uScale, 0.0, 1.0);
+    }
+  `,
+  /* glsl */`
+    precision highp float;
+
+    varying vec2 vTexCoord;
+
+    uniform sampler2D uTexture;
+    uniform vec3 uColor; 
+
+    void main() {
+      gl_FragColor = vec4(uColor, texture2D(uTexture, vTexCoord).a);
+    }
+  `,
+);

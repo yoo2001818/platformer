@@ -1,13 +1,16 @@
-import {vec3} from 'gl-matrix';
-
 import {Transform} from '../../3d/Transform';
 import {Entity} from '../../core/Entity';
+import {GLArrayBuffer} from '../gl/GLArrayBuffer';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {Renderer} from '../Renderer';
 import {PROBE_GRID_LIGHT} from '../shader/light';
 import {SH} from '../shader/sh';
 
-import {DIRECTIONAL_LIGHT_TEX, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER} from './gizmo';
+import {
+  GIZMO_QUAD_INSTANCED_SHADER,
+  GIZMO_QUAD_MODEL,
+  PROBE_GRID_LIGHT_TEX,
+} from './gizmo';
 import {Light, LightShaderBlock} from './Light';
 
 export interface ProbeGridLightOptions {
@@ -22,6 +25,7 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
   options: ProbeGridLightOptions;
   probeBuffer: Float32Array;
   probeTex: GLTexture2D;
+  gizmoBuffer: GLArrayBuffer;
 
   constructor(options?: ProbeGridLightOptions) {
     this.options = options ?? {
@@ -41,6 +45,7 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
       format: 'rgba',
       type: 'halfFloat',
     });
+    this.gizmoBuffer = new GLArrayBuffer(null, 'stream');
   }
 
   getOptions(): ProbeGridLightOptions {
@@ -136,15 +141,38 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
       if (!(light instanceof ProbeGridLight)) {
         return;
       }
-      // TODO change to probe grid light
+      const options = light.getOptions();
+      // Draw the light array
+      const size = options.size;
+      const dotCount = size[0] * size[1] * size[2];
+      const dotArray = new Float32Array(dotCount * 3);
+      let ptr = 0;
+      for (let x = 0; x < size[0]; x += 1) {
+        for (let y = 0; y < size[1]; y += 1) {
+          for (let z = 0; z < size[2]; z += 1) {
+            dotArray[ptr] = (x + 0.5) / size[0];
+            dotArray[ptr + 1] = (y + 0.5) / size[1];
+            dotArray[ptr + 2] = (z + 0.5) / size[2];
+            ptr += 3;
+          }
+        }
+      }
+      this.gizmoBuffer.set(dotArray);
+      const shader = GIZMO_QUAD_INSTANCED_SHADER;
+      shader.bind(glRenderer);
+      shader.setAttribute('aInstanced', {
+        buffer: this.gizmoBuffer,
+        divisor: 1,
+      });
       glRenderer.draw({
+        primCount: dotCount,
         geometry: GIZMO_QUAD_MODEL,
-        shader: GIZMO_QUAD_SHADER,
+        shader,
         uniforms: {
           ...camUniforms,
           uModel: transform.getMatrixWorld(),
-          uTexture: DIRECTIONAL_LIGHT_TEX,
-          uScale: [48 / width, 48 / height],
+          uTexture: PROBE_GRID_LIGHT_TEX,
+          uScale: [4 / width, 4 / height],
           uColor: color,
         },
         state: {
