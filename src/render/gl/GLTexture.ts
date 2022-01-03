@@ -132,6 +132,12 @@ export class GLTexture {
   dispose(): void {
     if (this.texture != null && this.renderer != null) {
       this.renderer.gl.deleteTexture(this.texture);
+      if (this.boundId != null && this.boundVersion != null) {
+        this.renderer.textureManager.notifyUnbind(
+          this.boundId,
+          this.boundVersion,
+        );
+      }
       this.texture = null;
       this.boundId = null;
       this.boundVersion = null;

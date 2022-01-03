@@ -27,6 +27,17 @@ export class GLTextureManager {
     this.boundVersion = 0;
   }
 
+  notifyUnbind(id: number, version: number): void {
+    const texture = this.boundTextures[id];
+    if (
+      texture != null &&
+      texture.boundVersion != null &&
+      texture.boundVersion <= version
+    ) {
+      this.boundTextures[id] = null;
+    }
+  }
+
   bind(original: GLTexture): number {
     // The texture can return other instances when it's not ready. Therefore,
     // we check the readiness in here.
