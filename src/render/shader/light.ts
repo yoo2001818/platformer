@@ -125,13 +125,24 @@ export const PROBE_GRID_LIGHT = /* glsl */`
   struct ProbeGridLight {
     mat4 matrix;
     mat4 invMatrix;
-    ivec3 size;
+    vec3 size;
     float power;
     float range;
   };
 
   vec3 calcProbeGridLight(vec3 viewPos, MaterialInfo mInfo, sampler2D gridMap, ProbeGridLight light) {
+    vec3 invLightSize = 1.0 / light.size;
     // Note that we can only use irradiance here
-    return vec3(1.0, 0.0, 0.0);
+    // First, get the probe position...
+    vec3 pos = (light.invMatrix * vec4(mInfo.position, 1.0)).xyz;
+    // Move the probe from -1 ~ 1 to 0 ~ 1
+    pos = (pos + 1.0) * 0.5;
+    // The probe is at the center of the screen; rescale to fit the actual
+    // probe position
+    pos = (pos - invLightSize * 0.5) / (1.0 - invLightSize);
+    pos = clamp(pos, vec3(0.0), vec3(1.0));
+    pos *= light.size;
+    // Run trilinear filtering according to the position.
+    return vec3(floor(pos) * invLightSize);
   }
 `;

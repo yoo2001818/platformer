@@ -150,9 +150,9 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
       for (let x = 0; x < size[0]; x += 1) {
         for (let y = 0; y < size[1]; y += 1) {
           for (let z = 0; z < size[2]; z += 1) {
-            dotArray[ptr] = (x + 0.5) / size[0];
-            dotArray[ptr + 1] = (y + 0.5) / size[1];
-            dotArray[ptr + 2] = (z + 0.5) / size[2];
+            dotArray[ptr] = (x + 0.5) / size[0] * 2 - 1;
+            dotArray[ptr + 1] = (y + 0.5) / size[1] * 2 - 1;
+            dotArray[ptr + 2] = (z + 0.5) / size[2] * 2 - 1;
             ptr += 3;
           }
         }

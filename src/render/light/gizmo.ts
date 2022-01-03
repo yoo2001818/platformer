@@ -29,7 +29,7 @@ export const GIZMO_QUAD_SHADER = new GLShader(
       vec4 centerPos = mvp * vec4(0.0, 0.0, 0.0, 1.0);
       centerPos /= centerPos.w;
       // Calculate in screen space...
-      gl_Position = vec4(centerPos.xy + aPosition.xy * uScale, 0.0, 1.0);
+      gl_Position = vec4(centerPos.xy + aPosition.xy * uScale, centerPos.z, 1.0);
     }
   `,
   /* glsl */`
@@ -67,7 +67,7 @@ export const GIZMO_CIRCLE_SHADER = new GLShader(
       vec3 ndcScale = (uProjection * vec4(1.0, 1.0, 0.0, 0.0)).xyz;
       pos.xyz += aPosition * ndcScale * uScale;
       pos /= pos.w;
-      gl_Position = vec4(pos.xy, 0.0, 1.0);
+      gl_Position = vec4(pos.xyz, 1.0);
     }
   `,
   /* glsl */`
@@ -250,7 +250,7 @@ export const GIZMO_QUAD_INSTANCED_SHADER = new GLShader(
       vec4 centerPos = mvp * vec4(vec3(0.0) + aInstanced, 1.0);
       centerPos /= centerPos.w;
       // Calculate in screen space...
-      gl_Position = vec4(centerPos.xy + aPosition.xy * uScale, 0.0, 1.0);
+      gl_Position = vec4(centerPos.xy + aPosition.xy * uScale, centerPos.z, 1.0);
     }
   `,
   /* glsl */`
