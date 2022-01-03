@@ -11,6 +11,7 @@ import {BVHTexture} from '../raytrace/BVHTexture';
 import {MaterialInjector} from '../raytrace/MaterialInjector';
 import {Sobol} from '../raytrace/Sobol';
 import {WorldBVH} from '../raytrace/WorldBVH';
+import {CONSTANT} from '../shader/constant';
 import {POINT_LIGHT} from '../shader/light';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
@@ -77,6 +78,7 @@ export class RaytraceEffect implements DeferredEffect {
           precision highp float;
           precision highp sampler2D;
 
+          ${CONSTANT}
           ${INTERSECTION}
           ${PBR}
           ${MATERIAL_INFO}
@@ -84,7 +86,6 @@ export class RaytraceEffect implements DeferredEffect {
           ${MATERIAL_INJECTOR}
           ${SAMPLE}
 
-          #define PI 3.141592
           #define INTERLACE_TILES 1.0
 
           varying vec2 vPosition;

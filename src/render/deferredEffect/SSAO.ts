@@ -8,6 +8,7 @@ import {GLTexture2D} from '../gl/GLTexture2D';
 import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {DeferredPipeline} from '../pipeline/DeferredPipeline';
+import {CONSTANT} from '../shader/constant';
 
 function createHemisphere(samples: number): GLTexture2D {
   const data = new Float32Array(samples * 3);
@@ -150,7 +151,7 @@ export class SSAO {
       /* glsl */`
         precision highp float;
         #define NUM_SAMPLES 16
-
+        ${CONSTANT}
         ${PBR}
         ${MATERIAL_INFO}
 

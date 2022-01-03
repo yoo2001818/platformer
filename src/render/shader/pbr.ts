@@ -1,6 +1,4 @@
 export const PBR = /* glsl */`
-  #define PI 3.141592
-
   float distributionGGX(float dotNM, float a) {
     float a2 = a * a;
     float dotNM2 = dotNM * dotNM;

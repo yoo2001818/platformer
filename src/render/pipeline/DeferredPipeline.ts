@@ -18,6 +18,7 @@ import {SSAO} from '../deferredEffect/SSAO';
 import {DeferredEffect} from '../deferredEffect/DeferredEffect';
 import {MaterialVertexShaderBlock} from '../Material';
 import {GLRenderBuffer} from '../gl/GLRenderBuffer';
+import {CONSTANT} from '../shader/constant';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -132,6 +133,7 @@ export class DeferredPipeline implements Pipeline {
           uniform mat4 uInverseProjection;
           uniform vec3 uViewPos;
 
+          ${CONSTANT}
           ${PBR}
           ${MATERIAL_INFO}
 
@@ -195,6 +197,7 @@ export class DeferredPipeline implements Pipeline {
           #version 100
           precision highp float;
 
+          ${CONSTANT}
           ${PBR}
           ${MATERIAL_INFO}
 

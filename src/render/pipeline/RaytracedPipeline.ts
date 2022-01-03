@@ -24,6 +24,7 @@ import {SAMPLE} from '../shader/sample';
 import {FILMIC} from '../shader/tonemap';
 import {LightTexture} from '../raytrace/LightTexture';
 import {LIGHT_MAP} from '../shader/raytrace/lightMap';
+import {CONSTANT} from '../shader/constant';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -112,8 +113,7 @@ export class RaytracedPipeline implements Pipeline {
           precision highp float;
           precision highp sampler2D;
 
-          #define PI 3.141592
-
+          ${CONSTANT}
           ${INTERSECTION}
           ${PBR}
           ${SAMPLE}

@@ -7,6 +7,7 @@ import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {GLTextureGenerated} from '../gl/GLTextureGenerated';
 import {getHDROptions, HDRType} from '../hdr/utils';
+import {CONSTANT} from '../shader/constant';
 import {CUBE_PACK, CUBE_PACK_HEADER} from '../shader/cubepack';
 import {HDR} from '../shader/hdr';
 import {PBR} from '../shader/pbr';
@@ -46,6 +47,7 @@ const BAKE_SHADER = new ShaderBank<[string]>(
       uniform sampler2D uSource;
       uniform sampler2D uHammersleyMap;
 
+      ${CONSTANT}
       ${PBR}
       ${HDR}
       ${CUBE_PACK}

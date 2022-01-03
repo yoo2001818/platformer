@@ -10,6 +10,7 @@ import {MATERIAL_INFO} from '../shader/material';
 import {PBR} from '../shader/pbr';
 import {FILMIC} from '../shader/tonemap';
 import {MaterialVertexShaderBlock} from '../Material';
+import {CONSTANT} from '../shader/constant';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -87,6 +88,7 @@ export class ForwardPipeline implements Pipeline {
           uniform mat4 uInverseProjection;
           uniform vec3 uViewPos;
 
+          ${CONSTANT}
           ${PBR}
           ${MATERIAL_INFO}
           ${FILMIC}

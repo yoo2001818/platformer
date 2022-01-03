@@ -5,6 +5,7 @@ import {GLShader} from '../gl/GLShader';
 import {GLTexture} from '../gl/GLTexture';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {GLTextureGenerated} from '../gl/GLTextureGenerated';
+import {CONSTANT} from '../shader/constant';
 import {PBR} from '../shader/pbr';
 
 import {generateHammersleyMap} from './generateHammersleyMap';
@@ -32,6 +33,7 @@ const BRDF_SHADER = new GLShader(
 
     uniform sampler2D uHammersleyMap;
 
+    ${CONSTANT}
     ${PBR}
 
     vec2 integrateBRDF(float NdotV, float roughness) {
