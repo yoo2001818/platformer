@@ -2,6 +2,7 @@ import {quat, vec3} from 'gl-matrix';
 
 import {Entity} from '../core/Entity';
 import {Transform} from '../3d/Transform';
+import {Camera} from '../3d/Camera';
 
 import {Viewport} from './Viewport';
 
@@ -143,6 +144,62 @@ export class CameraController {
         e.preventDefault();
         return true;
       }
+      case 'keydown': {
+        const e: KeyboardEvent = args[0];
+        if (e.shiftKey) {
+          return false;
+        }
+        const transform = this.entity.get<Transform>('transform')!;
+        const camera = this.entity.get<Camera>('camera')!;
+        if (e.keyCode === 32) {
+          vec3.copy(this.lerpStart, this.center);
+          vec3.set(this.lerpEnd, 0, 0, 0);
+          this.lerpCounter = 0;
+          return true;
+        }
+        // Persp - Ortho swap
+        if (e.keyCode === 101 || e.keyCode === 53) {
+          camera.setOptions({
+            ...camera.options,
+            type: camera.options.type === 'perspective' ? 'ortho' : 'perspective',
+          });
+          this.hasChanged = true;
+          return true;
+        }
+        // Front
+        if (e.keyCode === 97 || e.keyCode === 49) {
+          quat.copy(this.slerpStart, transform.getRotation());
+          quat.identity(this.slerpEnd);
+          if (e.ctrlKey) {
+            quat.rotateY(this.slerpEnd, this.slerpEnd, Math.PI);
+          }
+          this.slerpCounter = 0;
+          return true;
+        }
+        // Right
+        if (e.keyCode === 99 || e.keyCode === 51) {
+          quat.copy(this.slerpStart, transform.getRotation());
+          quat.identity(this.slerpEnd);
+          quat.rotateY(this.slerpEnd, this.slerpEnd, Math.PI / 2);
+          if (e.ctrlKey) {
+            quat.rotateY(this.slerpEnd, this.slerpEnd, -Math.PI);
+          }
+          this.slerpCounter = 0;
+          return true;
+        }
+        // Top
+        if (e.keyCode === 103 || e.keyCode === 55) {
+          quat.copy(this.slerpStart, transform.getRotation());
+          quat.identity(this.slerpEnd);
+          quat.rotateX(this.slerpEnd, this.slerpEnd, -Math.PI / 2);
+          if (e.ctrlKey) {
+            quat.rotateX(this.slerpEnd, this.slerpEnd, Math.PI);
+          }
+          this.slerpCounter = 0;
+          return true;
+        }
+        return false;
+      }
       case 'wheel': {
         const e: WheelEvent = args[0];
         let diff = e.deltaY / 50;
@@ -153,7 +210,7 @@ export class CameraController {
         if (e.shiftKey) {
           const vecY = vec3.create();
           vec3.transformQuat(vecY, [0, -diff * this.radius, 0],
-            transform.getRotation());
+          transform.getRotation());
           vec3.add(this.center, this.center, vecY);
           this.hasChanged = true;
           e.preventDefault();

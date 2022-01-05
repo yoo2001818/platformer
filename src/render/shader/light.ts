@@ -141,7 +141,7 @@ export const PROBE_GRID_LIGHT = /* glsl */`
     // probe position
     pos = (pos - invLightSize * 0.5) / (1.0 - invLightSize);
     pos = clamp(pos, vec3(0.0), vec3(1.0));
-    pos *= light.size;
+    pos *= (light.size - 1.0);
     // Run trilinear filtering according to the position.
     return vec3(floor(pos) * invLightSize);
   }
