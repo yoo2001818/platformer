@@ -142,7 +142,9 @@ export const PROBE_GRID_LIGHT = /* glsl */`
     pos = (pos - invLightSize * 0.5) / (1.0 - invLightSize);
     pos = clamp(pos, vec3(0.0), vec3(1.0));
     pos *= (light.size - 1.0);
-    // Run trilinear filtering according to the position.
+    // Run trilinear filtering according to the position. This should be
+    // done in TMU, otherwise we have to run 81 texel lookups (9 * 8),
+    // however, if TMU does it, we can only lookup 18 (9 * 2).
     return vec3(floor(pos) * invLightSize);
   }
 `;
