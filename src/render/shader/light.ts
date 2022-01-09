@@ -145,6 +145,18 @@ export const PROBE_GRID_LIGHT = /* glsl */`
     // Run trilinear filtering according to the position. This should be
     // done in TMU, otherwise we have to run 81 texel lookups (9 * 8),
     // however, if TMU does it, we can only lookup 18 (9 * 2).
-    return vec3(floor(pos) * invLightSize);
+    // 
+    // The probe texture structure is a series of XZ map, however we don't use
+    // 3D texture or texture arrays because it requires WebGL 2. Since this
+    // routine should be able to run in WebGL 1, we omit 3D textures.
+    // The probe texture is split to X and Y grid of XZ map.
+    // X axis should mean 9 values of the spherical harmonics.
+    // Y axis should mean Y value.
+
+    // (p / s * (s - 1) + 0.5) / s
+    vec2 inPos = (pos.xz * invLightSize.xz * (light.size.xz - 1.0) + 0.5) * invLightSize.xz;
+    float bottomY = floor(pos.y) * invLightSize.y;
+    float topY = ceil(pos.y) * invLightSize.y;
+    return vec3(inPos, topY);
   }
 `;
