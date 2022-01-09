@@ -28,12 +28,10 @@ export const SH = /* glsl */`
     return result;
   }
 
-  void shEvaluate(out vec3[9] sh, vec3 p) {
+  void shEvaluate(out vec3[9] result, vec3 p) {
     // From Peter-Pike Sloan's Stupid SH Tricks
     // http://www.ppsloan.org/publications/StupidSH36.pdf
     // https://github.com/dariomanesku/cmft/blob/master/src/cmft/cubemapfilter.cpp#L130
-
-    vec3[9] result;
 
     float x = -p.x;
     float y = -p.y;
@@ -64,6 +62,7 @@ export const SH = /* glsl */`
 
     vec3[9] directionSh;
     shEvaluate(directionSh, direction);
+
     // https://cseweb.ucsd.edu/~ravir/papers/envmap/envmap.pdf equation 8
 
     vec3 result = sh[0] * directionSh[0] * 1.0;

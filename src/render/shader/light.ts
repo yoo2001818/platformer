@@ -130,6 +130,10 @@ export const PROBE_GRID_LIGHT = /* glsl */`
     float range;
   };
 
+  float rand(vec2 co){
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+  }
+
   vec3 calcProbeGridLight(vec3 viewPos, MaterialInfo mInfo, sampler2D gridMap, ProbeGridLight light) {
     vec3 invLightSize = 1.0 / light.size;
     // Note that we can only use irradiance here
@@ -154,9 +158,21 @@ export const PROBE_GRID_LIGHT = /* glsl */`
     // Y axis should mean Y value.
 
     // (p / s * (s - 1) + 0.5) / s
-    vec2 inPos = (pos.xz * invLightSize.xz * (light.size.xz - 1.0) + 0.5) * invLightSize.xz;
+    vec2 offsetPos = (pos.xz * invLightSize.xz * (light.size.xz - 1.0) + 0.5) * invLightSize.xz;
+    offsetPos *= vec2(1.0 / 9.0, invLightSize.y);
     float bottomY = floor(pos.y) * invLightSize.y;
     float topY = ceil(pos.y) * invLightSize.y;
-    return vec3(inPos, topY);
+    float yOffset = fract(pos.y);
+    vec3[9] sh;
+    for (int i = 0; i < 9; i += 1) {
+      vec2 bottomPos = vec2(float(i) / 9.0, bottomY * invLightSize.y) + offsetPos;
+      vec2 topPos = vec2(float(i) / 9.0, topY * invLightSize.y) + offsetPos;
+      vec3 bottomValue = texture2D(gridMap, bottomPos).rgb;
+      vec3 topValue = texture2D(gridMap, topPos).rgb;
+      sh[i] = mix(bottomValue, topValue, yOffset);
+    }
+
+    // We have SH data now; calculate irradiance
+    return shEvaulateDiffuse(sh, mInfo.normal);
   }
 `;

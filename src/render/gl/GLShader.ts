@@ -159,7 +159,7 @@ export class GLShader {
     }
     this.textures!.forEach((slot) => {
       const value = step(uniforms, slot.path);
-      if (value != null) {
+      if (value != null && value instanceof GLTexture) {
         const texture = value as GLTexture;
         texture.prepare(renderer);
       }
