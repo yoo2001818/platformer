@@ -68,6 +68,7 @@ export class BVHTexture {
   }
 
   update(): void {
+    this.worldBVH.update();
     if (this.worldBVH.lastVersion === this.lastVersion) {
       return;
     }

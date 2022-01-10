@@ -212,7 +212,7 @@ function main() {
   worldBVH.update();
 
   const rasterPipeline = renderer.pipeline;
-  const rayPipeline = new RaytracedPipeline(renderer, worldBVH);
+  const rayPipeline = new RaytracedPipeline(renderer);
 
   const testMesh = new Mesh(
     new StandardMaterial('test', {

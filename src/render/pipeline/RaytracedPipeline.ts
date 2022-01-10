@@ -25,6 +25,7 @@ import {FILMIC} from '../shader/tonemap';
 import {LightTexture} from '../raytrace/LightTexture';
 import {LIGHT_MAP} from '../shader/raytrace/lightMap';
 import {CONSTANT} from '../shader/constant';
+import {getBVHTexture, getMaterialInjector, getWorldBVH} from '../bvhResource';
 
 import {Pipeline, PipelineShaderBlock} from './Pipeline';
 
@@ -51,21 +52,17 @@ export class RaytracedPipeline implements Pipeline {
   cameraUniforms: {[key: string]: unknown;} = {};
   worldVersion = -1;
 
-  constructor(renderer: Renderer, worldBVH: WorldBVH) {
+  constructor(renderer: Renderer) {
     this.renderer = renderer;
-    this.worldBVH = worldBVH;
-    this.materialInjector = new MaterialInjector(renderer);
-    this.bvhTexture = new BVHTexture(
-      worldBVH.entityStore,
-      worldBVH,
-      this.materialInjector,
-    );
+    this.worldBVH = getWorldBVH(renderer);
+    this.materialInjector = getMaterialInjector(renderer);
+    this.bvhTexture = getBVHTexture(renderer);
     this.lightTexture = new LightTexture(renderer.entityStore);
   }
 
   dispose(): void {
-    this.bvhTexture.dispose();
-    this.materialInjector.dispose();
+    // this.bvhTexture.dispose();
+    // this.materialInjector.dispose();
     this.lightTexture.dispose();
     this.rayBuffer?.dispose();
     this.rayFrameBuffer?.dispose();

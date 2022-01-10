@@ -4,7 +4,6 @@ import {GizmoEffect} from '../render/effect/GizmoEffect';
 import {DeferredPipeline} from '../render/pipeline/DeferredPipeline';
 import {ForwardPipeline} from '../render/pipeline/ForwardPipeline';
 import {RaytracedPipeline} from '../render/pipeline/RaytracedPipeline';
-import {WorldBVH} from '../render/raytrace/WorldBVH';
 import {Renderer} from '../render/Renderer';
 import {createId} from '../render/utils/createId';
 
@@ -85,13 +84,8 @@ export class Viewport {
             break;
           }
           case 'raytrace': {
-            // TODO: This can be used anywhere
-            const worldBVH = new WorldBVH(engine.entityStore);
             this.renderer.pipeline.dispose();
-            this.renderer.setPipeline(new RaytracedPipeline(
-              this.renderer,
-              worldBVH,
-            ));
+            this.renderer.setPipeline(new RaytracedPipeline(this.renderer));
             break;
           }
         }
