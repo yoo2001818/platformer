@@ -1,4 +1,5 @@
 import {BVHTexture} from './raytrace/BVHTexture';
+import {LightTexture} from './raytrace/LightTexture';
 import {MaterialInjector} from './raytrace/MaterialInjector';
 import {WorldBVH} from './raytrace/WorldBVH';
 import {Renderer} from './Renderer';
@@ -20,5 +21,11 @@ export function getBVHTexture(renderer: Renderer): BVHTexture {
   const injector = getMaterialInjector(renderer);
   return renderer.getResource('bvhTexture', () => {
     return new BVHTexture(renderer.entityStore, bvh, injector);
+  });
+}
+
+export function getLightTexture(renderer: Renderer): LightTexture {
+  return renderer.getResource('lightTexture', () => {
+    return new LightTexture(renderer.entityStore);
   });
 }

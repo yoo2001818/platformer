@@ -1,4 +1,4 @@
-import {getBVHTexture} from '../bvhResource';
+import {getBVHTexture, getLightTexture} from '../bvhResource';
 import {GLFrameBuffer} from '../gl/GLFrameBuffer';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {Renderer} from '../Renderer';
@@ -91,5 +91,8 @@ export class RaytracedProbeGrid implements ProbeGrid {
   prepare(renderer: Renderer): void {
     this._prepareTexture(renderer);
     const bvhTexture = getBVHTexture(renderer);
+    bvhTexture.update();
+    const lightTexture = getLightTexture(renderer);
+    lightTexture.update();
   }
 }
