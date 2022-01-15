@@ -1,7 +1,8 @@
 import {Transform} from '../../3d/Transform';
 import {Entity} from '../../core/Entity';
 import {GLArrayBuffer} from '../gl/GLArrayBuffer';
-import {GLTexture2D} from '../gl/GLTexture2D';
+import {ProbeGrid} from '../probe/ProbeGrid';
+import {RaytracedProbeGrid} from '../probe/RaytracedProbeGrid';
 import {Renderer} from '../Renderer';
 import {PROBE_GRID_LIGHT} from '../shader/light';
 import {SH} from '../shader/sh';
@@ -23,8 +24,7 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
   type = 'probeGrid';
   canRaytrace = false;
   options: ProbeGridLightOptions;
-  probeBuffer: Float32Array;
-  probeTex: GLTexture2D;
+  probeGrid: ProbeGrid;
   gizmoBuffer: GLArrayBuffer;
 
   constructor(options?: ProbeGridLightOptions) {
@@ -33,18 +33,7 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
       power: 1,
       range: 0.3,
     };
-    this.probeBuffer = new Float32Array();
-    this.probeTex = new GLTexture2D({
-      width: 1,
-      height: 1,
-      magFilter: 'nearest',
-      minFilter: 'nearest',
-      mipmap: false,
-      wrapS: 'clampToEdge',
-      wrapT: 'clampToEdge',
-      format: 'rgba',
-      type: 'halfFloat',
-    });
+    this.probeGrid = new RaytracedProbeGrid(this.options);
     this.gizmoBuffer = new GLArrayBuffer(null, 'stream');
   }
 
@@ -54,6 +43,7 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
 
   setOptions(options: ProbeGridLightOptions): void {
     this.options = options;
+    this.probeGrid.setOptions(options);
   }
 
   getShaderBlock(numLights: number, renderer: Renderer): LightShaderBlock {
@@ -110,7 +100,7 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
         power: options.power,
         range: options.range,
       });
-      outTextures.push(0);
+      outTextures.push(light.probeGrid.getTexture());
     });
     return {
       uProbeGridLights: output,
@@ -120,6 +110,17 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
 
   prepare(entities: Entity[], renderer: Renderer): void {
     // noop. Should prepare light map here
+    entities.forEach((entity) => {
+      const transform = entity.get<Transform>('transform');
+      const light = entity.get<Light>('light');
+      if (transform == null || light == null) {
+        return;
+      }
+      if (!(light instanceof ProbeGridLight)) {
+        return;
+      }
+      light.probeGrid.prepare(renderer);
+    });
   }
 
   writeTexture(entity: Entity, buffer: Float32Array, position: number): void {

@@ -167,8 +167,10 @@ export const PROBE_GRID_LIGHT = /* glsl */`
     for (int i = 0; i < 9; i += 1) {
       vec2 bottomPos = vec2(float(i) / 9.0, bottomY * invLightSize.y) + offsetPos;
       vec2 topPos = vec2(float(i) / 9.0, topY * invLightSize.y) + offsetPos;
-      vec3 bottomValue = texture2D(gridMap, bottomPos).rgb;
-      vec3 topValue = texture2D(gridMap, topPos).rgb;
+      vec4 bottomTexel = texture2D(gridMap, bottomPos);
+      vec4 topTexel = texture2D(gridMap, topPos);
+      vec3 bottomValue = bottomTexel.rgb / bottomTexel.a;
+      vec3 topValue = topTexel.rgb / topTexel.a;
       sh[i] = mix(bottomValue, topValue, yOffset);
     }
 

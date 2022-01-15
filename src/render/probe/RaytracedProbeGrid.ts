@@ -18,8 +18,8 @@ export class RaytracedProbeGrid implements ProbeGrid {
   giFrameBuffer: GLFrameBuffer | null = null;
   isValid = false;
 
-  constructor() {
-    this.options = {size: [0, 0, 0]};
+  constructor(options?: ProbeGridOptions) {
+    this.options = options ?? {size: [0, 0, 0]};
     this.isValid = false;
   }
 
@@ -90,17 +90,11 @@ export class RaytracedProbeGrid implements ProbeGrid {
     }
     this.rtTexture.updateSize(size[0], size[1] * size[2]);
     this.giTexture.updateSize(size[0] * 9, size[1] * size[2]);
-    this.isValid = false;
+    this.isValid = true;
   }
 
-  prepare(renderer: Renderer): void {
-    const {glRenderer} = renderer;
-    this._prepareTexture(renderer);
-    const bvhTexture = getBVHTexture(renderer);
-    bvhTexture.update();
-    const lightTexture = getLightTexture(renderer);
-    lightTexture.update();
-    const rtShader = renderer.getResource(`rtprobe~raytrace`, () => {
+  _getRaytraceShader(renderer: Renderer): GLShader {
+    return renderer.getResource(`rtprobe~raytrace`, () => {
       return new GLShader(
         /* glsl */`
           #version 100
@@ -128,12 +122,71 @@ export class RaytracedProbeGrid implements ProbeGrid {
         `,
       );
     });
+  }
+
+  _getOutputShader(renderer: Renderer): GLShader {
+    return renderer.getResource(`rtprobe~raytrace`, () => {
+      return new GLShader(
+        /* glsl */`
+          #version 100
+          precision highp float;
+
+          attribute vec3 aPosition;
+
+          varying vec2 vPosition;
+
+          void main() {
+            vPosition = aPosition.xy;
+            gl_Position = vec4(vPosition, 1.0, 1.0);
+          }
+        `,
+        /* glsl */`
+          #version 100
+          precision highp float;
+          precision highp sampler2D;
+
+          varying vec2 vPosition;
+
+          uniform sampler2D uTexture;
+
+          void main() {
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+          }
+        `,
+      );
+    });
+  }
+
+  prepare(renderer: Renderer): void {
+    const {glRenderer} = renderer;
+    this._prepareTexture(renderer);
+    const bvhTexture = getBVHTexture(renderer);
+    bvhTexture.update();
+    const lightTexture = getLightTexture(renderer);
+    lightTexture.update();
+    const rtShader = this._getRaytraceShader(renderer);
     // Run raytrace
     glRenderer.draw({
       shader: rtShader,
       geometry: LIGHT_QUAD,
       uniforms: {},
       frameBuffer: this.rtFrameBuffer!,
+    });
+    const outputShader = this._getOutputShader(renderer);
+    // Output to gi texture
+    glRenderer.draw({
+      shader: outputShader,
+      geometry: LIGHT_QUAD,
+      uniforms: {
+        uTexture: this.rtTexture!,
+      },
+      frameBuffer: this.giFrameBuffer!,
+      state: {
+        blend: {
+          equation: 'add',
+          func: ['one', 'one'],
+        },
+      },
     });
   }
 }
