@@ -5,6 +5,7 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {Renderer} from '../Renderer';
+import {SH} from '../shader/sh';
 
 import {ProbeGrid, ProbeGridOptions} from './ProbeGrid';
 
@@ -71,8 +72,8 @@ export class RaytracedProbeGrid implements ProbeGrid {
         type: 'halfFloat',
         wrapS: 'clampToEdge',
         wrapT: 'clampToEdge',
-        magFilter: 'linear',
-        minFilter: 'linear',
+        magFilter: 'nearest',
+        minFilter: 'nearest',
         mipmap: false,
         // X * numSHVectors
         width: size[0] * 9,
@@ -105,8 +106,8 @@ export class RaytracedProbeGrid implements ProbeGrid {
           varying vec2 vPosition;
 
           void main() {
-            vPosition = aPosition.xy;
-            gl_Position = vec4(vPosition, 1.0, 1.0);
+            vPosition = aPosition.xy * 0.5 + 0.5;
+            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
           }
         `,
         /* glsl */`
@@ -117,7 +118,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
           varying vec2 vPosition;
 
           void main() {
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            gl_FragColor = vec4(vPosition.xy, 0.0, 1.0);
           }
         `,
       );
@@ -136,8 +137,8 @@ export class RaytracedProbeGrid implements ProbeGrid {
           varying vec2 vPosition;
 
           void main() {
-            vPosition = aPosition.xy;
-            gl_Position = vec4(vPosition, 1.0, 1.0);
+            vPosition = aPosition.xy * 0.5 + 0.5;
+            gl_Position = vec4(aPosition.xy, 1.0, 1.0);
           }
         `,
         /* glsl */`
@@ -145,12 +146,40 @@ export class RaytracedProbeGrid implements ProbeGrid {
           precision highp float;
           precision highp sampler2D;
 
+          #define NUM_SAMPLES 1
+
+          ${SH}
+
           varying vec2 vPosition;
 
           uniform sampler2D uTexture;
 
           void main() {
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            // source (rt texture): X * N, Z * Y
+            // target (gi texture): X * SH, Z * Y
+            // There is no need to retrieve Z/Y to map the SH values, as they
+            // are the same from the gi texture and the rt texture.
+            int shIndex = int(floor(vPosition.x * 9.0));
+            float probeX = fract(vPosition.x * 9.0);
+            vec3 result = vec3(1.0);
+            for (int i = 0; i < NUM_SAMPLES; i += 1) {
+              vec2 texelPos = vec2((probeX + float(i)) / float(NUM_SAMPLES), vPosition.y);
+              vec4 texel = texture2D(uTexture, texelPos);
+              vec3 rotation = vec3(1.0, 0.0, 0.0);
+              vec3[9] rotationSh;
+              shEvaluate(rotationSh, rotation);
+              #if WEBGL2
+              result += texel.rgb;
+              // result += rotationSh[shIndex] * texel.rgb;
+              #else
+              for (int j = 0; j < 9; j += 1) {
+                if (shIndex == j) {
+                  result += rotationSh[j] * texel.rgb;
+                }
+              }
+              #endif
+            }
+            gl_FragColor = result;
           }
         `,
       );
