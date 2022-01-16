@@ -5,7 +5,6 @@ import {create3DComponents} from '../../3d/create3DComponents';
 import {Engine} from '../../core/Engine';
 import {parseGLTF} from '../../loader/gltf';
 import {Transform} from '../../3d/Transform';
-import {PointLight} from '../../render/light/PointLight';
 import {GLTexture2D} from '../../render/gl/GLTexture2D';
 import {createImage} from '../../render/utils/createImage';
 import {generateCubePackEquirectangular} from '../../render/map/generateCubePack';
@@ -16,6 +15,7 @@ import {Geometry} from '../../render/Geometry';
 import {quad} from '../../geom/quad';
 import {EnvironmentLight} from '../../render/light/EnvironmentLight';
 import {initModels} from '../../editor/initModels';
+import {ProbeGridLight} from '../../render/light/ProbeGridLight';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
@@ -35,9 +35,8 @@ function initEngine(): Engine {
   initModels(engine);
   engine.entityStore.create({
     name: 'PointLight',
-    transform: new Transform()
-      .translate([1.42, 2.2, -2.03]),
-    light: new PointLight({color: '#ffffff', power: 10, radius: 0.1, range: 20}),
+    transform: new Transform(),
+    light: new ProbeGridLight(),
   });
   const skyboxTexture = new GLTexture2D({
     width: 4096,

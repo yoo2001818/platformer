@@ -174,9 +174,7 @@ export const PROBE_GRID_LIGHT = /* glsl */`
       sh[i] = mix(bottomValue, topValue, yOffset);
     }
 
-    return sh[int(floor(light.matrix[0].x))];
-
     // We have SH data now; calculate irradiance
-    // return shEvaulateDiffuse(sh, mInfo.normal);
+    return shEvaulateDiffuse(sh, mInfo.normal);
   }
 `;

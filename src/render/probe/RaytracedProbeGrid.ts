@@ -5,6 +5,7 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {Renderer} from '../Renderer';
+import {CONSTANT} from '../shader/constant';
 import {SH} from '../shader/sh';
 
 import {ProbeGrid, ProbeGridOptions} from './ProbeGrid';
@@ -72,8 +73,8 @@ export class RaytracedProbeGrid implements ProbeGrid {
         type: 'halfFloat',
         wrapS: 'clampToEdge',
         wrapT: 'clampToEdge',
-        magFilter: 'nearest',
-        minFilter: 'nearest',
+        magFilter: 'linear',
+        minFilter: 'linear',
         mipmap: false,
         // X * numSHVectors
         width: size[0] * 9,
@@ -126,7 +127,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
   }
 
   _getOutputShader(renderer: Renderer): GLShader {
-    return renderer.getResource(`rtprobe~raytrace`, () => {
+    return renderer.getResource(`rtprobe~gi`, () => {
       return new GLShader(
         /* glsl */`
           #version 100
@@ -148,6 +149,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
 
           #define NUM_SAMPLES 1
 
+          ${CONSTANT}
           ${SH}
 
           varying vec2 vPosition;
@@ -161,16 +163,15 @@ export class RaytracedProbeGrid implements ProbeGrid {
             // are the same from the gi texture and the rt texture.
             int shIndex = int(floor(vPosition.x * 9.0));
             float probeX = fract(vPosition.x * 9.0);
-            vec3 result = vec3(1.0);
+            vec3 result = vec3(0.0);
             for (int i = 0; i < NUM_SAMPLES; i += 1) {
               vec2 texelPos = vec2((probeX + float(i)) / float(NUM_SAMPLES), vPosition.y);
               vec4 texel = texture2D(uTexture, texelPos);
-              vec3 rotation = vec3(1.0, 0.0, 0.0);
+              vec3 rotation = vec3(0.0, 0.0, 1.0);
               vec3[9] rotationSh;
               shEvaluate(rotationSh, rotation);
-              #if WEBGL2
-              result += texel.rgb;
-              // result += rotationSh[shIndex] * texel.rgb;
+              #ifdef WEBGL2
+              result += rotationSh[shIndex] * texel.rgb;
               #else
               for (int j = 0; j < 9; j += 1) {
                 if (shIndex == j) {
@@ -179,7 +180,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
               }
               #endif
             }
-            gl_FragColor = result;
+            gl_FragColor = vec4(result, 1.0);
           }
         `,
       );
