@@ -11,6 +11,7 @@ import {SH} from '../shader/sh';
 import {ProbeGrid, ProbeGridOptions} from './ProbeGrid';
 
 const LIGHT_QUAD = new GLGeometry(quad());
+const NUM_SAMPLES_PER_TICK = 4;
 
 export class RaytracedProbeGrid implements ProbeGrid {
   options: ProbeGridOptions;
@@ -59,7 +60,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
         minFilter: 'nearest',
         mipmap: false,
         // X * numSamplesPerTick
-        width: size[0],
+        width: size[0] * NUM_SAMPLES_PER_TICK,
         // Z * Y
         height: size[1] * size[2],
       });
@@ -92,7 +93,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
     if (this.isValid) {
       return;
     }
-    this.rtTexture.updateSize(size[0], size[1] * size[2]);
+    this.rtTexture.updateSize(size[0] * NUM_SAMPLES_PER_TICK, size[1] * size[2]);
     this.giTexture.updateSize(size[0] * 9, size[1] * size[2]);
     this.isValid = true;
   }
@@ -121,7 +122,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
           varying vec2 vPosition;
 
           void main() {
-            gl_FragColor = vec4(1.0);
+            gl_FragColor = vec4(vPosition.xy, 0.0, 1.0);
           }
         `,
       );
@@ -149,7 +150,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
           precision highp float;
           precision highp sampler2D;
 
-          #define NUM_SAMPLES 1
+          #define NUM_SAMPLES ${NUM_SAMPLES_PER_TICK}
 
           ${CONSTANT}
           ${SH}
