@@ -19,10 +19,12 @@ export class RaytracedProbeGrid implements ProbeGrid {
   giTexture: GLTexture2D | null = null;
   giFrameBuffer: GLFrameBuffer | null = null;
   isValid = false;
+  numSamples = 0;
 
   constructor(options?: ProbeGridOptions) {
     this.options = options ?? {size: [0, 0, 0]};
     this.isValid = false;
+    this.numSamples = 0;
   }
 
   dispose(): void {
@@ -119,7 +121,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
           varying vec2 vPosition;
 
           void main() {
-            gl_FragColor = vec4(vPosition.xy, 0.0, 1.0);
+            gl_FragColor = vec4(1.0);
           }
         `,
       );
@@ -194,29 +196,32 @@ export class RaytracedProbeGrid implements ProbeGrid {
     bvhTexture.update();
     const lightTexture = getLightTexture(renderer);
     lightTexture.update();
-    const rtShader = this._getRaytraceShader(renderer);
-    // Run raytrace
-    glRenderer.draw({
-      shader: rtShader,
-      geometry: LIGHT_QUAD,
-      uniforms: {},
-      frameBuffer: this.rtFrameBuffer!,
-    });
-    const outputShader = this._getOutputShader(renderer);
-    // Output to gi texture
-    glRenderer.draw({
-      shader: outputShader,
-      geometry: LIGHT_QUAD,
-      uniforms: {
-        uTexture: this.rtTexture!,
-      },
-      frameBuffer: this.giFrameBuffer!,
-      state: {
-        blend: {
-          equation: 'add',
-          func: ['one', 'one'],
+    if (this.numSamples < 1) {
+      const rtShader = this._getRaytraceShader(renderer);
+      // Run raytrace
+      glRenderer.draw({
+        shader: rtShader,
+        geometry: LIGHT_QUAD,
+        uniforms: {},
+        frameBuffer: this.rtFrameBuffer!,
+      });
+      const outputShader = this._getOutputShader(renderer);
+      // Output to gi texture
+      glRenderer.draw({
+        shader: outputShader,
+        geometry: LIGHT_QUAD,
+        uniforms: {
+          uTexture: this.rtTexture!,
         },
-      },
-    });
+        frameBuffer: this.giFrameBuffer!,
+        state: {
+          blend: {
+            equation: 'add',
+            func: ['one', 'one'],
+          },
+        },
+      });
+    }
+    this.numSamples += 1;
   }
 }

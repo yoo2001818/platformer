@@ -157,8 +157,7 @@ export const PROBE_GRID_LIGHT = /* glsl */`
     // X axis should mean 9 values of the spherical harmonics.
     // Y axis should mean Y value.
 
-    // (p / s * (s - 1) + 0.5) / s
-    vec2 offsetPos = (pos.xz * invLightSize.xz * (light.size.xz - 1.0) + 0.5) * invLightSize.xz;
+    vec2 offsetPos = (0.5 + pos.xz) * invLightSize.xz;
     offsetPos *= vec2(1.0 / 9.0, invLightSize.y);
     float bottomY = floor(pos.y) * invLightSize.y;
     float topY = ceil(pos.y) * invLightSize.y;
