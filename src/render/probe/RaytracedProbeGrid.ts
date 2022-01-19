@@ -73,7 +73,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
     if (this.giTexture == null) {
       this.giTexture = new GLTexture2D({
         format: 'rgba',
-        type: 'halfFloat',
+        type: 'float',
         wrapS: 'clampToEdge',
         wrapT: 'clampToEdge',
         magFilter: 'linear',
@@ -197,32 +197,30 @@ export class RaytracedProbeGrid implements ProbeGrid {
     bvhTexture.update();
     const lightTexture = getLightTexture(renderer);
     lightTexture.update();
-    if (this.numSamples < 1) {
-      const rtShader = this._getRaytraceShader(renderer);
-      // Run raytrace
-      glRenderer.draw({
-        shader: rtShader,
-        geometry: LIGHT_QUAD,
-        uniforms: {},
-        frameBuffer: this.rtFrameBuffer!,
-      });
-      const outputShader = this._getOutputShader(renderer);
-      // Output to gi texture
-      glRenderer.draw({
-        shader: outputShader,
-        geometry: LIGHT_QUAD,
-        uniforms: {
-          uTexture: this.rtTexture!,
+    const rtShader = this._getRaytraceShader(renderer);
+    // Run raytrace
+    glRenderer.draw({
+      shader: rtShader,
+      geometry: LIGHT_QUAD,
+      uniforms: {},
+      frameBuffer: this.rtFrameBuffer!,
+    });
+    const outputShader = this._getOutputShader(renderer);
+    // Output to gi texture
+    glRenderer.draw({
+      shader: outputShader,
+      geometry: LIGHT_QUAD,
+      uniforms: {
+        uTexture: this.rtTexture!,
+      },
+      frameBuffer: this.giFrameBuffer!,
+      state: {
+        blend: {
+          equation: 'add',
+          func: ['one', 'one'],
         },
-        frameBuffer: this.giFrameBuffer!,
-        state: {
-          blend: {
-            equation: 'add',
-            func: ['one', 'one'],
-          },
-        },
-      });
-    }
+      },
+    });
     this.numSamples += 1;
   }
 }
