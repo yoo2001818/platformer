@@ -8,7 +8,6 @@ import {PROBE_GRID_LIGHT} from '../shader/light';
 import {SH} from '../shader/sh';
 
 import {
-  GIZMO_QUAD_COLOR_SHADER,
   GIZMO_QUAD_INSTANCED_SHADER,
   GIZMO_QUAD_MODEL,
   PROBE_GRID_LIGHT_TEX,
@@ -120,7 +119,7 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
       if (!(light instanceof ProbeGridLight)) {
         return;
       }
-      light.probeGrid.prepare(renderer);
+      light.probeGrid.prepare(renderer, transform);
     });
   }
 

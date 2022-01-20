@@ -16,6 +16,7 @@ import {quad} from '../../geom/quad';
 import {EnvironmentLight} from '../../render/light/EnvironmentLight';
 import {initModels} from '../../editor/initModels';
 import {ProbeGridLight} from '../../render/light/ProbeGridLight';
+import {PointLight} from '../../render/light/PointLight';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
@@ -35,6 +36,17 @@ function initEngine(): Engine {
   initModels(engine);
   engine.entityStore.create({
     name: 'PointLight',
+    transform: new Transform()
+      .setPosition([-0.1792, 4.3322, -3.1509]),
+    light: new PointLight({
+      power: 10,
+      color: '#ffffff',
+      range: 100,
+      radius: 0.01,
+    }),
+  });
+  engine.entityStore.create({
+    name: 'ProbeLight',
     transform: new Transform()
       .setPosition([-0.1792, 2.5614, -3.1509])
       .setScale([2.77, 2.77, 2.77]),
