@@ -83,6 +83,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
         width: size[0] * 9,
         // Z * Y
         height: size[1] * size[2],
+        anistropic: 1,
       });
     }
     if (this.giFrameBuffer == null) {
