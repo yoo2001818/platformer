@@ -46,6 +46,33 @@ export const GIZMO_QUAD_SHADER = new GLShader(
   `,
 );
 
+export const GIZMO_QUAD_COLOR_SHADER = new GLShader(
+  /* glsl */`
+    precision highp float;
+
+    attribute vec3 aPosition;
+
+    varying vec2 vTexCoord;
+
+    void main() {
+      vTexCoord = aPosition.xy * 0.5 + 0.5;
+      gl_Position = vec4(aPosition.xy, 0.0, 1.0);
+    }
+  `,
+  /* glsl */`
+    precision highp float;
+
+    varying vec2 vTexCoord;
+
+    uniform sampler2D uTexture;
+
+    void main() {
+      vec4 result = texture2D(uTexture, vTexCoord);
+      gl_FragColor = result / result.a;
+    }
+  `,
+);
+
 export const GIZMO_CIRCLE_MODEL = new GLGeometry(circleLine(24));
 
 export const GIZMO_CIRCLE_SHADER = new GLShader(

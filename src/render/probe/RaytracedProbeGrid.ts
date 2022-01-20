@@ -121,8 +121,15 @@ export class RaytracedProbeGrid implements ProbeGrid {
 
           varying vec2 vPosition;
 
+          uniform vec4 uSize;
+
           void main() {
-            gl_FragColor = vec4(vPosition.xy, 0.0, 1.0);
+            // X * N, Z * Y
+            float rotationId = floor(vPosition.x * uSize.w);
+            float probeX = fract(vPosition.x * uSize.w);
+            float probeY = floor(vPosition.y * uSize.y) / uSize.y;
+            float probeZ = fract(vPosition.y * uSize.y);
+            gl_FragColor = vec4(probeX, probeY, probeZ, 1.0);
           }
         `,
       );
@@ -183,7 +190,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
               }
               #endif
             }
-            gl_FragColor = vec4(result, 1.0);
+            gl_FragColor = vec4(result / float(NUM_SAMPLES), 1.0);
           }
         `,
       );
@@ -191,6 +198,8 @@ export class RaytracedProbeGrid implements ProbeGrid {
   }
 
   prepare(renderer: Renderer): void {
+    const {options} = this;
+    const {size} = options;
     const {glRenderer} = renderer;
     this._prepareTexture(renderer);
     const bvhTexture = getBVHTexture(renderer);
@@ -202,7 +211,9 @@ export class RaytracedProbeGrid implements ProbeGrid {
     glRenderer.draw({
       shader: rtShader,
       geometry: LIGHT_QUAD,
-      uniforms: {},
+      uniforms: {
+        uSize: [size[0], size[1], size[2], NUM_SAMPLES_PER_TICK],
+      },
       frameBuffer: this.rtFrameBuffer!,
     });
     const outputShader = this._getOutputShader(renderer);

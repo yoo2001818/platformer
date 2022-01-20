@@ -8,6 +8,7 @@ import {PROBE_GRID_LIGHT} from '../shader/light';
 import {SH} from '../shader/sh';
 
 import {
+  GIZMO_QUAD_COLOR_SHADER,
   GIZMO_QUAD_INSTANCED_SHADER,
   GIZMO_QUAD_MODEL,
   PROBE_GRID_LIGHT_TEX,
@@ -187,6 +188,19 @@ export class ProbeGridLight implements Light<ProbeGridLightOptions> {
           },
         },
       });
+
+      /*
+      glRenderer.draw({
+        geometry: GIZMO_QUAD_MODEL,
+        shader: GIZMO_QUAD_COLOR_SHADER,
+        uniforms: {
+          uTexture: light.probeGrid.getTexture(),
+        },
+        state: {
+          depth: false,
+        },
+      });
+      */
     });
   }
 
