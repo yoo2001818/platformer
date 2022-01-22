@@ -5,6 +5,7 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {GLShader} from '../gl/GLShader';
 import {GLTexture2D} from '../gl/GLTexture2D';
 import {GLTextureGenerated} from '../gl/GLTextureGenerated';
+import {FILMIC} from '../shader/tonemap';
 
 export const GIZMO_QUAD_MODEL = new GLGeometry(quad());
 
@@ -62,13 +63,15 @@ export const GIZMO_QUAD_COLOR_SHADER = new GLShader(
   /* glsl */`
     precision highp float;
 
+    ${FILMIC}
+
     varying vec2 vTexCoord;
 
     uniform sampler2D uTexture;
 
     void main() {
       vec4 result = texture2D(uTexture, vTexCoord);
-      gl_FragColor = result / result.a;
+      gl_FragColor = vec4(tonemap((result / result.a).rgb), 1.0);
     }
   `,
 );

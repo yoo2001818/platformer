@@ -22,7 +22,7 @@ import {SH} from '../shader/sh';
 import {ProbeGrid, ProbeGridOptions} from './ProbeGrid';
 
 const LIGHT_QUAD = new GLGeometry(quad());
-const NUM_SAMPLES_PER_TICK = 4;
+const NUM_SAMPLES_PER_TICK = 16;
 
 function getRandomVector(): vec3 {
   const vec = vec3.fromValues(
@@ -209,7 +209,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
             int rotationId = int(floor(vPosition.x * uSize.w));
             vec3 probePos = vec3(
               fract(vPosition.x * uSize.w),
-              floor(vPosition.y * uSize.y) / uSize.y,
+              (floor(vPosition.y * uSize.y) + 0.5) / uSize.y,
               fract(vPosition.y * uSize.y)
             ) * 2.0 - 1.0;
             vec3 direction = uDirection[rotationId];
@@ -225,7 +225,7 @@ export class RaytracedProbeGrid implements ProbeGrid {
             context.specDisabled = 1.0;
             MaterialInfo mInfo;
 
-            const int NUM_SAMPLES = 4;
+            const int NUM_SAMPLES = 3;
             for (int i = 0; i < NUM_SAMPLES; i += 1) {
               bool isIntersecting = intersectMesh(mInfo, context.origin, context.dir, uBVHMap, uAtlasMap, uBVHMapSize, 0);
               if (!isIntersecting) {

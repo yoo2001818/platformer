@@ -28,12 +28,13 @@ import {Viewport} from './Viewport';
 function initEngine(): Engine {
   const engine = new Engine();
   engine.entityStore.registerComponents(create3DComponents());
-  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/cornell.gltf')).entities);
+  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/pri-home5.gltf')).entities);
   engine.entityStore.create({
     name: 'Test',
     transform: {position: [0, 1, 0]},
   });
   initModels(engine);
+  /*
   engine.entityStore.create({
     name: 'PointLight',
     transform: new Transform()
@@ -45,11 +46,12 @@ function initEngine(): Engine {
       radius: 0.01,
     }),
   });
+  */
   engine.entityStore.create({
     name: 'ProbeLight',
     transform: new Transform()
-      .setPosition([-0.1792, 2.5614, -3.1509])
-      .setScale([2.77, 2.77, 2.77]),
+      .setPosition([1.8099, 1.1495, -1.6352])
+      .setScale([1.5468, 1.2735, 1.5468]),
     light: new ProbeGridLight(),
   });
   const skyboxTexture = new GLTexture2D({

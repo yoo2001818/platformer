@@ -94,7 +94,7 @@ const LIGHT_BLOCK: LightPipelineShaderBlock = {
     vec3 N = mInfo.normal;
     result +=
       calcPointLight(L, V, N, mInfo.position, light) *
-      calcBRDF(L, V, N, mInfo);
+      calcBRDF(L, V, N, mInfo) * 0.0;
   `,
 };
 
@@ -140,7 +140,7 @@ export class PointLight implements Light<PointLightOptions> {
           vec3 N = mInfo.normal;
           result +=
             calcPointLight(L, V, N, mInfo.position, light) *
-            calcBRDF(L, V, N, mInfo);
+            calcBRDF(L, V, N, mInfo) * 0.0;
         }
       `,
     };
