@@ -15,8 +15,7 @@ import {Geometry} from '../../render/Geometry';
 import {quad} from '../../geom/quad';
 import {EnvironmentLight} from '../../render/light/EnvironmentLight';
 import {initModels} from '../../editor/initModels';
-import {ProbeGridLight} from '../../render/light/ProbeGridLight';
-import {PointLight} from '../../render/light/PointLight';
+import {DirectionalShadowLight} from '../../render/light/DirectionalShadowLight';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
@@ -28,25 +27,26 @@ import {Viewport} from './Viewport';
 function initEngine(): Engine {
   const engine = new Engine();
   engine.entityStore.registerComponents(create3DComponents());
-  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/pri-home5.gltf')).entities);
+  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/cat.gltf')).entities);
   engine.entityStore.create({
     name: 'Test',
     transform: {position: [0, 1, 0]},
   });
   initModels(engine);
-  /*
   engine.entityStore.create({
-    name: 'PointLight',
+    name: 'DirectionalLight',
     transform: new Transform()
-      .setPosition([-0.1792, 4.3322, -3.1509]),
-    light: new PointLight({
-      power: 10,
+      // .setPosition([-0.1792, 4.3322, -3.1509]),
+      .setPosition([0.6899, 1.5984, 0.6409])
+      .rotateY(30 / 180 * Math.PI)
+      .rotateX(-35 / 180 * Math.PI),
+    light: new DirectionalShadowLight({
+      power: 5,
       color: '#ffffff',
-      range: 100,
-      radius: 0.01,
     }),
   });
-  */
+
+  /*
   engine.entityStore.create({
     name: 'ProbeLight',
     transform: new Transform()
@@ -54,6 +54,7 @@ function initEngine(): Engine {
       .setScale([1.5468, 1.2735, 1.5468]),
     light: new ProbeGridLight(),
   });
+  */
   const skyboxTexture = new GLTexture2D({
     width: 4096,
     height: 2048,
