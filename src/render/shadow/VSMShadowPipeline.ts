@@ -7,8 +7,9 @@ import {GLGeometry} from '../gl/GLGeometry';
 import {quad} from '../../geom/quad';
 import {MaterialVertexShaderBlock} from '../Material';
 import {Renderer} from '../Renderer';
-import {BAKE_VSM} from '../shader/shadow';
+import {BAKE_VSM, VSM} from '../shader/shadow';
 import {AtlasItem} from '../Atlas';
+import {LightShaderBlock} from '../light/Light';
 
 import {ShadowPipeline} from './ShadowPipeline';
 
@@ -152,6 +153,15 @@ export class VSMShadowPipeline implements ShadowPipeline {
         `,
       );
     });
+  }
+
+  getUnpackShaderBlock(): LightShaderBlock {
+    return {
+      header: /* glsl */`
+        ${VSM}
+      `,
+      body: 'unpackVSM',
+    };
   }
 
   begin(atlas: AtlasItem, uniforms: {[key: string]: unknown;}): void {
