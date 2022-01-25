@@ -6,10 +6,10 @@ import {Entity} from '../../core/Entity';
 import {Mesh} from '../Mesh';
 import {Renderer} from '../Renderer';
 import {DIRECTIONAL_LIGHT} from '../shader/light';
-import {VSM} from '../shader/shadow';
 import {VSMShadowPipeline} from '../shadow/VSMShadowPipeline';
 import {AtlasItem} from '../Atlas';
 import {convertFloatArray} from '../gl/uniform/utils';
+import {ShadowPipeline} from '../shadow/ShadowPipeline';
 
 import {Light, LightShaderBlock} from './Light';
 import {DIRECTIONAL_LIGHT_VALUE} from './constant';
@@ -43,6 +43,13 @@ implements Light<DirectionalShadowLightOptions> {
     this.breakpoints = [];
   }
 
+  _getShadowPipeline(renderer: Renderer): ShadowPipeline {
+    return renderer.getResource(
+      'shadowPipeline~vsm',
+      () => new VSMShadowPipeline(renderer),
+    );
+  }
+
   getOptions(): DirectionalShadowLightOptions {
     return this.options;
   }
@@ -51,14 +58,16 @@ implements Light<DirectionalShadowLightOptions> {
     this.options = options;
   }
 
-  getShaderBlock(numLights: number): LightShaderBlock {
+  getShaderBlock(numLights: number, renderer: Renderer): LightShaderBlock {
+    const shadowPipeline = this._getShadowPipeline(renderer);
+    const shadowShaderBlock = shadowPipeline.getUnpackShaderBlock();
     return {
       header: /* glsl */`
         #define NUM_DIRECTIONAL_SHADOW_LIGHTS ${numLights}
         #define NUM_DIRECTIONAL_SHADOW_CASCADES ${NUM_CASCADES}
 
         ${DIRECTIONAL_LIGHT}
-        ${VSM}
+        ${shadowShaderBlock.header}
         
         uniform DirectionalLight uDirectionalShadowLights[NUM_DIRECTIONAL_SHADOW_LIGHTS];
         uniform vec4 uDirectionalShadowUV[${numLights * NUM_CASCADES}];
@@ -89,7 +98,7 @@ implements Light<DirectionalShadowLightOptions> {
               lightPos = lightPos * 0.5 + 0.5;
               vec2 lightUV = lightPos.xy;
               lightUV = shadowUV.xy + lightUV * shadowUV.zw;
-              lightInten = unpackVSM(uDirectionalShadowMap, lightUV, lightPos.z);
+              lightInten = ${shadowShaderBlock.body}(uDirectionalShadowMap, lightUV, lightPos.z);
             }
             vec3 L;
             vec3 V = normalize(viewPos - mInfo.position);
@@ -147,10 +156,7 @@ implements Light<DirectionalShadowLightOptions> {
   prepare(entities: Entity[], renderer: Renderer): void {
     const {shadowMapManager, camera, pipeline, entityStore} = renderer;
 
-    const shadowPipeline = renderer.getResource(
-      'shadowPipeline~vsm',
-      () => new VSMShadowPipeline(renderer),
-    );
+    const shadowPipeline = this._getShadowPipeline(renderer);
 
     const cameraData = camera!.get<Camera>('camera')!;
     const {near, far} = cameraData.options;
