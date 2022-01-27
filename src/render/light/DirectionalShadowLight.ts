@@ -6,10 +6,10 @@ import {Entity} from '../../core/Entity';
 import {Mesh} from '../Mesh';
 import {Renderer} from '../Renderer';
 import {DIRECTIONAL_LIGHT} from '../shader/light';
-import {VSMShadowPipeline} from '../shadow/VSMShadowPipeline';
 import {AtlasItem} from '../Atlas';
 import {convertFloatArray} from '../gl/uniform/utils';
 import {ShadowPipeline} from '../shadow/ShadowPipeline';
+import {PCFShadowPipeline} from '../shadow/PCFShadowPipeline';
 
 import {Light, LightShaderBlock} from './Light';
 import {DIRECTIONAL_LIGHT_VALUE} from './constant';
@@ -45,8 +45,8 @@ implements Light<DirectionalShadowLightOptions> {
 
   _getShadowPipeline(renderer: Renderer): ShadowPipeline {
     return renderer.getResource(
-      'shadowPipeline~vsm',
-      () => new VSMShadowPipeline(renderer),
+      'shadowPipeline~pcf',
+      () => new PCFShadowPipeline(renderer),
     );
   }
 

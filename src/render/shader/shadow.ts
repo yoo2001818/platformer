@@ -43,3 +43,23 @@ export const ESM = /* glsl */`
     return pow(min(1.0, max(0.0, exp(-2.0 * (receiver - occluder)))), 20.0);
   }
 `;
+
+export const BAKE_PCF = /* glsl */`
+  vec4 bakePCF(float intensity) {
+    return vec4(intensity, 0.0, 0.0, 0.0);
+  }
+`;
+
+export const PCF = /* glsl */`
+  float unpackPCF(
+    sampler2D shadowMap,
+    vec2 uv,
+    float receiver
+  ) {
+    float occluder = texture2D(shadowMap, uv).r;
+    if (receiver < occluder + 0.01) {
+      return 1.0;
+    }
+    return 0.0;
+  }
+`;
