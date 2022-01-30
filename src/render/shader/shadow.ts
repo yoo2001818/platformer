@@ -11,10 +11,11 @@ export const VSM = /* glsl */`
   float unpackVSM(
     sampler2D shadowMap,
     vec2 uv,
+    vec4 uvSize,
     float receiver
   ) {
     float lightInten = 1.0;
-    vec2 moments = texture2D(shadowMap, uv).rg;
+    vec2 moments = texture2D(shadowMap, uv * uvSize.zw + uvSize.xy).rg;
     float targetZ = min(receiver, 1.0);
     if (targetZ > moments.x) {
       float variance = max(moments.y - moments.x * moments.x, 0.00025);
@@ -36,9 +37,10 @@ export const ESM = /* glsl */`
   float unpackESM(
     sampler2D shadowMap,
     vec2 uv,
+    vec4 uvSize,
     float receiver
   ) {
-    float occluder = texture2D(shadowMap, uv).r;
+    float occluder = texture2D(shadowMap, uv * uvSize.zw + uvSize.xy).r;
     float receiver = (min(receiver, 1.0) + 1.0) / 2.0;
     return pow(min(1.0, max(0.0, exp(-2.0 * (receiver - occluder)))), 20.0);
   }
@@ -54,9 +56,11 @@ export const PCF = /* glsl */`
   float unpackPCF(
     sampler2D shadowMap,
     vec2 uv,
+    vec4 uvSize,
     float receiver
   ) {
-    float occluder = texture2D(shadowMap, uv).r;
+    vec2 shadowMapSize = vec2(512.0, 512.0);
+    float occluder = texture2D(shadowMap, uv * uvSize.zw + uvSize.xy).r;
     if (receiver < occluder + 0.01) {
       return 1.0;
     }

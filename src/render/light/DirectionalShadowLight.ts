@@ -97,8 +97,7 @@ implements Light<DirectionalShadowLightOptions> {
             if (abs(lightPos.x) < 1.0 && abs(lightPos.y) < 1.0) {
               lightPos = lightPos * 0.5 + 0.5;
               vec2 lightUV = lightPos.xy;
-              lightUV = shadowUV.xy + lightUV * shadowUV.zw;
-              lightInten = ${shadowShaderBlock.body}(uDirectionalShadowMap, lightUV, lightPos.z);
+              lightInten = ${shadowShaderBlock.body}(uDirectionalShadowMap, lightUV, shadowUV, lightPos.z);
             }
             vec3 L;
             vec3 V = normalize(viewPos - mInfo.position);
