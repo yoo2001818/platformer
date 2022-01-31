@@ -16,7 +16,7 @@ import {DIRECTIONAL_LIGHT_VALUE} from './constant';
 import {DIRECTIONAL_LIGHT_TEX, GIZMO_LINE_MODEL, GIZMO_LINE_SHADER, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER} from './gizmo';
 
 const NUM_CASCADES = 3;
-const CASCADE_BREAKPOINTS = [-1, 0.05, 0.15, 1];
+const CASCADE_BREAKPOINTS = [-1, 0.2, 0.5, 1];
 
 export interface DirectionalShadowLightOptions {
   color: string | number[];
@@ -207,7 +207,7 @@ implements Light<DirectionalShadowLightOptions> {
       vec3.add(worldMax, worldMax, [0.01, 0.01, 0.01]);
 
       for (let i = 0; i < NUM_CASCADES; i += 1) {
-        const atlas = shadowMapManager.getAtlas(light.atlases[i], 256, 256);
+        const atlas = shadowMapManager.getAtlas(light.atlases[i], 1024, 1024);
         light.atlases[i] = atlas;
 
         const breakPrevRaw = CASCADE_BREAKPOINTS[i];

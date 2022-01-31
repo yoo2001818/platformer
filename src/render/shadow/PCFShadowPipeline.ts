@@ -49,10 +49,8 @@ export class PCFShadowPipeline implements ShadowPipeline {
   // 1. (A) Render mesh to renderbuffer
   // 2. (A->B) Blit renderbuffer to texture
   tempDepth1: GLRenderBuffer;
-  tempBuffer1: GLRenderBuffer;
-  tempTexture2: GLTexture2D;
+  tempTexture1: GLTexture2D;
   tempFrame1: GLFrameBuffer;
-  tempFrame2: GLFrameBuffer;
   currentAtlas: AtlasItem | null = null;
   currentUniforms: {[key: string]: unknown;} = {};
 
@@ -62,26 +60,18 @@ export class PCFShadowPipeline implements ShadowPipeline {
     const {capabilities} = glRenderer;
     const useFloat = false;
     // TODO: Various resolutions
+    const resolution = 1024;
     this.tempDepth1 = new GLRenderBuffer({
-      width: 512,
-      height: 512,
+      width: resolution,
+      height: resolution,
       format: capabilities.isWebGL2 ? 'depthComponent32f' : 'depthComponent16',
-      samples: capabilities.isWebGL2 ? 4 : 0,
+      samples: 0,
     });
-    this.tempBuffer1 = new GLRenderBuffer({
-      width: 512,
-      height: 512,
-      // eslint-disable-next-line no-nested-ternary
-      format: capabilities.isWebGL2
-        ? (useFloat ? 'r32f' : 'r16f')
-        : (useFloat ? 'rgba32f' : 'rgba16f'),
-      samples: 4,
-    });
-    this.tempTexture2 = new GLTexture2D({
+    this.tempTexture1 = new GLTexture2D({
       format: capabilities.isWebGL2 ? 'red' : 'rgba',
       type: useFloat ? 'float' : 'halfFloat',
-      width: 512,
-      height: 512,
+      width: resolution,
+      height: resolution,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -89,19 +79,9 @@ export class PCFShadowPipeline implements ShadowPipeline {
       mipmap: false,
       anistropic: 1,
     });
-    if (capabilities.isWebGL2) {
-      this.tempFrame1 = new GLFrameBuffer({
-        depth: this.tempDepth1,
-        color: this.tempBuffer1,
-      });
-    } else {
-      this.tempFrame1 = new GLFrameBuffer({
-        depth: this.tempDepth1,
-        color: this.tempTexture2,
-      });
-    }
-    this.tempFrame2 = new GLFrameBuffer({
-      color: this.tempTexture2,
+    this.tempFrame1 = new GLFrameBuffer({
+      depth: this.tempDepth1,
+      color: this.tempTexture1,
     });
   }
 
@@ -165,26 +145,17 @@ export class PCFShadowPipeline implements ShadowPipeline {
       throw new Error('Current shadow atlas is null');
     }
     const {glRenderer, shadowMapManager} = this.renderer;
-    const {gl, capabilities} = glRenderer;
-    if (capabilities.isWebGL2) {
-      // Rendered mesh -> tempTexture2
-      glRenderer.blit(
-        this.tempFrame1,
-        this.tempFrame2,
-        gl.COLOR_BUFFER_BIT,
-      );
-    }
-    // tempTexture2 -> output (Y)
+    // tempTexture1 -> output (Y)
     const atlas = this.currentAtlas;
     glRenderer.draw({
       frameBuffer: shadowMapManager.getFrameBuffer(),
       geometry: QUAD,
       shader: COPY_SHADER,
       uniforms: {
-        uTexture: this.tempTexture2,
+        uTexture: this.tempTexture1,
         uResolution: [
-          this.tempTexture2.getWidth(),
-          this.tempTexture2.getHeight(),
+          this.tempTexture1.getWidth(),
+          this.tempTexture1.getHeight(),
         ],
         uDirection: [0, 1],
       },
