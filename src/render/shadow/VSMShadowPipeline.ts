@@ -73,15 +73,16 @@ export class VSMShadowPipeline implements ShadowPipeline {
     const {capabilities} = glRenderer;
     const useFloat = false;
     // TODO: Various resolutions
+    const resolution = 1024;
     this.tempDepth1 = new GLRenderBuffer({
-      width: 512,
-      height: 512,
+      width: resolution,
+      height: resolution,
       format: capabilities.isWebGL2 ? 'depthComponent32f' : 'depthComponent16',
       samples: capabilities.isWebGL2 ? 4 : 0,
     });
     this.tempBuffer1 = new GLRenderBuffer({
-      width: 512,
-      height: 512,
+      width: resolution,
+      height: resolution,
       // eslint-disable-next-line no-nested-ternary
       format: capabilities.isWebGL2
         ? (useFloat ? 'rg32f' : 'rg16f')
@@ -91,8 +92,8 @@ export class VSMShadowPipeline implements ShadowPipeline {
     this.tempTexture2 = new GLTexture2D({
       format: capabilities.isWebGL2 ? 'rg' : 'rgba',
       type: useFloat ? 'float' : 'halfFloat',
-      width: 512,
-      height: 512,
+      width: resolution,
+      height: resolution,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',
@@ -103,8 +104,8 @@ export class VSMShadowPipeline implements ShadowPipeline {
     this.tempTexture3 = new GLTexture2D({
       format: capabilities.isWebGL2 ? 'rg' : 'rgba',
       type: useFloat ? 'float' : 'halfFloat',
-      width: 512,
-      height: 512,
+      width: resolution,
+      height: resolution,
       magFilter: 'linear',
       minFilter: 'linear',
       wrapS: 'clampToEdge',

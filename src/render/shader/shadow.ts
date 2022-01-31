@@ -59,7 +59,7 @@ export const PCF = /* glsl */`
     vec4 uvSize,
     float receiver
   ) {
-    vec2 shadowMapSize = vec2(512.0, 512.0);
+    vec2 shadowMapSize = vec2(1024.0, 1024.0);
     float sum = 0.0;
     for (float y = -1.5; y <= 1.5; y += 1.0) {
       for (float x = -1.5; x <= 1.5; x += 1.0) {
