@@ -60,10 +60,18 @@ export const PCF = /* glsl */`
     float receiver
   ) {
     vec2 shadowMapSize = vec2(512.0, 512.0);
-    float occluder = texture2D(shadowMap, uv * uvSize.zw + uvSize.xy).r;
-    if (receiver < occluder + 0.01) {
-      return 1.0;
+    float sum = 0.0;
+    for (float y = -1.5; y <= 1.5; y += 1.0) {
+      for (float x = -1.5; x <= 1.5; x += 1.0) {
+        float occluder = texture2D(
+          shadowMap,
+          (uv + vec2(x, y) / shadowMapSize) * uvSize.zw + uvSize.xy
+        ).r;
+        if (receiver < occluder + 0.01) {
+          sum += 1.0;
+        }
+      }
     }
-    return 0.0;
+    return sum / 16.0;
   }
 `;
