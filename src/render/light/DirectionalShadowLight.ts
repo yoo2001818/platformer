@@ -13,14 +13,15 @@ import {PCFShadowPipeline} from '../shadow/PCFShadowPipeline';
 
 import {Light, LightShaderBlock} from './Light';
 import {DIRECTIONAL_LIGHT_VALUE} from './constant';
-import {DIRECTIONAL_LIGHT_TEX, GIZMO_LINE_MODEL, GIZMO_LINE_SHADER, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER} from './gizmo';
+import {DIRECTIONAL_LIGHT_TEX, GIZMO_CUBE_MODEL, GIZMO_LINE_MODEL, GIZMO_LINE_SHADER, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER} from './gizmo';
 
 const NUM_CASCADES = 3;
-const CASCADE_BREAKPOINTS = [-1, 0.2, 0.5, 1];
+const CASCADE_BREAKPOINTS = [0, 0.2, 0.5, 1];
 
 export interface DirectionalShadowLightOptions {
   color: string | number[];
   power: number;
+  debugFreezeCamera?: boolean;
 }
 
 export class DirectionalShadowLight
@@ -36,6 +37,7 @@ implements Light<DirectionalShadowLightOptions> {
     this.options = options ?? {
       color: '#ffffff',
       power: 1,
+      debugFreezeCamera: false,
     };
     this.atlases = [];
     this.viewProjections =
@@ -171,6 +173,9 @@ implements Light<DirectionalShadowLightOptions> {
     // Note that this must be performed FOR EACH directional light
     entities.forEach((entity) => {
       const light = entity.get<DirectionalShadowLight>('light')!;
+      if (light.options.debugFreezeCamera) {
+        return;
+      }
       const transform = entity.get<Transform>('transform')!;
       const lightModel = transform.getMatrixWorld();
       const lightView = mat4.create();
@@ -357,6 +362,24 @@ implements Light<DirectionalShadowLightOptions> {
           depth: false,
         },
       });
+      if (light.options.debugFreezeCamera) {
+        light.viewProjections.forEach((mat) => {
+          const matInv = mat4.invert(mat4.create(), mat);
+          glRenderer.draw({
+            geometry: GIZMO_CUBE_MODEL,
+            shader: GIZMO_LINE_SHADER,
+            uniforms: {
+              ...camUniforms,
+              uModel: matInv,
+              uColor: '#ff0000',
+              uScale: 1,
+            },
+            state: {
+              depth: false,
+            },
+          });
+        });
+      }
     });
   }
 

@@ -121,6 +121,29 @@ export const GIZMO_LINE_MODEL = new GLGeometry({
   mode: LINES,
 });
 
+export const GIZMO_CUBE_MODEL = new GLGeometry({
+  attributes: {
+    aPosition: {
+      data: [
+        -1, -1, -1, 1, -1, -1,
+        -1, 1, -1, 1, 1, -1,
+        -1, -1, 1, 1, -1, 1,
+        -1, 1, 1, 1, 1, 1,
+        -1, -1, -1, -1, 1, -1,
+        1, -1, -1, 1, 1, -1,
+        -1, -1, 1, -1, 1, 1,
+        1, -1, 1, 1, 1, 1,
+        -1, -1, -1, -1, -1, 1,
+        1, -1, -1, 1, -1, 1,
+        -1, 1, -1, -1, 1, 1,
+        1, 1, -1, 1, 1, 1,
+      ],
+      size: 3,
+    },
+  },
+  mode: LINES,
+});
+
 export const GIZMO_LINE_SHADER = new GLShader(
   /* glsl */`
     precision highp float;

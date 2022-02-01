@@ -21,6 +21,7 @@ const LIGHT_SCHEMAS: {[key: string]: SchemaPropertiesSchema[];} = {
   directionalShadow: [
     {id: 'color', label: 'Color', type: 'color'},
     {id: 'power', label: 'Power', type: 'number'},
+    {id: 'debugFreezeCamera', label: 'Freeze Camera', type: 'boolean'},
   ],
   environment: [
     {id: 'texture', label: 'Texture', type: 'texture2D'},

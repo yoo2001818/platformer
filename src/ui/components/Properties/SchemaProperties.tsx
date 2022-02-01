@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {DimensionInput, ColorInput, NumberInput} from '../Input';
+import {DimensionInput, ColorInput, NumberInput, SelectInput} from '../Input';
 import {FormGroup} from '../FormGroup';
 
 export interface SchemaPropertiesTypeProps {
@@ -24,6 +24,16 @@ export const TYPE_TABLE: {[key: string]: SchemaPropertiesType;} = {
   ),
   number: (props) => (
     <NumberInput {...props} />
+  ),
+  boolean: (props) => (
+    // TODO: This should be a checkbox
+    <SelectInput
+      options={[
+        {label: 'No', value: false},
+        {label: 'Yes', value: true},
+      ]}
+      {...props}
+    />
   ),
 };
 
