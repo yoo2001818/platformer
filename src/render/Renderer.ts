@@ -97,7 +97,7 @@ export class Renderer {
       !glRenderer.hasResourceChanged() &&
       !pipeline.shouldForceRender()
     ) {
-      // return;
+      return;
     }
     this.frameId += 1;
     this.frameTransformVersion = transformComp.globalVersion;
