@@ -166,8 +166,6 @@ implements Light<DirectionalShadowLightOptions> {
     const cameraInvProjection =
       cameraData.getInverseProjection(renderer.getAspectRatio());
     const cameraInvView = cameraData.getInverseView(camera!);
-    const cameraProjectionView =
-      cameraData.getProjectionView(camera!, renderer.getAspectRatio());
 
     const cameraZ = cameraProjection[10];
     const cameraW = cameraProjection[14];
@@ -184,38 +182,34 @@ implements Light<DirectionalShadowLightOptions> {
       mat4.invert(lightView, lightModel);
 
       // Retrieve boundary for all objects
-      // Boundary in **camera NDC** space
-      const ndcMin = vec3.create();
-      const ndcMax = vec3.create();
+      // Boundary in **light view** space
+      const worldMin = vec3.create();
+      const worldMax = vec3.create();
       let worldInitialized = false;
       entityStore.forEachWith(['transform', 'mesh'], (entity) => {
         const transform = entity.get<Transform>('transform')!;
         const mesh = entity.get<Mesh>('mesh')!;
         const transformMat = transform.getMatrixWorld();
-        const out = vec4.create();
+        const out = vec3.create();
         if (!mesh.shouldCastShadow()) {
           return;
         }
         mesh.getBoundPoints().forEach((point) => {
-          vec4.set(out, point[0], point[1], point[2], 1);
-          vec4.transformMat4(out, out, transformMat);
-          vec4.transformMat4(out, out, cameraProjectionView);
-          vec4.scale(out, out, 1 / out[3]);
+          vec3.transformMat4(out, point as vec3, transformMat);
+          vec3.transformMat4(out, out, lightView);
           if (!worldInitialized) {
-            vec3.copy(ndcMin, out as vec3);
-            vec3.copy(ndcMax, out as vec3);
+            vec3.copy(worldMin, out);
+            vec3.copy(worldMax, out);
             worldInitialized = true;
           } else {
-            vec3.min(ndcMin, ndcMin, out as vec3);
-            vec3.max(ndcMax, ndcMax, out as vec3);
+            vec3.min(worldMin, worldMin, out);
+            vec3.max(worldMax, worldMax, out);
           }
         });
       });
       // Give a small amount of margin
-      /*
-      vec3.add(ndcMin, ndcMin, [-0.01, -0.01, -0.01]);
-      vec3.add(ndcMax, ndcMax, [0.01, 0.01, 0.01]);
-      */
+      vec3.add(worldMin, worldMin, [-0.01, -0.01, -0.01]);
+      vec3.add(worldMax, worldMax, [0.01, 0.01, 0.01]);
 
       for (let i = 0; i < NUM_CASCADES; i += 1) {
         const atlas = shadowMapManager.getAtlas(light.atlases[i], 1024, 1024);
@@ -237,11 +231,6 @@ implements Light<DirectionalShadowLightOptions> {
         // of the frustum in the light's local space.
         const minVec = vec3.create();
         const maxVec = vec3.create();
-        // X Y Z in bit flag
-        const corners = [0, 1, 2, 3, 4, 5, 6, 7];
-        console.log(breakPrev, breakNext, ndcMin, ndcMax);
-
-        /*
         const corners = [
           vec4.fromValues(-1, -1, breakPrev, 1),
           vec4.fromValues(1, -1, breakPrev, 1),
@@ -252,20 +241,10 @@ implements Light<DirectionalShadowLightOptions> {
           vec4.fromValues(-1, 1, breakNext, 1),
           vec4.fromValues(1, 1, breakNext, 1),
         ];
-        */
-
-        corners.forEach((flag, index) => {
+        corners.forEach((corner, index) => {
           const pos: Float32Array = vec4.create() as Float32Array;
-          // Write flag
-          pos[0] = (flag & 1) ? ndcMin[0] : ndcMax[0];
-          pos[1] = (flag & 2) ? ndcMin[1] : ndcMax[1];
-          pos[2] = (flag & 4) ? ndcMin[2] : ndcMax[2];
-          pos[0] = Math.min(1, Math.max(-1, pos[0]));
-          pos[1] = Math.min(1, Math.max(-1, pos[1]));
-          pos[2] = Math.min(breakNext, Math.max(breakPrev, pos[2]));
-          pos[3] = 1;
           // NDC -> view
-          vec4.transformMat4(pos, pos, cameraInvProjection);
+          vec4.transformMat4(pos, corner, cameraInvProjection);
           vec4.scale(pos, pos, 1 / pos[3]);
           // view -> world
           vec4.transformMat4(pos, pos, cameraInvView);
@@ -281,9 +260,8 @@ implements Light<DirectionalShadowLightOptions> {
           }
         });
         // Intersect with world boundary
-        // vec3.max(minVec, minVec, ndcMin);
-        // vec3.min(maxVec, maxVec, ndcMax);
-        console.log(minVec, maxVec);
+        vec3.max(minVec, minVec, worldMin);
+        vec3.min(maxVec, maxVec, worldMax);
         const isValid =
           minVec[0] < maxVec[0] &&
           minVec[1] < maxVec[1] &&
