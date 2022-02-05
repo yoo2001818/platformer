@@ -130,12 +130,16 @@ export class PCFShadowPipeline implements ShadowPipeline {
 
   draw(options: DrawOptions): void {
     const {glRenderer} = this.renderer;
+    const atlas = this.currentAtlas;
     glRenderer.draw({
       ...options,
       frameBuffer: this.tempFrame1,
       uniforms: {
         ...options.uniforms,
         ...this.currentUniforms,
+      },
+      state: {
+        viewport: [0, 0, atlas!.width, atlas!.height],
       },
     });
   }
