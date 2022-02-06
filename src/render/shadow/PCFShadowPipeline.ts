@@ -35,9 +35,10 @@ const COPY_SHADER = new GLShader(
     varying vec2 vPosition;
 
     uniform highp sampler2D uTexture;
+    uniform vec2 uSize;
 
     void main() {
-      gl_FragColor = texture2D(uTexture, vPosition);
+      gl_FragColor = texture2D(uTexture, vPosition * uSize);
     }
   `,
 );
@@ -157,9 +158,9 @@ export class PCFShadowPipeline implements ShadowPipeline {
       shader: COPY_SHADER,
       uniforms: {
         uTexture: this.tempTexture1,
-        uResolution: [
-          this.tempTexture1.getWidth(),
-          this.tempTexture1.getHeight(),
+        uSize: [
+          atlas.width / this.tempTexture1.getWidth(),
+          atlas.height / this.tempTexture1.getHeight(),
         ],
         uDirection: [0, 1],
       },
