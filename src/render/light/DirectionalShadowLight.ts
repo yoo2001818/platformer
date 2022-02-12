@@ -16,7 +16,7 @@ import {DIRECTIONAL_LIGHT_VALUE} from './constant';
 import {DIRECTIONAL_LIGHT_TEX, GIZMO_CUBE_MODEL, GIZMO_LINE_MODEL, GIZMO_LINE_SHADER, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER} from './gizmo';
 
 const NUM_CASCADES = 3;
-const CASCADE_BREAKPOINTS = [0, 0.2, 0.3, 1];
+const CASCADE_BREAKPOINTS = [0, 2, 8, Infinity];
 
 export interface DirectionalShadowLightOptions {
   color: string | number[];
@@ -160,10 +160,10 @@ implements Light<DirectionalShadowLightOptions> {
     const shadowPipeline = this._getShadowPipeline(renderer);
 
     const cameraData = camera!.get<Camera>('camera')!;
-    const {near, far, fov} = cameraData.options;
+    const {far, fov} = cameraData.options;
     const aspect = renderer.getAspectRatio();
     // The size of the film, at z=1
-    const filmHeight = 1 / (2 * Math.tan(fov / 2));
+    const filmHeight = 1 / Math.tan(fov / 2);
     const filmWidth = filmHeight * aspect;
     const cameraInvView = cameraData.getInverseView(camera!);
 
@@ -213,10 +213,10 @@ implements Light<DirectionalShadowLightOptions> {
         light.atlases[i] = atlas;
 
         const breakPrevRaw = CASCADE_BREAKPOINTS[i];
-        const breakPrev = near + breakPrevRaw * (far - near);
+        const breakPrev = Math.min(breakPrevRaw, far);
 
         const breakNextRaw = CASCADE_BREAKPOINTS[i + 1];
-        const breakNext = near + breakNextRaw * (far - near);
+        const breakNext = Math.min(breakNextRaw, far);
 
         light.breakpoints[i] = breakNext;
 
