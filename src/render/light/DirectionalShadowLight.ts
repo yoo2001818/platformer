@@ -16,7 +16,7 @@ import {DIRECTIONAL_LIGHT_VALUE} from './constant';
 import {DIRECTIONAL_LIGHT_TEX, GIZMO_CUBE_MODEL, GIZMO_LINE_MODEL, GIZMO_LINE_SHADER, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER} from './gizmo';
 
 const NUM_CASCADES = 3;
-const CASCADE_BREAKPOINTS = [0, 0.2, 0.5, 1];
+const CASCADE_BREAKPOINTS = [0, 0.2, 0.3, 1];
 
 export interface DirectionalShadowLightOptions {
   color: string | number[];
@@ -160,15 +160,12 @@ implements Light<DirectionalShadowLightOptions> {
     const shadowPipeline = this._getShadowPipeline(renderer);
 
     const cameraData = camera!.get<Camera>('camera')!;
-    const {near, far} = cameraData.options;
-    const cameraProjection =
-      cameraData.getProjection(1);
-    const cameraInvProjection =
-      cameraData.getInverseProjection(renderer.getAspectRatio());
+    const {near, far, fov} = cameraData.options;
+    const aspect = renderer.getAspectRatio();
+    // The size of the film, at z=1
+    const filmHeight = 1 / (2 * Math.tan(fov / 2));
+    const filmWidth = filmHeight * aspect;
     const cameraInvView = cameraData.getInverseView(camera!);
-
-    const cameraZ = cameraProjection[10];
-    const cameraW = cameraProjection[14];
 
     // Note that this must be performed FOR EACH directional light
     entities.forEach((entity) => {
@@ -216,12 +213,10 @@ implements Light<DirectionalShadowLightOptions> {
         light.atlases[i] = atlas;
 
         const breakPrevRaw = CASCADE_BREAKPOINTS[i];
-        const breakPrevZ = near + breakPrevRaw * (far - near);
-        const breakPrev = (-breakPrevZ * cameraZ + cameraW) / breakPrevZ;
+        const breakPrev = near + breakPrevRaw * (far - near);
 
         const breakNextRaw = CASCADE_BREAKPOINTS[i + 1];
-        const breakNextZ = near + breakNextRaw * (far - near);
-        const breakNext = (-breakNextZ * cameraZ + cameraW) / breakNextZ;
+        const breakNext = near + breakNextRaw * (far - near);
 
         light.breakpoints[i] = breakNext;
 
@@ -243,9 +238,14 @@ implements Light<DirectionalShadowLightOptions> {
         ];
         corners.forEach((corner, index) => {
           const pos: Float32Array = vec4.create() as Float32Array;
-          // NDC -> view
-          vec4.transformMat4(pos, corner, cameraInvProjection);
-          vec4.scale(pos, pos, 1 / pos[3]);
+          // Create view vector using film size
+          vec4.set(
+            pos,
+            corner[0] * -corner[2] * filmWidth,
+            corner[1] * -corner[2] * filmHeight,
+            -corner[2],
+            1,
+          );
           // view -> world
           vec4.transformMat4(pos, pos, cameraInvView);
           // world -> light
