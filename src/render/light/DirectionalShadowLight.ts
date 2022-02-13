@@ -16,7 +16,7 @@ import {DIRECTIONAL_LIGHT_VALUE} from './constant';
 import {DIRECTIONAL_LIGHT_TEX, GIZMO_CUBE_MODEL, GIZMO_LINE_MODEL, GIZMO_LINE_SHADER, GIZMO_QUAD_MODEL, GIZMO_QUAD_SHADER} from './gizmo';
 
 const NUM_CASCADES = 3;
-const CASCADE_BREAKPOINTS = [0, 2, 8, Infinity];
+const CASCADE_BREAKPOINTS = [0, 4, 20, Infinity];
 
 export interface DirectionalShadowLightOptions {
   color: string | number[];
@@ -81,7 +81,7 @@ implements Light<DirectionalShadowLightOptions> {
         for (int i = 0; i < NUM_DIRECTIONAL_SHADOW_LIGHTS; i += 1) {
           int cascadeId = 3;
           for (int j = 0; j < NUM_DIRECTIONAL_SHADOW_CASCADES; j += 1) {
-            if ((mInfo.depth * 2.0 - 1.0) <= uDirectionalShadowBreakpoints[i * NUM_DIRECTIONAL_SHADOW_CASCADES + j]) {
+            if (mInfo.depth <= uDirectionalShadowBreakpoints[i * NUM_DIRECTIONAL_SHADOW_CASCADES + j]) {
               cascadeId = j;
               break;
             }
@@ -165,6 +165,7 @@ implements Light<DirectionalShadowLightOptions> {
     // The size of the film, at z=1
     const filmHeight = 1 / Math.tan(fov / 2);
     const filmWidth = filmHeight * aspect;
+    const cameraProjection = cameraData.getProjection(aspect);
     const cameraInvView = cameraData.getInverseView(camera!);
 
     // Note that this must be performed FOR EACH directional light
@@ -218,7 +219,11 @@ implements Light<DirectionalShadowLightOptions> {
         const breakNextRaw = CASCADE_BREAKPOINTS[i + 1];
         const breakNext = Math.min(breakNextRaw, far);
 
-        light.breakpoints[i] = breakNext;
+        const breakpointVec = vec4.fromValues(0, 0, -breakNext, 1);
+        vec4.transformMat4(breakpointVec, breakpointVec, cameraProjection);
+        const breakNextZ = breakpointVec[2] / breakpointVec[3];
+
+        light.breakpoints[i] = breakNextZ * 0.5 + 0.5;
 
         // Calculate view/projection matrix for the shadow
         // This is (not...) simply done by converting each vertex of display
