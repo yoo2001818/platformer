@@ -157,8 +157,6 @@ implements Light<DirectionalShadowLightOptions> {
   prepare(entities: Entity[], renderer: Renderer): void {
     const {shadowMapManager, camera, pipeline, entityStore} = renderer;
 
-    const shadowPipeline = this._getShadowPipeline(renderer);
-
     const cameraData = camera!.get<Camera>('camera')!;
     const {far, fov} = cameraData.options;
     const aspect = renderer.getAspectRatio();
@@ -174,6 +172,7 @@ implements Light<DirectionalShadowLightOptions> {
       if (light.options.debugFreezeCamera) {
         return;
       }
+      const shadowPipeline = this._getShadowPipeline(renderer);
       const transform = entity.get<Transform>('transform')!;
       const lightModel = transform.getMatrixWorld();
       const lightView = mat4.create();
