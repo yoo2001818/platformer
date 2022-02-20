@@ -23,6 +23,7 @@ import {LayoutTree, SplitList, SplitCell} from './LayoutTree';
 import {Panel, PanelHeader, PanelContent} from './Panel';
 import {EntityProperties} from './EntityProperties';
 import {Viewport} from './Viewport';
+import {MenuBar} from './MenuBar';
 
 function initEngine(): Engine {
   const engine = new Engine();
@@ -131,6 +132,7 @@ export function App(): React.ReactElement {
         `}
       />
       <LayoutTree>
+        <MenuBar />
         <SplitList direction="horizontal">
           <SplitCell size={0.8}>
             <Viewport />
