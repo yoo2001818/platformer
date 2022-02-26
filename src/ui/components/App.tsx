@@ -132,32 +132,36 @@ export function App(): React.ReactElement {
         `}
       />
       <LayoutTree>
-        <MenuBar />
-        <SplitList direction="horizontal">
-          <SplitCell size={0.8}>
-            <Viewport />
-          </SplitCell>
-          <SplitCell size={0.2}>
-            <SplitList direction="vertical">
-              <SplitCell size={0.4}>
-                <Panel>
-                  <PanelHeader>
-                    Hierarchy
-                  </PanelHeader>
-                  <PanelContent>
-                    <EntityList />
-                  </PanelContent>
-                </Panel>
+        <SplitList direction="vertical">
+          <MenuBar />
+          <SplitCell size={1}>
+            <SplitList direction="horizontal">
+              <SplitCell size={0.8}>
+                <Viewport />
               </SplitCell>
-              <SplitCell size={0.6}>
-                <Panel>
-                  <PanelHeader>
-                    Properties
-                  </PanelHeader>
-                  <PanelContent>
-                    <EntityProperties />
-                  </PanelContent>
-                </Panel>
+              <SplitCell size={0.2}>
+                <SplitList direction="vertical">
+                  <SplitCell size={0.4}>
+                    <Panel>
+                      <PanelHeader>
+                        Hierarchy
+                      </PanelHeader>
+                      <PanelContent>
+                        <EntityList />
+                      </PanelContent>
+                    </Panel>
+                  </SplitCell>
+                  <SplitCell size={0.6}>
+                    <Panel>
+                      <PanelHeader>
+                        Properties
+                      </PanelHeader>
+                      <PanelContent>
+                        <EntityProperties />
+                      </PanelContent>
+                    </Panel>
+                  </SplitCell>
+                </SplitList>
               </SplitCell>
             </SplitList>
           </SplitCell>
