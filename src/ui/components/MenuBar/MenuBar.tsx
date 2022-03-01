@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { COLORS } from '../../styles';
+
+import {COLORS} from '../../styles';
 
 export interface MenuBarProps {
   className?: string;
