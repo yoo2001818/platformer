@@ -1,7 +1,9 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import {COLORS, RESET_BUTTON} from '../../styles';
+import {COLORS} from '../../styles';
+
+import {MenuItem} from './MenuItem';
 
 export interface MenuBarProps {
   className?: string;
@@ -27,11 +29,4 @@ const MenuDiv = styled.div`
   color: ${COLORS.gray0};
   padding: 0 9px;
   font-size: 14px;
-`;
-
-const MenuItem = styled.button`
-  ${RESET_BUTTON}
-  display: inline-block;
-  color: ${COLORS.gray0};
-  padding: 5px 9px;
 `;
