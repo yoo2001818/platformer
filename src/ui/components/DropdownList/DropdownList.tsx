@@ -13,12 +13,17 @@ export function DropdownList(
 ): React.ReactElement {
   const {className, children} = props;
   return (
-    <Div className={className}>
+    <ListDiv className={className}>
       { children }
-    </Div>
+    </ListDiv>
   );
 }
 
-const Div = styled.div`
-  color: ${COLORS.gray90};
+const ListDiv = styled.div`
+  padding: 4px 0;
+  border: 1px solid ${COLORS.gray40};
+  background-color: ${COLORS.gray0};
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .10);
+  overflow: auto;
 `;

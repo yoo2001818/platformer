@@ -1,24 +1,35 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import {COLORS} from '../../styles';
+import {COLORS, RESET_BUTTON} from '../../styles';
 
-export interface DropDownListItemProps {
+export interface DropdownListItemProps {
   className?: string;
   children: React.ReactNode;
 }
 
-export function DropDownListItem(
-  props: DropDownListItemProps,
+export function DropdownListItem(
+  props: DropdownListItemProps,
 ): React.ReactElement {
   const {className, children} = props;
   return (
-    <Div className={className}>
+    <ItemButton className={className}>
       { children }
-    </Div>
+    </ItemButton>
   );
 }
 
-const Div = styled.div`
-  color: ${COLORS.gray90};
+const ItemButton = styled.button`
+  ${RESET_BUTTON}
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 12px 6px;
+  font-size: 13px;
+  line-height: normal;
+  color: ${COLORS.gray70};
+  text-align: left;
+  &:hover {
+    background-color: ${COLORS.gray20};
+  }
 `;
