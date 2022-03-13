@@ -24,9 +24,9 @@ export function MenuBar(
         )}
       >
         <DropdownList>
-          <DropdownListItem>Test</DropdownListItem>
-          <DropdownListItem>Test</DropdownListItem>
-          <DropdownListItem>Test</DropdownListItem>
+          <DropdownListItem>New</DropdownListItem>
+          <DropdownListItem>Open...</DropdownListItem>
+          <DropdownListItem>Save</DropdownListItem>
         </DropdownList>
       </Dropdown>
       <MenuItem>Edit</MenuItem>

@@ -1,4 +1,4 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect, useRef} from 'react';
 import styled from '@emotion/styled';
 
 export interface DropdownChildProps {
@@ -15,12 +15,33 @@ export function Dropdown(
   props: DropdownProps,
 ): React.ReactElement {
   const {className, renderButton, children} = props;
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setOpen] = useState(false);
   const handleToggle = useCallback(() => {
     setOpen((v) => !v);
   }, []);
+  useEffect(() => {
+    const containerElem = containerRef.current;
+    if (!isOpen || containerElem == null) {
+      return;
+    }
+    const handleClick = (e: MouseEvent): void => {
+      const elem = e.target;
+      if (elem instanceof Element && !containerElem.contains(elem)) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener('click', handleClick);
+    // eslint-disable-next-line consistent-return
+    return () => {
+      window.removeEventListener('click', handleClick);
+    };
+  }, [isOpen]);
   return (
-    <DropdownContainer className={className}>
+    <DropdownContainer
+      className={className}
+      ref={containerRef}
+    >
       { renderButton({
         toggle: handleToggle,
       }) }

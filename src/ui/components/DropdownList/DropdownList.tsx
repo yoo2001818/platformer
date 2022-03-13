@@ -20,6 +20,8 @@ export function DropdownList(
 }
 
 const ListDiv = styled.div`
+  min-width: 110px;
+  box-sizing: border-box;
   padding: 4px 0;
   border: 1px solid ${COLORS.gray40};
   background-color: ${COLORS.gray0};
