@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
+import {Dropdown} from '../Dropdown/Dropdown';
 import {DropdownListItem} from '../DropdownList/DropdownItem';
 import {DropdownList} from '../DropdownList/DropdownList';
 import {COLORS} from '../../styles';
@@ -17,15 +18,20 @@ export function MenuBar(
   const {className} = props;
   return (
     <MenuDiv className={className}>
-      <MenuItem>File</MenuItem>
+      <Dropdown
+        renderButton={({toggle}) => (
+          <MenuItem onClick={toggle}>File</MenuItem>
+        )}
+      >
+        <DropdownList>
+          <DropdownListItem>Test</DropdownListItem>
+          <DropdownListItem>Test</DropdownListItem>
+          <DropdownListItem>Test</DropdownListItem>
+        </DropdownList>
+      </Dropdown>
       <MenuItem>Edit</MenuItem>
       <MenuItem>View</MenuItem>
       <MenuItem>Help</MenuItem>
-      <DropdownList>
-        <DropdownListItem>Test</DropdownListItem>
-        <DropdownListItem>Test</DropdownListItem>
-        <DropdownListItem>Test</DropdownListItem>
-      </DropdownList>
     </MenuDiv>
   );
 }

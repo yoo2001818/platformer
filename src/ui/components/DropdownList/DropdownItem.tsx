@@ -5,15 +5,20 @@ import {COLORS, RESET_BUTTON} from '../../styles';
 
 export interface DropdownListItemProps {
   className?: string;
+  onClick?: () => void;
   children: React.ReactNode;
 }
 
 export function DropdownListItem(
   props: DropdownListItemProps,
 ): React.ReactElement {
-  const {className, children} = props;
+  const {className, onClick, children} = props;
   return (
-    <ItemButton className={className}>
+    <ItemButton
+      className={className}
+      type="button"
+      onClick={onClick}
+    >
       { children }
     </ItemButton>
   );
