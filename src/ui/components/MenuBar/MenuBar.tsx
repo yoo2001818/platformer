@@ -1,12 +1,11 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import {Dropdown} from '../Dropdown/Dropdown';
 import {DropdownListItem} from '../DropdownList/DropdownItem';
-import {DropdownList} from '../DropdownList/DropdownList';
 import {COLORS} from '../../styles';
 
 import {MenuItem} from './MenuItem';
+import {MenuItemDropdown} from './MenuItemDropdown';
 
 export interface MenuBarProps {
   className?: string;
@@ -18,17 +17,11 @@ export function MenuBar(
   const {className} = props;
   return (
     <MenuDiv className={className}>
-      <Dropdown
-        renderButton={({toggle}) => (
-          <MenuItem onClick={toggle}>File</MenuItem>
-        )}
-      >
-        <DropdownList>
-          <DropdownListItem>New</DropdownListItem>
-          <DropdownListItem>Open...</DropdownListItem>
-          <DropdownListItem>Save</DropdownListItem>
-        </DropdownList>
-      </Dropdown>
+      <MenuItemDropdown label="File">
+        <DropdownListItem>New</DropdownListItem>
+        <DropdownListItem>Open...</DropdownListItem>
+        <DropdownListItem>Save</DropdownListItem>
+      </MenuItemDropdown>
       <MenuItem>Edit</MenuItem>
       <MenuItem>View</MenuItem>
       <MenuItem>Help</MenuItem>
