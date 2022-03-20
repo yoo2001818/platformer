@@ -173,6 +173,10 @@ export class EntityStore {
     entity.destroy();
   }
 
+  deleteAll(): void {
+    this.getEntities().forEach((entity) => this.delete(entity.handle));
+  }
+
   getEntities(): Entity[] {
     return this.entities.filter((v) => v.isValid());
   }
