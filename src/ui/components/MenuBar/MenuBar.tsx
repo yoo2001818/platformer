@@ -3,6 +3,8 @@ import styled from '@emotion/styled';
 
 import {DropdownListItem} from '../DropdownList/DropdownItem';
 import {COLORS} from '../../styles';
+import {newFile} from '../../../editor/commands/file';
+import {useEngine} from '../../hooks/useEngine';
 
 import {MenuItem} from './MenuItem';
 import {MenuItemDropdown} from './MenuItemDropdown';
@@ -15,10 +17,17 @@ export function MenuBar(
   props: MenuBarProps,
 ): React.ReactElement {
   const {className} = props;
+  const engine = useEngine();
   return (
     <MenuDiv className={className}>
       <MenuItemDropdown label="File">
-        <DropdownListItem>New</DropdownListItem>
+        <DropdownListItem
+          onClick={() => {
+            newFile(engine);
+          }}
+        >
+          New
+        </DropdownListItem>
         <DropdownListItem>Open...</DropdownListItem>
         <DropdownListItem>Save</DropdownListItem>
       </MenuItemDropdown>
