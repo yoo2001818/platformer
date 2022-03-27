@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 
 import {DropdownListItem} from '../DropdownList/DropdownItem';
 import {COLORS} from '../../styles';
-import {newFile} from '../../../editor/commands/file';
+import {loadFile, newFile, saveFile} from '../../../editor/commands/file';
 import {useEngine} from '../../hooks/useEngine';
 
 import {MenuItem} from './MenuItem';
@@ -28,8 +28,20 @@ export function MenuBar(
         >
           New
         </DropdownListItem>
-        <DropdownListItem>Open...</DropdownListItem>
-        <DropdownListItem>Save</DropdownListItem>
+        <DropdownListItem
+          onClick={() => {
+            loadFile(engine);
+          }}
+        >
+          Open...
+        </DropdownListItem>
+        <DropdownListItem
+          onClick={() => {
+            saveFile(engine);
+          }}
+        >
+          Save
+        </DropdownListItem>
       </MenuItemDropdown>
       <MenuItem>Edit</MenuItem>
       <MenuItem>View</MenuItem>
