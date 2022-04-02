@@ -14,3 +14,13 @@ The current engine structure allows each component to manipulate their own
 data, so it should be no problem, however there is a problem with common asset
 management interface. There must be a common way to manage this, and link it to
 the engine / serialization layer.
+
+## Mesh, Geometry, Material
+Mesh, Geometry, Material, can reference non-serializable data. We need a way
+to address them, and recall them when necessary.
+
+A simplest solution would be creating a "recall" layer, which can generate a
+necessary object from strings, config objects, etc.
+
+This task would have to be done by MeshComponent, as all serialization will
+go through it.
