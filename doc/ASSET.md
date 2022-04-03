@@ -24,3 +24,8 @@ necessary object from strings, config objects, etc.
 
 This task would have to be done by MeshComponent, as all serialization will
 go through it.
+
+## EntityFuture
+Currently the engine supports EntityFuture for serialization purposes. This
+can be thought as asset management too, as the resource must be processed by
+EntityFuture, rather than passing it through JSON serialization.
