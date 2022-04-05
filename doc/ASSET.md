@@ -29,3 +29,16 @@ go through it.
 Currently the engine supports EntityFuture for serialization purposes. This
 can be thought as asset management too, as the resource must be processed by
 EntityFuture, rather than passing it through JSON serialization.
+
+## The component itself should do it
+Well, the path is clear - the component itself should perform all the
+deserialization routine. However, the engine should provide a "asset map" for
+managing the resources, as serialization routine doesn't provide a slot for
+managing this resources. It can be just simple as providing an object,
+outputting the entire object after serialization.
+
+However, this also means that serialization / setting routine must be kept
+separate, because the `create` method, will use different format from
+`serialize`, `deserialize` routine.
+
+Possibly, we can just make `pack`, `unpack` function in order to this to work.
