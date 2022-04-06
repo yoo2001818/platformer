@@ -42,3 +42,31 @@ separate, because the `create` method, will use different format from
 `serialize`, `deserialize` routine.
 
 Possibly, we can just make `pack`, `unpack` function in order to this to work.
+
+## Interface
+
+```tsx
+interface Component {
+
+  get(entity): T | null;
+  set(entity, value: T);
+
+  getJSON(entity, objMap): unknown;
+  setJSON(entity, objMap, value): void;
+}
+```
+
+...Other resources can be resolved like this, but other entity references can't
+survive this, as the objMap needs to be populated with the entity list first
+to reference others.
+
+Furthermore, the objMap itself may not be serializable, so objMap needs to take
+care of resources, preferably using a Map. But this is not relevant in
+deserialization time.
+
+For this reason, while calling `getJSON`, the objMap can be "enhanced" - it can
+store indices, map, etc, for serialization purposes. But, when calling 
+`setJSON`, it should be converted to JSON-serializable object.
+
+Preferably, the objMap itself can handle all of this - so that getJSON, setJSON
+uses same interface.
