@@ -2,6 +2,7 @@ import type {Entity} from '../Entity';
 import type {EntityChunk} from '../EntityChunk';
 import type {EntityGroup} from '../EntityGroup';
 import type {EntityStore} from '../EntityStore';
+import {ResourceMap} from '../serialization/ResourceMap';
 
 export interface Component<
   TReadValue,
@@ -12,7 +13,8 @@ export interface Component<
   register(store: EntityStore, index: number, name: string): void;
   unregister(): void;
 
-  toJSON?(entity: Entity): unknown;
+  getJSON?(entity: Entity, resourceMap: ResourceMap): unknown;
+  setJSON?(entity: Entity, resourceMap: ResourceMap, value: unknown): void;
   get(entity: Entity): TReadValue | null;
   set(entity: Entity, value: TWriteValue): void;
   delete(entity: Entity): void;
