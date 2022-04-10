@@ -70,3 +70,27 @@ store indices, map, etc, for serialization purposes. But, when calling
 
 Preferably, the objMap itself can handle all of this - so that getJSON, setJSON
 uses same interface.
+
+## Serialization methods
+Okay, other components won't really matter - however, Mesh and Animation
+component can choose to load the data from external sources. This means that
+asynchronous loading is possible, and we should account for it.
+
+During deserialization, we can just choose to load the resource asynchronously -
+no problem. However, we need to determine if the resource should be saved along
+with the file or not. We can choose to include it, or not.
+
+While this should be selectable by the user (or the code), there should be some
+sane defaults.
+
+The Mesh, and the resources attached to it (geometry, material) should have
+URI to determine where the resource came from. If it is not defined, it should
+be considered as a local resource and saved along with the JSON.
+
+If the resource is tampered and a fork was made from the original source, it
+should lose the URI.
+
+The mesh component should implement a protocol handler to handle various
+protocols, and file types.
+Since it should directly handle the file types, not only protocols, it is not
+portable between animation component, etc. 
