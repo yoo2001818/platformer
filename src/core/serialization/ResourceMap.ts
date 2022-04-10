@@ -1,17 +1,22 @@
+import {Engine} from '../Engine';
+
 export interface ResourceMapComponent {
+  load?(): void;
   toJSON(): unknown;
 }
 
 export interface ResourceMapDescriptor<T extends ResourceMapComponent> {
   name: string;
-  create(json?: unknown): T;
+  create(engine: Engine, resourceMap: ResourceMap, json?: unknown): T;
 }
 
 export class ResourceMap {
+  engine: Engine;
   entries: Map<string, ResourceMapComponent>;
   entriesJson: Map<string, unknown>;
 
-  constructor() {
+  constructor(engine: Engine) {
+    this.engine = engine;
     this.entries = new Map();
     this.entriesJson = new Map();
   }
@@ -33,8 +38,9 @@ export class ResourceMap {
       jsonObj = this.entriesJson.get(descriptor.name);
       this.entriesJson.delete(descriptor.name);
     }
-    const newEntry = descriptor.create(jsonObj);
+    const newEntry = descriptor.create(this.engine, this, jsonObj);
     this.entries.set(descriptor.name, newEntry);
+    newEntry.load?.();
     return newEntry;
   }
 
