@@ -1,11 +1,14 @@
 import {Atom, AtomDescriptor} from './Atom';
 import {Component} from './components/Component';
+import type {Engine} from './Engine';
 import {Entity} from './Entity';
 import {EntityChunk} from './EntityChunk';
 import {EntityFuture} from './EntityFuture';
 import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
 import {EntityQuery} from './EntityQuery';
+import {ResourceMap} from './serialization/ResourceMap';
+import {resourceMapEntity} from './serialization/ResourceMapEntity';
 import {Signal} from './Signal';
 import {SignalWithArg} from './SignalWithArg';
 import {sortEntity} from './sortEntity';
@@ -291,8 +294,12 @@ export class EntityStore {
     });
   }
 
-  toJSON(): unknown {
-    return this.getEntities().map((v) => v.toJSON());
+  // FIXME: This shouldn't have to receive Engine as argument
+  toJSON(engine: Engine, entities: Entity[] = this.getEntities()): unknown {
+    const resourceMap = new ResourceMap(engine);
+    const entityMap = resourceMap.get(resourceMapEntity);
+    entityMap.addEntities(entities);
+    return resourceMap.toJSON();
   }
 
   getAtom<T>(descriptor: AtomDescriptor<T>): Atom<T> {
