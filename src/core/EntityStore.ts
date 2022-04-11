@@ -302,6 +302,14 @@ export class EntityStore {
     return resourceMap.toJSON();
   }
 
+  // FIXME: This shouldn't have to receive Engine as argument
+  appendJSON(engine: Engine, json: unknown): void {
+    const resourceMap = new ResourceMap(engine);
+    resourceMap.fromJSON(json);
+    const entityMap = resourceMap.get(resourceMapEntity);
+    entityMap.load();
+  }
+
   getAtom<T>(descriptor: AtomDescriptor<T>): Atom<T> {
     let atom = this.atoms.get(descriptor.name);
     if (atom == null) {
