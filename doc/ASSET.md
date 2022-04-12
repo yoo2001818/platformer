@@ -94,3 +94,50 @@ The mesh component should implement a protocol handler to handle various
 protocols, and file types.
 Since it should directly handle the file types, not only protocols, it is not
 portable between animation component, etc. 
+
+## We need a AssetLibrary
+Until this point, I've thought about integrating serialization method onto the
+component store - however this is not a valid solution. There might be a lot of
+different serialization methods - For example, GLTF, COLLADA, OBJ, STL, etc,
+are all different formats with different serialization methods. We could convert
+them to internal JSON format, and deserialize that - however, the GLTF, COLLADA,
+etc formats are inherently "linked" - resources references to each other.
+
+In this case, there is no actual benefit from making an internal serializable
+format; we'd just ditch the middle man and convert from foreign format to
+internal data directly.
+
+In order to do that, we have to detach internal data and the engine, as
+the internal data can be appended to the engine, even multiple times. Or the
+internal data can be just read independently of the engine.
+
+However, the engine currently do not allow such method. The component and the
+data store is strongly bonded to the engine. This is not bad though - this
+design is completely intended.
+
+We can make a "subset" of the engine which conforms to the component interface,
+however it can freely move the entities around - without hurting cross
+references, so that deserializer can return the data using it.
+
+In addition to the entities, the related resources, such as textures,
+geometries, materials, etc, can also be carried in there.
+
+This is then called an AssetLibrary, which is subset of the engine state and
+can be appended to the engine if needed.
+
+### Maintaining references
+Parent hierarchy, Material ID, etc, are all references - it must be preserved
+between entity movements. To support this, each component should be aware of
+references and help them move around. For example, Hierarchy component may
+detect other engine (AssetLibrary) reference and resolve them.
+
+It can be resolved by nested copying - however this will easily end up in
+infinite loop and we need a way to stop this behavior.
+
+The engine itself, should support bulk appending and provide facility to detect
+these references and resolve the foreign references to the engine itself.
+
+The simplest way could be, while bulk appending, the reference may be rewritten
+using a rewriter (In a sense, this is very similiar to EntityFuture), which
+is provided by `bulkAppend` method. The assets also can be resolved in similiar
+way, but it'd be more trickier.
