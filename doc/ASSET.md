@@ -141,3 +141,35 @@ The simplest way could be, while bulk appending, the reference may be rewritten
 using a rewriter (In a sense, this is very similiar to EntityFuture), which
 is provided by `bulkAppend` method. The assets also can be resolved in similiar
 way, but it'd be more trickier.
+
+## Conclusion
+The EntityStore should be independent of the Engine. EntityStore may decide to
+not manage EntityGroup, EntityChunk objects and just manage Entity array.
+
+We may change the name of EntityStore to more inviting name like "EntityBundle",
+however this is extremely confusing as there are simliarly named classes like
+EntityGroup, EntityChunk, etc.
+
+The EntityStore should support "append" method that can accept a list of Entity
+from other EntityStore.
+
+Component should be aware of other EntityStore while setting values. For
+example, if Entity from another EntityStore is detected while appending, it
+should be replaced to freshly copied Entity. This task should be done by a
+mapper that is temporarily set while performing "append". The user may override
+this to allow keeping references and forwarding to already-pasted references,
+etc.
+
+We assume that Component sets are the same between multiple EntityStore,
+(or the source is subset of the destination) for now.
+
+Managing other resources, such as Material, Texture, etc is not the scope of
+EntityStore. However EntityStore may reference AssetLibrary, which is set while
+creating the Component objects. The Component should be aware of resources from
+other AssetLibrary, and copy them / rename them when necessary. The AssetLibrary
+may provide some utilites to perform this task, as some kind of metadata is
+anyway necessary for bookkeeping the resources. This is subject to change, as
+specifing these resources may be problem in the future.
+
+The serializer, deserializer should accept both AssetLibrary and EntityStore -
+this set would be called as a "Bundle".
