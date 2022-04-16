@@ -140,6 +140,10 @@ export class EntityStore {
     return result;
   }
 
+  append(entities: Entity[]): void {
+    // Copy entities from other EntityStore and append it;
+  }
+
   get(handle: EntityHandle | null): Entity | null {
     if (handle == null) {
       return null;
