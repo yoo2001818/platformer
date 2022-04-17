@@ -142,6 +142,20 @@ export class EntityStore {
 
   append(entities: Entity[]): void {
     // Copy entities from other EntityStore and append it;
+    const createdEntities: Entity[] = [];
+    this.futureResolver = (future) => {
+      return createdEntities[future.index];
+    };
+    const result = entities.map((entity) => {
+      const newEntity = this.create();
+      createdEntities.push(newEntity);
+      return newEntity;
+    });
+    entities.forEach((entity, index) => {
+      const newEntity = result[index];
+      newEntity.setMap(entity.getMap());
+    });
+    this.futureResolver = null;
   }
 
   get(handle: EntityHandle | null): Entity | null {
