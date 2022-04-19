@@ -1,23 +1,20 @@
-import {ObjectFutureComponent} from '../core/components/ObjectFutureComponent';
+import {ObjectComponent} from '../core/components/ObjectComponent';
 
 import {
   Animation,
-  AnimationWithFuture,
   AnimationTarget,
 } from './Animation';
 
-export class AnimationComponent extends ObjectFutureComponent<
-  Animation,
-  AnimationWithFuture
-> {
+export class AnimationComponent extends ObjectComponent<Animation> {
   constructor() {
     super(
       (value) => value,
-      (value, getFuture) => ({
+      undefined,
+      (value, resolveEntity) => ({
         ...value,
         targets: value.targets.map((target): AnimationTarget => ({
           ...target,
-          entity: getFuture(target.entity),
+          entity: resolveEntity(target.entity)!,
         })),
       }),
     );

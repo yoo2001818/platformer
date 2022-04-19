@@ -3,7 +3,6 @@ import {Component} from './components/Component';
 import type {Engine} from './Engine';
 import {Entity} from './Entity';
 import {EntityChunk} from './EntityChunk';
-import {EntityFuture} from './EntityFuture';
 import {EntityGroup} from './EntityGroup';
 import {EntityHandle} from './EntityHandle';
 import {EntityQuery} from './EntityQuery';
@@ -35,9 +34,7 @@ export class EntityStore {
   signal: Signal;
   groupAddedSignal: SignalWithArg<[EntityGroup]>;
 
-  // FIXME: This should be specified differently; it is only used for
-  // createEntities
-  futureResolver: ((future: EntityFuture) => Entity) | null;
+  _resolveEntity: ((entity: Entity) => Entity) | null;
 
   constructor() {
     this.components = [];
@@ -59,7 +56,21 @@ export class EntityStore {
     this.signal = new Signal();
     this.groupAddedSignal = new SignalWithArg();
 
-    this.futureResolver = null;
+    this._resolveEntity = null;
+  }
+
+  resolveEntity(entity: Entity | null): Entity | null {
+    if (entity == null) {
+      return null;
+    }
+    // If the entity belongs to this store, return it
+    if (entity.store === this) {
+      return entity;
+    }
+    if (this._resolveEntity == null) {
+      return null;
+    }
+    return this._resolveEntity(entity);
   }
 
   registerComponent(name: string, component: Component<any>): void {
@@ -124,9 +135,6 @@ export class EntityStore {
 
   createEntities(entities: {[key: string]: any;}[]): Entity[] {
     const createdEntities: Entity[] = [];
-    this.futureResolver = (future) => {
-      return createdEntities[future.index];
-    };
     const result = entities.map((options) => {
       const entity = this.create();
       createdEntities.push(entity);
@@ -136,15 +144,15 @@ export class EntityStore {
       const entity = result[index];
       entity.setMap(options);
     });
-    this.futureResolver = null;
     return result;
   }
 
   append(entities: Entity[]): void {
     // Copy entities from other EntityStore and append it;
     const createdEntities: Entity[] = [];
-    this.futureResolver = (future) => {
-      return createdEntities[future.index];
+    this._resolveEntity = (entity) => {
+      const index = entities.findIndex((v) => v === entity);
+      return createdEntities[index];
     };
     const result = entities.map((entity) => {
       const newEntity = this.create();
@@ -155,7 +163,7 @@ export class EntityStore {
       const newEntity = result[index];
       newEntity.setMap(entity.getMap());
     });
-    this.futureResolver = null;
+    this._resolveEntity = null;
   }
 
   get(handle: EntityHandle | null): Entity | null {

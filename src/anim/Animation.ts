@@ -1,13 +1,7 @@
 import {Entity} from '../core/Entity';
-import {EntityFuture} from '../core/EntityFuture';
 
 export interface AnimationTarget {
   entity: Entity;
-  path: 'rotation' | 'scale' | 'position';
-}
-
-export interface AnimationTargetWithFuture {
-  entity: Entity | EntityFuture;
   path: 'rotation' | 'scale' | 'position';
 }
 
@@ -26,12 +20,6 @@ export interface AnimationClip {
 
 export interface Animation {
   targets: AnimationTarget[];
-  clips: AnimationClip[];
-  currentTime: number;
-}
-
-export interface AnimationWithFuture {
-  targets: AnimationTargetWithFuture[];
   clips: AnimationClip[];
   currentTime: number;
 }

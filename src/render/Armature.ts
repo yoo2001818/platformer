@@ -2,21 +2,14 @@ import {mat4} from 'gl-matrix';
 
 import {TransformComponent} from '../3d/TransformComponent';
 import {Entity} from '../core/Entity';
-import {EntityFuture} from '../core/EntityFuture';
 import {EntityStore} from '../core/EntityStore';
 
 import {GLTexture2D} from './gl/GLTexture2D';
 
 export interface ArmatureOptions {
   inverseBindMatrices: Float32Array;
-  joints: Entity[];
+  joints: (Entity | null)[];
   skeleton: Entity | null;
-}
-
-export interface ArmatureOptionsWithFuture {
-  inverseBindMatrices: Float32Array;
-  joints: (Entity | EntityFuture)[];
-  skeleton: (Entity | EntityFuture) | null;
 }
 
 export class Armature {
@@ -62,8 +55,10 @@ export class Armature {
       const target = matrixData.subarray(i * 16, (i + 1) * 16);
       const invMatrix = inverseBindMatrices.subarray(i * 16, (i + 1) * 16);
       const entity = joints[i];
-      const transform = transformComp.get(entity)!;
-      mat4.multiply(target, transform.getMatrixWorld(), invMatrix);
+      if (entity != null) {
+        const transform = transformComp.get(entity)!;
+        mat4.multiply(target, transform.getMatrixWorld(), invMatrix);
+      }
     }
     this._matrixVersion = transformComp.globalVersion;
     return matrixData;

@@ -1,32 +1,37 @@
-import {ObjectFutureComponent} from '../core/components/ObjectFutureComponent';
+import {ObjectComponent} from '../core/components/ObjectComponent';
 import {Entity} from '../core/Entity';
 
-import {Armature, ArmatureOptionsWithFuture} from './Armature';
+import {Armature, ArmatureOptions} from './Armature';
 
-export class ArmatureComponent extends ObjectFutureComponent<
-  Armature,
-  Armature | ArmatureOptionsWithFuture
+export class ArmatureComponent extends ObjectComponent<
+  Armature, Armature | ArmatureOptions
 > {
   constructor() {
     super(
       // TODO: The clone may want to change references
       (value) => value.clone(),
-      (value, getFuture) => {
+      (value) => {
         if (value instanceof Armature) {
           return value;
         }
         return new Armature({
           ...value,
-          joints: value.joints.map(getFuture),
-          skeleton: value.skeleton != null
-            ? getFuture(value.skeleton)
-            : null,
+          joints: value.joints,
+          skeleton: value.skeleton,
+        });
+      },
+      (value, resolveEntity) => {
+        // TODO: Maybe we can do this without cloning...?
+        return new Armature({
+          ...value.options,
+          joints: value.options.joints.map(resolveEntity),
+          skeleton: resolveEntity(value.options.skeleton),
         });
       },
     );
   }
 
-  set(entity: Entity, value: Armature | ArmatureOptionsWithFuture): Armature {
+  set(entity: Entity, value: Armature | ArmatureOptions): Armature {
     const result = super.set(entity, value);
     result.register(this.entityStore!);
     return result;
