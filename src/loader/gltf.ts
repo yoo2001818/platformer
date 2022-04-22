@@ -1,8 +1,10 @@
 import {Transform} from '../3d/Transform';
-import {AnimationClip, AnimationTargetWithFuture} from '../anim/Animation';
+import {AnimationClip, AnimationTarget} from '../anim/Animation';
+import {Entity} from '../core/Entity';
 import {EntityFuture} from '../core/EntityFuture';
+import {EntityStore} from '../core/EntityStore';
 import {GeometryAttribute} from '../geom/types';
-import {ArmatureOptionsWithFuture} from '../render/Armature';
+import {Armature, ArmatureOptions} from '../render/Armature';
 import {Geometry, GeometryBounds} from '../render/Geometry';
 import {GLTexture2D} from '../render/gl/GLTexture2D';
 import {GLAttributeType} from '../render/gl/types';
@@ -413,8 +415,10 @@ export function parseGLTF(input: any): GLTFResult {
     });
   }
 
-  const nodes: {[key: string]: any;}[] = input.nodes.map((node: any) => {
-    const entity: {[key: string]: any;} = {};
+  const entityStore = new EntityStore();
+
+  const nodes: Entity[] = input.nodes.map((node: any) => {
+    const entity = entityStore.create();
     const transform = new Transform();
     if ('matrix' in node) {
       transform.setMatrix(node.matrix);
@@ -429,23 +433,23 @@ export function parseGLTF(input: any): GLTFResult {
         transform.setScale(node.scale);
       }
     }
-    entity.transform = transform;
+    entity.set('transform', transform);
     if ('mesh' in node) {
       const mesh = meshes[node.mesh];
       if (mesh == null) {
         throw new Error('Invalid mesh reference');
       }
-      entity.mesh = mesh;
+      entity.set('mesh', mesh);
     }
     if ('name' in node) {
-      entity.name = node.name;
+      entity.set('name', node.name);
     }
     if (node.extensions?.KHR_lights_punctual != null) {
       const light = lights[node.extensions?.KHR_lights_punctual.light];
       if (light == null) {
         throw new Error('Invalid light reference');
       }
-      entity.light = light.clone();
+      entity.set('light', light.clone());
     }
     return entity;
   });
@@ -457,7 +461,7 @@ export function parseGLTF(input: any): GLTFResult {
         if (childNode == null) {
           throw new Error('Invalid child reference');
         }
-        childNode.parent = new EntityFuture(index);
+        childNode.set('parent', nodes[index]);
       });
     }
     if ('skin' in node) {
@@ -468,22 +472,22 @@ export function parseGLTF(input: any): GLTFResult {
       if (skin.inverseBindMatrices == null) {
         throw new Error('inverse bind matrix must be provided ... for now');
       }
-      const armature: ArmatureOptionsWithFuture = {
+      const armature: ArmatureOptions = {
         inverseBindMatrices: getAccessorFloat32Array(
           skin.inverseBindMatrices,
         ),
         skeleton: skin.skeleton != null
-          ? new EntityFuture(skin.skeleton)
+          ? nodes[skin.skeleton]
           : null,
         joints: skin.joints.map((joint: number) => new EntityFuture(joint)),
       };
-      nodes[index].armature = armature;
+      nodes[index].set('armature', new Armature(armature));
     }
   });
   // Set up animation controller node if any animation is specified
   if (input.animations != null) {
     const targetMap: Map<string, number> = new Map();
-    const targets: AnimationTargetWithFuture[] = [];
+    const targets: AnimationTarget[] = [];
     const clips: AnimationClip[] = input.animations.map((
       animation: any,
     ): AnimationClip => {
@@ -496,7 +500,7 @@ export function parseGLTF(input: any): GLTFResult {
           targetId = targetMap.get(targetKey)!;
         } else {
           targets.push({
-            entity: new EntityFuture(channel.target.node),
+            entity: nodes[channel.target.node],
             path: ANIMATION_PATH_MAP[channel.target.path] as any,
           });
           targetMap.set(targetKey, targets.length - 1);
@@ -523,13 +527,13 @@ export function parseGLTF(input: any): GLTFResult {
         duration,
       };
     });
-    nodes.push({
-      animation: {
-        targets,
-        clips,
-        currentTime: 0,
-      },
+    const animEntity = entityStore.create();
+    animEntity.set('animation', {
+      targets,
+      clips,
+      currentTime: 0,
     });
+    nodes.push(animEntity);
   }
   console.log(input);
   console.log(nodes);
