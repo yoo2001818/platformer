@@ -1,3 +1,4 @@
+import {create3DComponents} from '../3d/create3DComponents';
 import {Transform} from '../3d/Transform';
 import {AnimationClip, AnimationTarget} from '../anim/Animation';
 import {Entity} from '../core/Entity';
@@ -76,7 +77,7 @@ const ANIMATION_PATH_MAP: {[key: string]: string;} = {
 
 export interface GLTFResult {
   meshes: Mesh[];
-  entities: {[key: string]: any;}[];
+  entityStore: EntityStore;
 }
 
 export function parseGLTF(input: any): GLTFResult {
@@ -416,6 +417,7 @@ export function parseGLTF(input: any): GLTFResult {
   }
 
   const entityStore = new EntityStore();
+  entityStore.registerComponents(create3DComponents());
 
   const nodes: Entity[] = input.nodes.map((node: any) => {
     const entity = entityStore.create();
@@ -537,5 +539,5 @@ export function parseGLTF(input: any): GLTFResult {
   }
   console.log(input);
   console.log(nodes);
-  return {meshes, entities: nodes};
+  return {meshes, entityStore};
 }
