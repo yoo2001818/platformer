@@ -87,7 +87,7 @@ function main() {
   const pbrTexture = generatePBREnvMap(glRenderer, mip, hdrType);
 
   const gltf = parseGLTF(require('./models/pri-home5.gltf'));
-  store.createEntities(gltf.entities);
+  store.append(gltf.entityStore.getEntities());
 
   /*
   const bvh = gltf.meshes[0].geometries[0].getBVH();
