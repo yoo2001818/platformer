@@ -9,5 +9,5 @@ export function loadFile(engine: Engine): void {
 }
 
 export function saveFile(engine: Engine): void {
-  console.log(engine.entityStore.toJSON());
+  // console.log(engine.entityStore.toJSON());
 }

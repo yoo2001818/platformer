@@ -28,7 +28,7 @@ import {MenuBar} from './MenuBar';
 function initEngine(): Engine {
   const engine = new Engine();
   engine.entityStore.registerComponents(create3DComponents());
-  engine.entityStore.createEntities(parseGLTF(require('../../sample/models/cat.gltf')).entities);
+  engine.entityStore.append(parseGLTF(require('../../sample/models/cat.gltf')).entityStore.getEntities());
   engine.entityStore.create({
     name: 'Test',
     transform: {position: [0, 1, 0]},
