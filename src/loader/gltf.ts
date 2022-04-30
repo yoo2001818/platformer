@@ -481,7 +481,7 @@ export function parseGLTF(input: any): GLTFResult {
         skeleton: skin.skeleton != null
           ? nodes[skin.skeleton]
           : null,
-        joints: skin.joints.map((joint: number) => new EntityFuture(joint)),
+        joints: skin.joints.map((joint: number) => nodes[joint]),
       };
       nodes[index].set('armature', new Armature(armature));
     }
