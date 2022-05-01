@@ -2,7 +2,6 @@ import {create3DComponents} from '../3d/create3DComponents';
 import {Transform} from '../3d/Transform';
 import {AnimationClip, AnimationTarget} from '../anim/Animation';
 import {Entity} from '../core/Entity';
-import {EntityFuture} from '../core/EntityFuture';
 import {EntityStore} from '../core/EntityStore';
 import {GeometryAttribute} from '../geom/types';
 import {Armature, ArmatureOptions} from '../render/Armature';
