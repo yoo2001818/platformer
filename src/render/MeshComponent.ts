@@ -1,4 +1,6 @@
 import {UnisonComponent} from '../core/components/UnisonComponent';
+import {Entity} from '../core/Entity';
+import {EntityChunk} from '../core/EntityChunk';
 
 import {Mesh} from './Mesh';
 
@@ -12,5 +14,13 @@ export class MeshComponent extends UnisonComponent<Mesh> {
       }).join('/'),
       (mesh) => mesh.clone(),
     );
+  }
+
+  set(entity: Entity, value: Mesh): void {
+    super.set(entity, value);
+  }
+
+  initChunk(chunk: EntityChunk, value: Mesh | null): void {
+    super.initChunk(chunk, value);
   }
 }

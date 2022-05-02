@@ -1,7 +1,6 @@
 import type {Entity} from '../Entity';
 import {EntityChunk} from '../EntityChunk';
 import type {EntityStore} from '../EntityStore';
-import {ResourceMap} from '../serialization/ResourceMap';
 
 import {Component} from './Component';
 
@@ -39,10 +38,6 @@ export class Float32ArrayComponent
       return Array.from(value);
     }
     return null;
-  }
-
-  setJSON(entity: Entity, resourceMap: ResourceMap, value: number[]): void {
-    this.set(entity, value);
   }
 
   get(entity: Entity): Float32Array | null {

@@ -3,7 +3,6 @@ import {ComponentSignalMapper} from './ComponentSignalMapper';
 import type {EntityChunk} from './EntityChunk';
 import {EntityHandle} from './EntityHandle';
 import type {EntityStore} from './EntityStore';
-import {ResourceMap} from './serialization/ResourceMap';
 import {Signal} from './Signal';
 import {UpstreamSignal} from './UpstreamSignal';
 
@@ -250,50 +249,6 @@ export class Entity {
       }
     });
     return output;
-  }
-
-  toJSON(resourceMap: ResourceMap): {[key: string]: unknown;} {
-    const result: {[key: string]: any;} = {};
-    result.handle = this.handle.toJSON();
-    this.store.getComponents().forEach((component) => {
-      const name = component.getName()!;
-      if (component.getJSON != null) {
-        result[name] = component.getJSON(this, resourceMap);
-      } else {
-        let value = component.get(this);
-        const valueJSONable = value as {toJSON(): unknown;};
-        if (value != null && typeof valueJSONable.toJSON === 'function') {
-          value = valueJSONable.toJSON();
-        }
-        if (value != null) {
-          result[name] = value;
-        }
-      }
-    });
-    return result;
-  }
-
-  fromJSON(resourceMap: ResourceMap, json: unknown): void {
-    if (typeof json !== 'object') {
-      return;
-    }
-    const jsonObj = json as {[key: string]: unknown;};
-    Object.entries(jsonObj).forEach(([key, value]) => {
-      // Ignore 'handle' - it's reserved for marking IDs
-      if (key === 'handle') {
-        return;
-      }
-      const component = this.store.getComponentOptional(key);
-      if (component == null) {
-        return;
-      }
-      this.markChanged(component);
-      if (component.setJSON != null) {
-        component.setJSON(this, resourceMap, value);
-      } else {
-        component.set(this, value);
-      }
-    });
   }
 
   getComponentSignal(component: Component<any, any> | string | number): Signal {
