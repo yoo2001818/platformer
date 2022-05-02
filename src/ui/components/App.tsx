@@ -2,7 +2,7 @@ import React, {useEffect, useRef} from 'react';
 import {css, Global} from '@emotion/react';
 
 import {create3DComponents} from '../../3d/create3DComponents';
-import {Engine} from '../../core/Engine';
+import {Engine, UPDATE_PHASE} from '../../core/Engine';
 import {parseGLTF} from '../../loader/gltf';
 import {Transform} from '../../3d/Transform';
 import {GLTexture2D} from '../../render/gl/GLTexture2D';
@@ -16,6 +16,7 @@ import {quad} from '../../geom/quad';
 import {EnvironmentLight} from '../../render/light/EnvironmentLight';
 import {initModels} from '../../editor/initModels';
 import {DirectionalShadowLight} from '../../render/light/DirectionalShadowLight';
+import {updateAnimation} from '../../anim/updateAnimation';
 
 import {EngineProvider} from './EngineContext';
 import {EntityList} from './EntityList';
@@ -34,6 +35,9 @@ function initEngine(): Engine {
     transform: {position: [0, 1, 0]},
   });
   initModels(engine);
+  engine.registerSystem(UPDATE_PHASE, (deltaTime) => {
+    updateAnimation(engine.entityStore, deltaTime);
+  });
   engine.entityStore.create({
     name: 'DirectionalLight',
     transform: new Transform()
