@@ -158,7 +158,7 @@ export class EntityStore {
     });
     entities.forEach((entity, index) => {
       const newEntity = result[index];
-      newEntity.setMap(entity.getMap());
+      newEntity.setMap(entity.getCloneMap());
     });
     this._resolveEntity = null;
   }
