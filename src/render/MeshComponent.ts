@@ -20,7 +20,7 @@ export class MeshComponent extends UnisonComponent<Mesh> {
     super.set(entity, value);
   }
 
-  initChunk(chunk: EntityChunk, value: Mesh | null): void {
-    super.initChunk(chunk, value);
+  handleInitChunk(chunk: EntityChunk, value: Mesh | null): void {
+    super.handleInitChunk(chunk, value);
   }
 }

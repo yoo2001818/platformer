@@ -72,7 +72,7 @@ export class EntityChunk {
   init(protoEntity: Entity): void {
     protoEntity.store.getComponents().forEach((component) => {
       const value = protoEntity.get(component);
-      component.initChunk?.(this, value);
+      component.handleInitChunk?.(this, value);
     });
   }
 

@@ -40,7 +40,7 @@ export class EntityGroup {
   init(protoEntity: Entity): void {
     protoEntity.store.getComponents().forEach((component) => {
       const value = protoEntity.get(component);
-      component.initGroup?.(this, value);
+      component.handleInitGroup?.(this, value);
     });
   }
 

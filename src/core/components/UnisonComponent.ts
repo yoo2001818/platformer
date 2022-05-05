@@ -92,7 +92,7 @@ export class UnisonComponent<
     return id;
   }
 
-  initChunk(chunk: EntityChunk, value: TReadValue | null): void {
+  handleInitChunk(chunk: EntityChunk, value: TReadValue | null): void {
     chunk._setRawMap(this, value);
   }
 

@@ -79,7 +79,7 @@ export class Float32ArrayComponent
     return chunk._getRawMap<Float32Array>(this);
   }
 
-  initChunk(chunk: EntityChunk, value: Float32Array | null): void {
+  handleInitChunk(chunk: EntityChunk, value: Float32Array | null): void {
     if (value == null) {
       // Do nothing if chunk doesn't have Float32Array
       return;

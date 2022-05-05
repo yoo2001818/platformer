@@ -19,9 +19,12 @@ export interface Component<
 
   getHashCode(value: TWriteValue | null): number;
 
-  initChunk?(chunk: EntityChunk, value: TWriteValue | null): void;
+  handleInitEntity?(entity: Entity): void;
+  handleDestroyEntity?(entity: Entity): void;
+
+  handleInitChunk?(chunk: EntityChunk, value: TWriteValue | null): void;
   getChunk?(chunk: EntityChunk, offset: number): TReadValue | null;
   setChunk?(chunk: EntityChunk, offset: number, value: TWriteValue): void;
 
-  initGroup?(group: EntityGroup, value: TWriteValue | null): void;
+  handleInitGroup?(group: EntityGroup, value: TWriteValue | null): void;
 }
